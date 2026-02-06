@@ -1,0 +1,729 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Introduction Video</title>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Crimson+Pro:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --color-primary: #2D5F8D;
+            --color-primary-dark: #1E4266;
+            --color-accent: #E8925C;
+            --color-accent-dark: #D67B47;
+            
+            --gradient-sidebar: linear-gradient(135deg, #2D5F8D 0%, #1E4266 100%);
+            --shadow-xl: 0 20px 60px rgba(29, 50, 77, 0.2);
+            
+            --font-body: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            --font-display: 'Crimson Pro', Georgia, serif;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html, body {
+            height: 100%;
+            overflow: hidden;
+        }
+
+        body {
+            font-family: var(--font-body);
+            background: var(--gradient-sidebar);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        /* Main Container */
+        .video-wrapper {
+            position: relative;
+            width: 100%;
+            max-width: 1000px;
+            height: auto;
+            max-height: calc(100vh - 100px);
+        }
+
+        .video-header {
+            text-align: right;
+            margin-bottom: 15px;
+            animation: slideInRight 0.8s ease;
+        }
+
+        .assessment-title {
+            display: inline-block;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(10px);
+            padding: 12px 20px;
+            border-radius: 10px;
+            border-right: 4px solid var(--color-accent);
+        }
+
+        .assessment-label {
+            color: var(--color-accent);
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            margin-bottom: 3px;
+        }
+
+        .assessment-name {
+            color: white;
+            font-family: var(--font-display);
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        /* Video Container */
+        .video-container {
+            position: relative;
+            width: 100%;
+            background: #000;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: var(--shadow-xl);
+            animation: fadeInUp 0.8s ease 0.2s both;
+        }
+
+        video {
+            width: 100%;
+            height: auto;
+            max-height: calc(100vh - 150px);
+            display: block;
+            object-fit: contain;
+        }
+
+        /* Loading Screen */
+        .loading-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--gradient-sidebar);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+            transition: opacity 0.5s ease;
+        }
+
+        .loading-screen.hide {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .loading-logo {
+            font-family: var(--font-display);
+            font-size: 2rem;
+            font-weight: 700;
+            color: white;
+            margin-bottom: 30px;
+            animation: fadeInUp 0.6s ease;
+        }
+
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .loading-text {
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 14px;
+            margin-top: 20px;
+            animation: fadeIn 0.6s ease 0.3s both;
+        }
+
+        /* Unmute Prompt */
+        .unmute-prompt {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(10px);
+            padding: 40px 50px;
+            border-radius: 15px;
+            text-align: center;
+            z-index: 8;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: none;
+        }
+
+        .unmute-prompt.show {
+            display: block;
+            animation: scaleIn 0.5s ease;
+        }
+
+        .unmute-prompt:hover {
+            transform: translate(-50%, -50%) scale(1.05);
+            background: rgba(0, 0, 0, 0.9);
+        }
+
+        .unmute-icon {
+            width: 60px;
+            height: 60px;
+            margin: 0 auto 20px;
+            stroke: var(--color-accent);
+        }
+
+        .unmute-text {
+            color: white;
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .unmute-subtext {
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 0.95rem;
+        }
+
+        /* Progress Bar */
+        .video-progress {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.2);
+            z-index: 5;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--color-primary), var(--color-accent));
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        /* Controls Overlay */
+        .controls-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, rgba(45, 95, 141, 0.95), rgba(30, 66, 102, 0.95));
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 15;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .controls-overlay.show {
+            display: flex;
+        }
+
+        .completion-icon {
+            width: 80px;
+            height: 80px;
+            background: var(--color-accent);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 30px;
+            animation: scaleIn 0.5s ease;
+        }
+
+        .completion-icon svg {
+            width: 40px;
+            height: 40px;
+            stroke: white;
+        }
+
+        @keyframes scaleIn {
+            from {
+                transform: scale(0);
+                opacity: 0;
+            }
+            to {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        .overlay-title {
+            color: white;
+            font-family: var(--font-display);
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 15px;
+            text-align: center;
+            animation: fadeInUp 0.5s ease 0.2s both;
+        }
+
+        .overlay-subtitle {
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 1rem;
+            margin-bottom: 40px;
+            text-align: center;
+            animation: fadeInUp 0.5s ease 0.3s both;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            justify-content: center;
+            animation: fadeInUp 0.5s ease 0.4s both;
+        }
+
+        .control-btn {
+            padding: 14px 35px;
+            font-size: 1rem;
+            font-weight: 600;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: var(--font-body);
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .control-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.6s ease;
+        }
+
+        .control-btn:hover::before {
+            left: 100%;
+        }
+
+        .control-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+        }
+
+        .control-btn:active {
+            transform: translateY(0);
+        }
+
+        .control-btn.primary {
+            background: var(--color-accent);
+            color: white;
+            padding: 16px 45px;
+        }
+
+        .control-btn.primary:hover {
+            background: var(--color-accent-dark);
+        }
+
+        .control-btn.secondary {
+            background: white;
+            color: var(--color-primary);
+        }
+
+        .control-btn.secondary:hover {
+            background: #f0f0f0;
+        }
+
+        .control-btn.tertiary {
+            background: transparent;
+            color: white;
+            border: 2px solid rgba(255, 255, 255, 0.5);
+        }
+
+        .control-btn.tertiary:hover {
+            border-color: white;
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes slideInRight {
+            from {
+                opacity: 0;
+                transform: translateX(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            body {
+                padding: 15px;
+            }
+
+            .video-wrapper {
+                max-height: calc(100vh - 80px);
+            }
+
+            video {
+                max-height: calc(100vh - 120px);
+            }
+
+            .assessment-title {
+                padding: 10px 16px;
+            }
+
+            .assessment-label {
+                font-size: 10px;
+            }
+
+            .assessment-name {
+                font-size: 14px;
+            }
+
+            .overlay-title {
+                font-size: 1.5rem;
+            }
+
+            .overlay-subtitle {
+                font-size: 0.9rem;
+                padding: 0 20px;
+            }
+
+            .button-group {
+                flex-direction: column;
+                width: 100%;
+                max-width: 280px;
+            }
+
+            .control-btn {
+                width: 100%;
+                justify-content: center;
+            }
+
+            .unmute-prompt {
+                padding: 30px 40px;
+            }
+
+            .unmute-icon {
+                width: 50px;
+                height: 50px;
+            }
+
+            .unmute-text {
+                font-size: 1.1rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            body {
+                padding: 10px;
+            }
+
+            .video-wrapper {
+                max-height: calc(100vh - 60px);
+            }
+
+            video {
+                max-height: calc(100vh - 100px);
+            }
+
+            .loading-logo {
+                font-size: 1.5rem;
+            }
+
+            .overlay-title {
+                font-size: 1.3rem;
+            }
+
+            .control-btn {
+                padding: 12px 25px;
+                font-size: 0.95rem;
+            }
+
+            .control-btn.primary {
+                padding: 14px 35px;
+            }
+        }
+
+        @media (max-height: 600px) {
+            .video-wrapper {
+                max-height: calc(100vh - 40px);
+            }
+
+            video {
+                max-height: calc(100vh - 80px);
+            }
+
+            .video-header {
+                margin-bottom: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="video-wrapper">
+        <!-- Assessment Title -->
+        <div class="video-header">
+            <div class="assessment-title">
+                <div class="assessment-label">Assessment Introduction</div>
+                <div class="assessment-name">Welcome Session</div>
+            </div>
+        </div>
+
+        <div class="video-container">
+            <!-- Loading Screen -->
+            <div class="loading-screen" id="loadingScreen">
+                <div class="loading-logo">Assessment Portal</div>
+                <div class="loading-spinner"></div>
+                <div class="loading-text">Loading your introduction video...</div>
+            </div>
+
+            <!-- Video Element -->
+            <video id="introVideo" playsinline preload="auto">
+                <source src="/static/videos/introVideo.mp4" type="video/mp4">
+                Your browser does not support the video tag.
+            </video>
+
+            <!-- Unmute Prompt -->
+            <div class="unmute-prompt" id="unmutePrompt">
+                <svg class="unmute-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+                    <path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+                    <path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path>
+                </svg>
+                <div class="unmute-text">Click to Enable Sound</div>
+                <div class="unmute-subtext">Tap anywhere to unmute and continue</div>
+            </div>
+
+            <!-- Progress Bar -->
+            <div class="video-progress">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+
+            <!-- Controls Overlay -->
+            <div class="controls-overlay" id="controlsOverlay">
+                <div class="completion-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="20 6 9 17 4 12"></polyline>
+                    </svg>
+                </div>
+                <h1 class="overlay-title">Introduction Complete</h1>
+                <p class="overlay-subtitle">You're ready to begin your assessment</p>
+                <div class="button-group">
+                    <button class="control-btn secondary" id="replayBtn">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="1 4 1 10 7 10"></polyline>
+                            <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path>
+                        </svg>
+                        Watch Again
+                    </button>
+                    <button class="control-btn primary" id="beginBtn">
+                        Begin Assessment
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="5" y1="12" x2="19" y2="12"></line>
+                            <polyline points="12 5 19 12 12 19"></polyline>
+                        </svg>
+                    </button>
+                    <button class="control-btn tertiary" id="backBtn">
+                        Return to Home
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const video = document.getElementById('introVideo');
+        const loadingScreen = document.getElementById('loadingScreen');
+        const overlay = document.getElementById('controlsOverlay');
+        const progressFill = document.getElementById('progressFill');
+        const unmutePrompt = document.getElementById('unmutePrompt');
+        const replayBtn = document.getElementById('replayBtn');
+        const beginBtn = document.getElementById('beginBtn');
+        const backBtn = document.getElementById('backBtn');
+
+        let hasStarted = false;
+
+        // Video loaded
+        video.addEventListener('loadeddata', () => {
+            console.log('Video loaded successfully');
+            
+            // Hide loading screen
+            setTimeout(() => {
+                loadingScreen.classList.add('hide');
+            }, 500);
+
+            // Try to autoplay muted first
+            setTimeout(() => {
+                video.muted = true;
+                video.play().then(() => {
+                    console.log('Autoplay successful (muted)');
+                    hasStarted = true;
+                    
+                    // Show unmute prompt after 1 second
+                    setTimeout(() => {
+                        unmutePrompt.classList.add('show');
+                    }, 1000);
+                }).catch(err => {
+                    console.log('Autoplay prevented:', err);
+                    // Show play button
+                    showPlayButton();
+                });
+            }, 800);
+        });
+
+        // Handle video errors
+        video.addEventListener('error', (e) => {
+            console.error('Video error:', e);
+            console.error('Video error code:', video.error ? video.error.code : 'unknown');
+            loadingScreen.querySelector('.loading-text').textContent = 'Unable to load video. Redirecting...';
+            setTimeout(() => {
+                window.location.href = '/question/1/';
+            }, 2000);
+        });
+
+        // Update progress bar
+        video.addEventListener('timeupdate', () => {
+            const progress = (video.currentTime / video.duration) * 100;
+            progressFill.style.width = progress + '%';
+        });
+
+        // Unmute on click
+        unmutePrompt.addEventListener('click', () => {
+            video.muted = false;
+            video.volume = 1.0; // Set volume to 100%
+            unmutePrompt.classList.remove('show');
+            console.log('Video unmuted, volume:', video.volume);
+        });
+
+        // Also allow clicking video to unmute
+        video.addEventListener('click', () => {
+            if (video.muted || video.volume < 1.0) {
+                video.muted = false;
+                video.volume = 1.0;
+                unmutePrompt.classList.remove('show');
+                console.log('Video unmuted via video click');
+            }
+        });
+
+        // Show controls when video ends
+        video.addEventListener('ended', () => {
+            overlay.classList.add('show');
+            unmutePrompt.classList.remove('show');
+            console.log('Video ended');
+        });
+
+        // Replay button
+        replayBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            overlay.classList.remove('show');
+            video.currentTime = 0;
+            video.muted = false;
+            video.volume = 1.0;
+            video.play();
+        });
+
+        // Begin assessment button
+        beginBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            window.location.href = 'question_interface.html';
+        });
+
+        // Back button
+        backBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            window.location.href = '/';
+        });
+
+        // Show play button if autoplay fails
+        function showPlayButton() {
+            const playBtn = document.createElement('div');
+            playBtn.style.cssText = `
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                background: rgba(0, 0, 0, 0.85);
+                backdrop-filter: blur(10px);
+                padding: 40px 50px;
+                border-radius: 15px;
+                text-align: center;
+                z-index: 12;
+                cursor: pointer;
+                transition: all 0.3s ease;
+            `;
+            playBtn.innerHTML = `
+                <svg width="60" height="60" viewBox="0 0 24 24" fill="white" style="margin-bottom: 15px;">
+                    <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                </svg>
+                <div style="color: white; font-size: 1.2rem; font-weight: 600;">Click to Start Video</div>
+                <div style="color: rgba(255, 255, 255, 0.7); font-size: 0.95rem; margin-top: 10px;">Sound will be enabled</div>
+            `;
+            
+            playBtn.addEventListener('click', () => {
+                video.muted = false;
+                video.volume = 1.0;
+                video.play().then(() => {
+                    playBtn.remove();
+                    loadingScreen.classList.add('hide');
+                    hasStarted = true;
+                }).catch(err => {
+                    console.error('Play failed:', err);
+                    alert('Unable to play video. Please try refreshing the page.');
+                });
+            });
+            
+            playBtn.addEventListener('mouseenter', () => {
+                playBtn.style.transform = 'translate(-50%, -50%) scale(1.05)';
+            });
+            
+            playBtn.addEventListener('mouseleave', () => {
+                playBtn.style.transform = 'translate(-50%, -50%) scale(1)';
+            });
+            
+            document.querySelector('.video-container').appendChild(playBtn);
+            loadingScreen.classList.add('hide');
+        }
+
+        // Ensure volume is set properly
+        video.volume = 1.0;
+        
+        // Preload video
+        video.load();
+    </script>
+</body>
+</html>

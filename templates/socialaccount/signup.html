@@ -1,0 +1,133 @@
+{% load static %}
+{% load socialaccount %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Complete Signup - StudentCompanion</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Crimson+Pro:wght@600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'account/css/account.css' %}">
+</head>
+<body>
+    <div class="auth-container">
+        <div class="auth-sidebar">
+            <div class="sidebar-content">
+                <div class="logo-area">
+                    <h1 class="brand-name">StudentCompanion</h1>
+                    <p class="brand-tagline">Your academic journey, organized</p>
+                </div>
+                <div class="sidebar-illustration">
+                    <div class="floating-shape shape-1"></div>
+                    <div class="floating-shape shape-2"></div>
+                    <div class="floating-shape shape-3"></div>
+                </div>
+                <div class="sidebar-footer">
+                    <p class="quote">"Education is not preparation for life; education is life itself."</p>
+                    <p class="quote-author">— John Dewey</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="auth-main">
+            <div class="auth-box">
+                <div class="auth-header">
+                    <div style="text-align: center; margin-bottom: 1.5rem;">
+                        <svg width="64" height="64" viewBox="0 0 64 64" style="margin: 0 auto;">
+                            <circle cx="32" cy="32" r="30" fill="#E8F5E9" stroke="#4CAF50" stroke-width="2"/>
+                            <path d="M44 24L28 40L20 32" stroke="#4CAF50" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+                        </svg>
+                    </div>
+                    <h2 class="auth-title">Almost There!</h2>
+                    <p class="auth-subtitle">Complete your profile to get started</p>
+                </div>
+
+                {% if messages %}
+                    <div class="messages-container">
+                        {% for message in messages %}
+                            <div class="alert alert-{{ message.tags }}">
+                                {{ message }}
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+
+                {% if account %}
+                    <div class="info-card" style="background: #E8F5E9; border-left-color: #4CAF50; margin-bottom: 2rem;">
+                        <div class="info-icon" style="color: #4CAF50;">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                                <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                            </svg>
+                        </div>
+                        <div class="info-content">
+                            <h3 class="info-title" style="color: #2E7D32;">Connected via {{ account.provider|title }}</h3>
+                            <p class="info-text" style="color: #1B5E20;">
+                                <strong>{{ account.extra_data.email }}</strong>
+                            </p>
+                        </div>
+                    </div>
+                {% endif %}
+
+                <form method="post" action="{% url 'socialaccount_signup' %}" class="auth-form">
+                    {% csrf_token %}
+                    
+                    {% if form.email %}
+                        <div class="form-group">
+                            <label for="id_email" class="form-label">Email Address</label>
+                            {{ form.email }}
+                            {% if form.email.errors %}
+                                <span class="form-error">{{ form.email.errors.0 }}</span>
+                            {% endif %}
+                        </div>
+                    {% endif %}
+
+                    {% if form.username %}
+                        <div class="form-group">
+                            <label for="id_username" class="form-label">Username</label>
+                            {{ form.username }}
+                            {% if form.username.errors %}
+                                <span class="form-error">{{ form.username.errors.0 }}</span>
+                            {% endif %}
+                        </div>
+                    {% endif %}
+
+                    {% if form.non_field_errors %}
+                        <div class="form-error-box">
+                            {{ form.non_field_errors.0 }}
+                        </div>
+                    {% endif %}
+
+                    <button type="submit" class="btn-primary">
+                        <span>Complete Signup</span>
+                        <svg class="btn-arrow" width="20" height="20" viewBox="0 0 20 20" fill="none">
+                            <path d="M4.16669 10H15.8334M15.8334 10L10 4.16669M15.8334 10L10 15.8334" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </button>
+                </form>
+
+                <div class="auth-footer" style="margin-top: 2rem;">
+                    <p class="footer-text">
+                        Already have an account? 
+                        <a href="{% url 'account_login' %}" class="footer-link">Sign in</a>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Auto-add classes to Django form fields
+        document.addEventListener('DOMContentLoaded', function() {
+            const inputs = document.querySelectorAll('input[type="text"], input[type="email"], input[type="password"]');
+            inputs.forEach(input => {
+                if (!input.classList.contains('form-input')) {
+                    input.classList.add('form-input');
+                }
+            });
+        });
+    </script>
+</body>
+</html>

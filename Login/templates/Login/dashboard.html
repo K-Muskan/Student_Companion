@@ -1,0 +1,685 @@
+{% load static %}
+{% load socialaccount %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - StudentCompanion</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Literata:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-brand">
+                <h1 class="brand-name">StudentCompanion</h1>
+                <span class="brand-tagline">Mental Wellness Hub</span>
+            </div>
+            <div class="nav-menu">
+                <a href="#overview" class="nav-link active">Overview</a>
+                <a href="#sessions" class="nav-link">Sessions</a>
+                <a href="#insights" class="nav-link">Insights</a>
+                <a href="#resources" class="nav-link">Resources</a>
+            </div>
+            <div class="nav-user">
+                <span class="user-email">{{ user.email|default:"mallahkhadija97@gmail.com" }}</span>
+                <a href="{% url 'account_logout' %}" class="btn-logout">Logout</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Success Message -->
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert-banner alert-{{ message.tags }}">
+                <div class="alert-content">
+                    <svg class="alert-icon" width="20" height="20" viewBox="0 0 20 20" fill="none">
+                        <path d="M10 18C14.4183 18 18 14.4183 18 10C18 5.58172 14.4183 2 10 2C5.58172 2 2 5.58172 2 10C2 14.4183 5.58172 18 10 18Z" stroke="currentColor" stroke-width="2"/>
+                        <path d="M8 10L9.5 11.5L12.5 8.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    <span>{{ message }}</span>
+                </div>
+                <button class="alert-close" onclick="this.parentElement.remove()">×</button>
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <!-- Main Dashboard -->
+    <main class="dashboard">
+        <div class="dashboard-container">
+            
+            <!-- Welcome Section -->
+            <section class="welcome-section">
+                <div class="welcome-content">
+                    <h2 class="welcome-title">Welcome back, {{ user.first_name|default:"Student" }}! 👋</h2>
+                    <p class="welcome-subtitle">Here's your mental wellness overview</p>
+                </div>
+                <div class="quick-actions">
+                    <a href="{% url 'questionnaire:index' %}" class="btn-primary">
+                        <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                            <path d="M10 4V16M4 10H16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                        </svg>
+                        <span>Start New Session</span>
+                    </a>
+                    <button class="btn-secondary" onclick="showEmergencyResources()">
+                        <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                            <path d="M10 2L12.5 7L18 8L14 12L15 18L10 15L5 18L6 12L2 8L7.5 7L10 2Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+                        </svg>
+                        <span>Get Support</span>
+                    </button>
+                </div>
+            </section>
+
+            <!-- Key Metrics Grid -->
+            <section class="metrics-grid">
+                <!-- Overall Wellness Score -->
+                <div class="metric-card featured">
+                    <div class="metric-header">
+                        <h3 class="metric-title">Overall Wellness</h3>
+                        <span class="metric-trend positive">+12%</span>
+                    </div>
+                    <div class="metric-value-container">
+                        <div class="circular-progress" data-progress="73">
+                            <svg class="progress-ring" width="140" height="140">
+                                <circle class="progress-ring-bg" cx="70" cy="70" r="60"></circle>
+                                <circle class="progress-ring-fill" cx="70" cy="70" r="60"></circle>
+                            </svg>
+                            <div class="progress-text">
+                                <span class="progress-value">73</span>
+                                <span class="progress-label">Good</span>
+                            </div>
+                        </div>
+                    </div>
+                    <p class="metric-description">Your mental wellness score is improving</p>
+                </div>
+
+                <!-- Risk Level -->
+                <div class="metric-card risk-card low-risk">
+                    <div class="metric-icon">
+                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none">
+                            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+                        </svg>
+                    </div>
+                    <h3 class="metric-title">Risk Assessment</h3>
+                    <div class="metric-value">Low Risk</div>
+                    <p class="metric-description">No immediate intervention needed</p>
+                </div>
+
+                <!-- Recent Mood -->
+                <div class="metric-card mood-card">
+                    <div class="metric-icon mood-icon">
+                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none">
+                            <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
+                            <path d="M8 14s1.5 2 4 2 4-2 4-2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                            <circle cx="9" cy="9" r="1" fill="currentColor"/>
+                            <circle cx="15" cy="9" r="1" fill="currentColor"/>
+                        </svg>
+                    </div>
+                    <h3 class="metric-title">Current Mood</h3>
+                    <div class="metric-value">Depressed</div>
+                    <p class="metric-description">Last assessed: Today</p>
+                </div>
+
+                <!-- Session Streak -->
+                <div class="metric-card streak-card">
+                    <div class="metric-icon">
+                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none">
+                            <path d="M13 2L3 14h8l-1 8 10-12h-8l1-8z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+                        </svg>
+                    </div>
+                    <h3 class="metric-title">Session Streak</h3>
+                    <div class="metric-value">3 weeks</div>
+                    <p class="metric-description">Keep up the good work!</p>
+                </div>
+            </section>
+
+            <!-- Charts Section -->
+            <section class="charts-section">
+                <!-- Mood Trend Chart -->
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <h3 class="chart-title">Mood Trend (Last 30 Days)</h3>
+                        <select class="chart-filter">
+                            <option>Last 7 Days</option>
+                            <option selected>Last 30 Days</option>
+                            <option>Last 3 Months</option>
+                        </select>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="moodChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Wellness Breakdown -->
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <h3 class="chart-title">Wellness Factors</h3>
+                    </div>
+                    <div class="wellness-breakdown">
+                        <div class="wellness-item">
+                            <div class="wellness-label">
+                                <span class="wellness-dot" style="background: #7DBAA4;"></span>
+                                <span>Emotional Health</span>
+                            </div>
+                            <div class="wellness-bar-container">
+                                <div class="wellness-bar" style="width: 65%; background: #7DBAA4;"></div>
+                            </div>
+                            <span class="wellness-value">65%</span>
+                        </div>
+                        <div class="wellness-item">
+                            <div class="wellness-label">
+                                <span class="wellness-dot" style="background: #6B9AC4;"></span>
+                                <span>Sleep Quality</span>
+                            </div>
+                            <div class="wellness-bar-container">
+                                <div class="wellness-bar" style="width: 78%; background: #6B9AC4;"></div>
+                            </div>
+                            <span class="wellness-value">78%</span>
+                        </div>
+                        <div class="wellness-item">
+                            <div class="wellness-label">
+                                <span class="wellness-dot" style="background: #E8A87C;"></span>
+                                <span>Social Connection</span>
+                            </div>
+                            <div class="wellness-bar-container">
+                                <div class="wellness-bar" style="width: 52%; background: #E8A87C;"></div>
+                            </div>
+                            <span class="wellness-value">52%</span>
+                        </div>
+                        <div class="wellness-item">
+                            <div class="wellness-label">
+                                <span class="wellness-dot" style="background: #A89DD9;"></span>
+                                <span>Academic Stress</span>
+                            </div>
+                            <div class="wellness-bar-container">
+                                <div class="wellness-bar" style="width: 45%; background: #A89DD9;"></div>
+                            </div>
+                            <span class="wellness-value">45%</span>
+                        </div>
+                        <div class="wellness-item">
+                            <div class="wellness-label">
+                                <span class="wellness-dot" style="background: #E89B9B;"></span>
+                                <span>Physical Activity</span>
+                            </div>
+                            <div class="wellness-bar-container">
+                                <div class="wellness-bar" style="width: 60%; background: #E89B9B;"></div>
+                            </div>
+                            <span class="wellness-value">60%</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Session History & MSE Report -->
+            <section class="content-grid">
+                <!-- Recent Sessions -->
+                <div class="sessions-panel">
+                    <div class="panel-header">
+                        <h3 class="panel-title">Recent Sessions</h3>
+                        <a href="#" class="panel-link">View All</a>
+                    </div>
+                    <div class="sessions-list">
+                        <!-- Session 1 - Today -->
+                        <div class="session-card recent" onclick="showMSEReport(1)">
+                            <div class="session-date">
+                                <span class="session-day">Today</span>
+                                <span class="session-time">2:50 PM</span>
+                            </div>
+                            <div class="session-content">
+                                <h4 class="session-title">Mental Status Examination</h4>
+                                <div class="session-tags">
+                                    <span class="tag tag-warning">Depressed Mood</span>
+                                    <span class="tag tag-danger">Hallucinations</span>
+                                </div>
+                                <div class="session-metrics">
+                                    <div class="session-metric">
+                                        <span class="metric-label">Risk:</span>
+                                        <span class="metric-badge low">Low</span>
+                                    </div>
+                                    <div class="session-metric">
+                                        <span class="metric-label">Insight:</span>
+                                        <span class="metric-badge good">Good</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="session-arrow">
+                                <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                                    <path d="M7.5 15L12.5 10L7.5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                            </div>
+                        </div>
+
+                        <!-- Session 2 - 3 days ago -->
+                        <div class="session-card" onclick="showMSEReport(2)">
+                            <div class="session-date">
+                                <span class="session-day">3 days ago</span>
+                                <span class="session-time">4:15 PM</span>
+                            </div>
+                            <div class="session-content">
+                                <h4 class="session-title">Mental Status Examination</h4>
+                                <div class="session-tags">
+                                    <span class="tag tag-info">Anxious</span>
+                                    <span class="tag tag-success">Good Progress</span>
+                                </div>
+                                <div class="session-metrics">
+                                    <div class="session-metric">
+                                        <span class="metric-label">Risk:</span>
+                                        <span class="metric-badge low">Low</span>
+                                    </div>
+                                    <div class="session-metric">
+                                        <span class="metric-label">Insight:</span>
+                                        <span class="metric-badge good">Good</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="session-arrow">
+                                <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                                    <path d="M7.5 15L12.5 10L7.5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                            </div>
+                        </div>
+
+                        <!-- Session 3 - 1 week ago -->
+                        <div class="session-card" onclick="showMSEReport(3)">
+                            <div class="session-date">
+                                <span class="session-day">1 week ago</span>
+                                <span class="session-time">11:30 AM</span>
+                            </div>
+                            <div class="session-content">
+                                <h4 class="session-title">Mental Status Examination</h4>
+                                <div class="session-tags">
+                                    <span class="tag tag-success">Improving</span>
+                                    <span class="tag tag-info">Motivated</span>
+                                </div>
+                                <div class="session-metrics">
+                                    <div class="session-metric">
+                                        <span class="metric-label">Risk:</span>
+                                        <span class="metric-badge moderate">Moderate</span>
+                                    </div>
+                                    <div class="session-metric">
+                                        <span class="metric-label">Insight:</span>
+                                        <span class="metric-badge fair">Fair</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="session-arrow">
+                                <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                                    <path d="M7.5 15L12.5 10L7.5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                            </div>
+                        </div>
+
+                        <!-- Session 4 - 2 weeks ago -->
+                        <div class="session-card" onclick="showMSEReport(4)">
+                            <div class="session-date">
+                                <span class="session-day">2 weeks ago</span>
+                                <span class="session-time">3:00 PM</span>
+                            </div>
+                            <div class="session-content">
+                                <h4 class="session-title">Mental Status Examination</h4>
+                                <div class="session-tags">
+                                    <span class="tag tag-warning">Stressed</span>
+                                    <span class="tag tag-info">Sleep Issues</span>
+                                </div>
+                                <div class="session-metrics">
+                                    <div class="session-metric">
+                                        <span class="metric-label">Risk:</span>
+                                        <span class="metric-badge moderate">Moderate</span>
+                                    </div>
+                                    <div class="session-metric">
+                                        <span class="metric-label">Insight:</span>
+                                        <span class="metric-badge fair">Fair</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="session-arrow">
+                                <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                                    <path d="M7.5 15L12.5 10L7.5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recommendations Panel -->
+                <div class="recommendations-panel">
+                    <div class="panel-header">
+                        <h3 class="panel-title">Clinical Recommendations</h3>
+                        <span class="panel-badge">Based on latest session</span>
+                    </div>
+                    <div class="recommendations-list">
+                        <div class="recommendation-card priority-high">
+                            <div class="recommendation-icon">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                                    <path d="M9 11l3 3L22 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                    <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                            </div>
+                            <div class="recommendation-content">
+                                <h4 class="recommendation-title">Psychiatric Evaluation</h4>
+                                <p class="recommendation-desc">Evaluation for antipsychotic medication recommended</p>
+                                <span class="recommendation-priority">High Priority</span>
+                            </div>
+                        </div>
+
+                        <div class="recommendation-card priority-high">
+                            <div class="recommendation-icon">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                                    <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                    <path d="M14 2v6h6M16 13H8M16 17H8M10 9H8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                            </div>
+                            <div class="recommendation-content">
+                                <h4 class="recommendation-title">Medical Workup</h4>
+                                <p class="recommendation-desc">Rule out organic causes through comprehensive medical evaluation</p>
+                                <span class="recommendation-priority">High Priority</span>
+                            </div>
+                        </div>
+
+                        <div class="recommendation-card priority-medium">
+                            <div class="recommendation-icon">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+                                </svg>
+                            </div>
+                            <div class="recommendation-content">
+                                <h4 class="recommendation-title">Cognitive Behavioral Therapy</h4>
+                                <p class="recommendation-desc">CBT sessions for depression management</p>
+                                <span class="recommendation-priority">Medium Priority</span>
+                            </div>
+                        </div>
+
+                        <div class="recommendation-card priority-medium">
+                            <div class="recommendation-icon">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                                    <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
+                                    <path d="M12 6v6l4 2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                                </svg>
+                            </div>
+                            <div class="recommendation-content">
+                                <h4 class="recommendation-title">Regular Follow-ups</h4>
+                                <p class="recommendation-desc">Schedule consistent psychiatric appointments</p>
+                                <span class="recommendation-priority">Medium Priority</span>
+                            </div>
+                        </div>
+
+                        <div class="recommendation-card priority-low">
+                            <div class="recommendation-icon">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                                    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                            </div>
+                            <div class="recommendation-content">
+                                <h4 class="recommendation-title">Psychoeducation</h4>
+                                <p class="recommendation-desc">Learn about your diagnosed conditions and treatment options</p>
+                                <span class="recommendation-priority">Low Priority</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="panel-footer">
+                        <p class="panel-note">
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                                <circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="2"/>
+                                <path d="M8 4v4M8 10h.01" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                            </svg>
+                            Patient shows good treatment motivation - positive prognostic sign
+                        </p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Quick Stats -->
+            <section class="quick-stats">
+                <div class="stat-item">
+                    <div class="stat-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                            <path d="M22 11.08V12a10 10 0 11-5.93-9.14" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M22 4L12 14.01l-3-3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </div>
+                    <div class="stat-content">
+                        <span class="stat-value">12</span>
+                        <span class="stat-label">Sessions Completed</span>
+                    </div>
+                </div>
+
+                <div class="stat-item">
+                    <div class="stat-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                            <path d="M12 2v20M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </div>
+                    <div class="stat-content">
+                        <span class="stat-value">3</span>
+                        <span class="stat-label">Active Goals</span>
+                    </div>
+                </div>
+
+                <div class="stat-item">
+                    <div class="stat-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                            <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </div>
+                    <div class="stat-content">
+                        <span class="stat-value">8</span>
+                        <span class="stat-label">Resources Downloaded</span>
+                    </div>
+                </div>
+
+                <div class="stat-item">
+                    <div class="stat-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                            <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
+                            <path d="M12 6v6l4 2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                        </svg>
+                    </div>
+                    <div class="stat-content">
+                        <span class="stat-value">45</span>
+                        <span class="stat-label">Days Active</span>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <!-- MSE Report Modal -->
+    <div id="mseModal" class="modal">
+        <div class="modal-content mse-report">
+            <div class="modal-header">
+                <h2 class="modal-title">Mental Status Examination Report</h2>
+                <button class="modal-close" onclick="closeMSEReport()">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="mse-section">
+                    <div class="mse-meta">
+                        <span class="mse-date">Assessment Date: February 05, 2026 at 2:50 PM</span>
+                        <span class="mse-badge ai-assisted">AI-Assisted Analysis</span>
+                    </div>
+                </div>
+
+                <!-- Risk Assessment Highlight -->
+                <div class="mse-section highlight-section low-risk-section">
+                    <h3 class="mse-heading">Risk Assessment</h3>
+                    <div class="risk-summary">
+                        <div class="risk-level">
+                            <span class="risk-badge low">LOW RISK</span>
+                            <p class="risk-text">No immediate intervention needed</p>
+                        </div>
+                        <div class="risk-details">
+                            <div class="risk-item">
+                                <span class="risk-label">Suicide Risk:</span>
+                                <span class="risk-value low">Low</span>
+                            </div>
+                            <div class="risk-item">
+                                <span class="risk-label">Homicide Risk:</span>
+                                <span class="risk-value low">Low</span>
+                            </div>
+                            <div class="risk-item">
+                                <span class="risk-label">Acute Anxiety:</span>
+                                <span class="risk-value warning">Yes</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Mood and Affect -->
+                <div class="mse-section">
+                    <h3 class="mse-heading">Mood and Affect</h3>
+                    <div class="mse-content">
+                        <div class="mse-item">
+                            <span class="mse-label">Stated Mood:</span>
+                            <span class="mse-value">"I have been feeling really empty"</span>
+                        </div>
+                        <div class="mse-item">
+                            <span class="mse-label">Mood Category:</span>
+                            <span class="mse-badge depressed">Depressed</span>
+                        </div>
+                        <div class="mse-item">
+                            <span class="mse-label">Sentiment Score:</span>
+                            <span class="mse-value">0.00 <span class="mse-note">(-1 to +1 scale)</span></span>
+                        </div>
+                        <div class="mse-item">
+                            <span class="mse-label">Affect Congruence:</span>
+                            <span class="mse-value warning">Incongruent - discrepancy between internal feelings and external presentation</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Thought Content -->
+                <div class="mse-section">
+                    <h3 class="mse-heading">Thought Content</h3>
+                    <div class="mse-content">
+                        <div class="mse-grid">
+                            <div class="mse-item">
+                                <span class="mse-label">Suicidal Ideation:</span>
+                                <span class="mse-badge success">Denied</span>
+                            </div>
+                            <div class="mse-item">
+                                <span class="mse-label">Homicidal Ideation:</span>
+                                <span class="mse-badge success">Denied</span>
+                            </div>
+                            <div class="mse-item">
+                                <span class="mse-label">Delusions:</span>
+                                <span class="mse-badge success">Denied</span>
+                            </div>
+                            <div class="mse-item">
+                                <span class="mse-label">Hallucinations:</span>
+                                <span class="mse-badge danger">Present</span>
+                            </div>
+                        </div>
+                        <div class="mse-detail-box danger">
+                            <strong>Hallucination Details:</strong>
+                            <ul>
+                                <li>Type: Auditory</li>
+                                <li>Frequency: Occasional</li>
+                                <li>Distressing: Yes</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Thought Process -->
+                <div class="mse-section">
+                    <h3 class="mse-heading">Thought Process</h3>
+                    <div class="mse-content">
+                        <div class="mse-item">
+                            <span class="mse-label">Organization:</span>
+                            <span class="mse-value">Variable organization</span>
+                        </div>
+                        <div class="mse-item">
+                            <span class="mse-label">Coherence:</span>
+                            <span class="mse-value">Mostly coherent</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Cognition -->
+                <div class="mse-section">
+                    <h3 class="mse-heading">Cognition</h3>
+                    <div class="mse-content">
+                        <div class="mse-item">
+                            <span class="mse-label">Orientation:</span>
+                            <span class="mse-badge success">Appears oriented (based on coherent responses)</span>
+                        </div>
+                        <div class="mse-item">
+                            <span class="mse-label">Memory:</span>
+                            <span class="mse-value">Unable to formally assess from interview</span>
+                        </div>
+                        <div class="mse-item">
+                            <span class="mse-label">Concentration:</span>
+                            <span class="mse-value">Unknown</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Insight and Judgment -->
+                <div class="mse-section">
+                    <h3 class="mse-heading">Insight and Judgment</h3>
+                    <div class="mse-content">
+                        <div class="mse-item">
+                            <span class="mse-label">Insight:</span>
+                            <span class="mse-badge success">Good - patient acknowledges difficulties</span>
+                        </div>
+                        <div class="mse-item">
+                            <span class="mse-label">Judgment:</span>
+                            <span class="mse-badge warning">Fair - mixed decision-making patterns</span>
+                        </div>
+                        <div class="mse-item">
+                            <span class="mse-label">Awareness:</span>
+                            <span class="mse-badge success">Yes</span>
+                        </div>
+                        <div class="mse-item">
+                            <span class="mse-label">Treatment Acceptance:</span>
+                            <span class="mse-badge success">Yes</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Clinical Impressions -->
+                <div class="mse-section">
+                    <h3 class="mse-heading">Clinical Impressions</h3>
+                    <div class="clinical-impressions">
+                        <div class="impression-item">
+                            <span class="impression-number">1</span>
+                            <span class="impression-text">Depressive symptoms present - low mood, possible anhedonia</span>
+                        </div>
+                        <div class="impression-item">
+                            <span class="impression-number">2</span>
+                            <span class="impression-text">Psychotic symptoms present - auditory hallucinations</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Disclaimer -->
+                <div class="mse-disclaimer">
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                        <circle cx="10" cy="10" r="9" stroke="currentColor" stroke-width="2"/>
+                        <path d="M10 6v4M10 13h.01" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
+                    <p>This is an AI-assisted analysis and should be reviewed by a qualified mental health professional. This report does not constitute a formal diagnosis or treatment plan.</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary" onclick="downloadReport()">
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                        <path d="M17 13v2a2 2 0 01-2 2H5a2 2 0 01-2-2v-2M10 3v10M6 9l4 4 4-4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    Download Report
+                </button>
+                <button class="btn-primary" onclick="closeMSEReport()">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="{% static 'js/dashboard.js' %}"></script>
+
+</body>
+</html>
