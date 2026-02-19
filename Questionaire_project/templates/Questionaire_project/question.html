@@ -1,0 +1,1138 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mental Health Assessment - Question {{ video.id }}</title>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Crimson+Pro:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --color-primary: #2D5F8D;
+            --color-primary-dark: #1E4266;
+            --color-accent: #E8925C;
+            --color-accent-dark: #D67B47;
+            
+            --gradient-sidebar: linear-gradient(135deg, #2D5F8D 0%, #1E4266 100%);
+            --shadow-xl: 0 20px 60px rgba(29, 50, 77, 0.2);
+            
+            --font-body: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            --font-display: 'Crimson Pro', Georgia, serif;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: var(--font-body);
+            background: #f7fafc;
+            min-height: 100vh;
+            overflow: hidden;
+        }
+
+        .container {
+            display: flex;
+            min-height: 100vh;
+            max-height: 100vh;
+            flex-direction: row;
+        }
+
+        /* Left Panel - Video/Loading Section - NARROWER */
+        .left-panel {
+            flex: 0 0 40%;
+            max-width: 40%;
+            background: #000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+            position: relative;
+            height: 100vh;
+            max-height: 100vh;
+            overflow: hidden;
+        }
+
+        .video-wrapper {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #000;
+            position: relative;
+            overflow: hidden;
+        }
+
+        video {
+            width: 100%;
+            height: 100%;
+            max-height: 100vh;
+            object-fit: fill;
+            display: block;
+        }
+
+        /* Video loading overlay */
+        .video-loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            font-size: 18px;
+            font-weight: 600;
+            z-index: 10;
+            background: rgba(232, 146, 92, 0.95);
+            padding: 20px 32px;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .video-loading:hover {
+            background: rgba(232, 146, 92, 1);
+            transform: translate(-50%, -50%) scale(1.05);
+        }
+
+        .video-loading.hidden {
+            display: none;
+        }
+
+        /* Loading Screen for Final Video */
+        .loading-screen {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #1E4266 0%, #2D5F8D 100%);
+            color: white;
+            text-align: center;
+            padding: 40px;
+        }
+
+        .loading-screen.active {
+            display: flex;
+        }
+
+        .loading-title {
+            font-family: var(--font-display);
+            font-size: 2.5em;
+            margin-bottom: 20px;
+            font-weight: 600;
+        }
+
+        .loading-subtitle {
+            font-size: 1.2em;
+            margin-bottom: 40px;
+            opacity: 0.9;
+        }
+
+        .loader-container {
+            width: 100%;
+            max-width: 500px;
+            margin-bottom: 30px;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            overflow: hidden;
+            margin-bottom: 15px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #E8925C, #F59E0B);
+            width: 0%;
+            transition: width 0.3s ease;
+            border-radius: 10px;
+        }
+
+        .progress-text {
+            font-size: 1.1em;
+            font-weight: 600;
+            color: #E8925C;
+        }
+
+        .loading-steps {
+            text-align: left;
+            margin-top: 30px;
+            max-width: 400px;
+        }
+
+        .loading-step {
+            display: flex;
+            align-items: center;
+            padding: 10px 0;
+            opacity: 0.5;
+            transition: opacity 0.3s ease;
+        }
+
+        .loading-step.active {
+            opacity: 1;
+        }
+
+        .loading-step.completed {
+            opacity: 0.7;
+        }
+
+        .step-icon {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.2);
+            margin-right: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .loading-step.active .step-icon {
+            background: #E8925C;
+        }
+
+        .loading-step.completed .step-icon {
+            background: #28A745;
+        }
+
+        .loading-step.completed .step-icon::after {
+            content: "✓";
+            color: white;
+            font-weight: bold;
+        }
+
+        .spinner {
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Right Panel - Question Section - WIDER (60% to fill space) */
+        .right-panel {
+            flex: 0 0 60%;
+            max-width: 60%;
+            background: white;
+            display: flex;
+            flex-direction: column;
+            padding: 40px 40px;
+            overflow-y: auto;
+            height: 100vh;
+            max-height: 100vh;
+        }
+
+        .question-header {
+            margin-bottom: 20px;
+        }
+
+        .question-number {
+            font-size: 0.75em;
+            color: var(--color-accent);
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            margin-bottom: 12px;
+        }
+
+        .question-text {
+            font-family: var(--font-display);
+            font-size: 1.4em;
+            color: var(--color-primary-dark);
+            line-height: 1.5;
+            margin-bottom: 12px;
+            font-weight: 600;
+            min-height: 60px;
+        }
+
+        .cursor {
+            display: inline-block;
+            width: 2px;
+            height: 1.2em;
+            background-color: var(--color-accent);
+            margin-left: 2px;
+            animation: blink 1s infinite;
+            vertical-align: text-bottom;
+        }
+
+        @keyframes blink {
+            0%, 49% { opacity: 1; }
+            50%, 100% { opacity: 0; }
+        }
+
+        /* Answer Section */
+        .answer-section {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            margin-bottom: 16px;
+            margin-top: 12px;
+        }
+
+        textarea {
+            width: 100%;
+            min-height: 150px;
+            max-height: 300px;
+            padding: 14px 16px;
+            font-size: 1em;
+            font-family: var(--font-body);
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            resize: vertical;
+            transition: all 0.3s ease;
+            line-height: 1.6;
+            color: var(--color-primary-dark);
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: var(--color-primary);
+            box-shadow: 0 0 0 3px rgba(45, 95, 141, 0.1);
+        }
+
+        textarea::placeholder {
+            color: #a0aec0;
+            font-size: 0.95em;
+        }
+
+        /* Buttons */
+        .button-group {
+            display: flex;
+            gap: 12px;
+            margin-top: auto;
+            padding-top: 16px;
+            width: 100%;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            font-size: 0.9em;
+            font-weight: 600;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            font-family: var(--font-body);
+            white-space: nowrap;
+        }
+
+        .btn-primary {
+            background: var(--color-accent);
+            color: white;
+            flex: 1;
+            min-width: 140px;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            background: var(--color-accent-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(232, 146, 92, 0.3);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn-secondary {
+            background: white;
+            color: var(--color-primary);
+            border: 2px solid var(--color-primary);
+            min-width: 100px;
+        }
+
+        .btn-secondary:hover:not(:disabled) {
+            background: var(--color-primary);
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .camera-box {
+            margin-top: 10px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 12px;
+            background: #f8fafc;
+        }
+
+        .camera-top {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .camera-badge {
+            font-size: 12px;
+            padding: 4px 8px;
+            border-radius: 999px;
+            font-weight: 600;
+        }
+
+        .camera-badge.connected {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .camera-badge.disconnected {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .camera-badge.warning {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        #cameraPreview {
+            margin-top: 10px;
+            width: 180px;
+            height: 120px;
+            background: #000;
+            border-radius: 6px;
+            object-fit: cover;
+        }
+
+        .camera-note {
+            margin-top: 8px;
+            font-size: 12px;
+            color: #475569;
+        }
+        /* Responsive */
+        @media (max-width: 968px) {
+            .container {
+                flex-direction: column;
+            }
+            
+            .left-panel, .right-panel {
+                flex: none;
+                max-width: 100%;
+                height: 50vh;
+                max-height: 50vh;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Left Panel: Video or Loading Screen -->
+        <div class="left-panel">
+            {% if is_final %}
+            <!-- Loading Screen for Final Video (Question 15 only) -->
+            <div class="loading-screen active" id="loadingScreen">
+                <div class="loading-title">Analyzing Your Responses...</div>
+                <div class="loading-subtitle">Please wait while we process your mental health assessment</div>
+                
+                <div class="loader-container">
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progressFill"></div>
+                    </div>
+                    <div class="progress-text" id="progressText">0%</div>
+                </div>
+
+                <div class="loading-steps">
+                    <div class="loading-step active" id="step1">
+                        <div class="step-icon"><div class="spinner"></div></div>
+                        <span>Processing responses...</span>
+                    </div>
+                    <div class="loading-step" id="step2">
+                        <div class="step-icon"></div>
+                        <span>Analyzing mood and affect...</span>
+                    </div>
+                    <div class="loading-step" id="step3">
+                        <div class="step-icon"></div>
+                        <span>Assessing risk factors...</span>
+                    </div>
+                    <div class="loading-step" id="step4">
+                        <div class="step-icon"></div>
+                        <span>Generating clinical report...</span>
+                    </div>
+                    <div class="loading-step" id="step5">
+                        <div class="step-icon"></div>
+                        <span>Finalizing recommendations...</span>
+                    </div>
+                </div>
+            </div>
+            {% else %}
+            <!-- Video Player -->
+            <div class="video-wrapper">
+                <div class="video-loading" id="videoLoading">▶ Click to Start Video</div>
+                <video id="videoPlayer" preload="auto" playsinline webkit-playsinline>
+                    <source src="{% static 'Questionaire_project/videos/' %}{{ video.file }}" type="video/mp4">
+                    Your browser does not support the video tag.
+                </video>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Right Panel: Question and Answer -->
+        <div class="right-panel">
+            {% if not is_final %}
+            <div class="question-header">
+                <div class="question-number">Question {{ video.id }} of {{ total_questions|add:"-1" }}</div>
+                <div class="question-text" id="questionContent">
+                    <span class="cursor"></span>
+                </div>
+            </div>
+
+            <div class="camera-box" id="cameraBox">
+                <div class="camera-top">
+                    <span id="cameraBadge" class="camera-badge disconnected">Camera disconnected</span>
+                </div>
+                <video id="cameraPreview" autoplay muted playsinline></video>
+                <canvas id="cameraCanvas" width="320" height="240" style="display:none;"></canvas>
+                <div class="camera-note">Camera is required for the full interview. Please allow camera access to continue.</div>
+            </div>
+
+            <div class="answer-section">
+                <textarea 
+                    id="answerInput" 
+                    placeholder="Type your response here..."
+                    autocomplete="off"
+                ></textarea>
+            </div>
+
+            <div class="button-group">
+                {% if video.id > 1 %}
+                <button class="btn btn-secondary" onclick="goToPrevious()">
+                    ← Previous
+                </button>
+                {% endif %}
+
+                {% if is_last %}
+                <button id="submitBtn" class="btn btn-primary" onclick="submitAndComplete()">
+                    Submit Assessment →
+                </button>
+                {% else %}
+                <button id="nextBtn" class="btn btn-primary" onclick="saveAndNext()">
+                    Next Question →
+                </button>
+                {% endif %}
+            </div>
+            {% else %}
+            <div class="question-header" style="text-align: center; margin-top: 50%;">
+                <div class="question-text">
+                    Your assessment is being analyzed. Please do not close this window.
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <script>
+        // ============================================================================
+        // CONFIGURATION
+        // ============================================================================
+
+        const questionId = {{ video.id }};
+        const isFinal = {{ is_final|yesno:"true,false" }};
+        const questionText = "{{ video.question|escapejs }}";
+        const videoFile = "{{ video.file }}";
+        const previousAnswer = "{{ previous_answer|escapejs }}";
+        const assessmentId = Number("{{ assessment_id }}");
+
+        console.log('=== PAGE INITIALIZATION ===');
+        console.log('Question ID:', questionId);
+        console.log('Video File:', videoFile);
+        console.log('Has Previous Answer:', previousAnswer.length > 0);
+
+        // Video transcripts with UPDATED trigger times
+        // These times are when the FIRST 10 WORDS have been spoken
+        const VIDEO_TRANSCRIPTS = {
+            1: { triggerTime: 3.5 },   // Wait for "Can you tell me about your mood over the"
+            2: { triggerTime: 3.8 },   // Wait for "Does what you show to others match how you"
+            3: { triggerTime: 3.6 },   // Wait for "Have you been feeling anxious, nervous, or worried a"
+            4: { triggerTime: 3.2 },   // Wait for "Do you ever have panic attacks? If yes: How"
+            5: { triggerTime: 3.7 },   // Wait for "Do you experience any difficulties with your sleep? If"
+            6: { triggerTime: 4.0 },   // Wait for "Do your thoughts feel like they're completely your own"
+            7: { triggerTime: 3.5 },   // Wait for "Have you had thoughts about death, wishing you were"
+            8: { triggerTime: 3.5 },   // Wait for "Have you had thoughts about hurting or harming anyone"
+            9: { triggerTime: 4.2 },   // Wait for "Some people have unusual experiences with their senses. Have you"
+            10: { triggerTime: 3.8 },  // Wait for "Do you have any beliefs that others seem to"
+            11: { triggerTime: 4.0 },  // Wait for "I want to understand your use of alcohol, drugs,"
+            12: { triggerTime: 3.6 },  // Wait for "Let's talk about how you make decisions. Do you"
+            13: { triggerTime: 3.5 },  // Wait for "Do you believe you're currently experiencing any mental health"
+            14: { triggerTime: 4.5 }   // Wait for "Before we conclude, do you have any questions for me"
+        };
+
+        // ============================================================================
+        // STATE
+        // ============================================================================
+
+        let videoPlaying = false;
+        let videoStarted = false;
+        let typingStarted = false;
+        let autoplayAttempted = false;
+
+        const video = document.getElementById('videoPlayer');
+        const videoLoading = document.getElementById('videoLoading');
+        const questionContent = document.getElementById('questionContent');
+        const answerInput = document.getElementById('answerInput');
+
+        // ============================================================================
+        // LOAD PREVIOUS ANSWER (IF EXISTS AND NOT FROM COMPLETED ASSESSMENT)
+        // ============================================================================
+
+        // Only load previous answer if it exists
+        // This allows users to navigate back during an active assessment
+        // but starts fresh after completing an assessment (session cleared)
+        if (!isFinal && answerInput && previousAnswer) {
+            answerInput.value = previousAnswer;
+            console.log('✓ Loaded previous answer');
+        }
+
+        // ============================================================================
+        // FINAL VIDEO ANALYSIS
+        // ============================================================================
+
+        if (isFinal) {
+            startAnalysisProcess();
+        }
+
+        function startAnalysisProcess() {
+            const steps = [
+                {id: 'step1', duration: 2000, progress: 20},
+                {id: 'step2', duration: 2500, progress: 40},
+                {id: 'step3', duration: 2500, progress: 60},
+                {id: 'step4', duration: 2000, progress: 80},
+                {id: 'step5', duration: 2000, progress: 100}
+            ];
+
+            let currentStep = 0;
+            let currentProgress = 0;
+
+            function processNextStep() {
+                if (currentStep > 0) {
+                    const prevStep = document.getElementById(steps[currentStep - 1].id);
+                    prevStep.classList.remove('active');
+                    prevStep.classList.add('completed');
+                    const spinner = prevStep.querySelector('.spinner');
+                    if (spinner) spinner.remove();
+                }
+
+                if (currentStep < steps.length) {
+                    const step = steps[currentStep];
+                    const stepElement = document.getElementById(step.id);
+                    stepElement.classList.add('active');
+
+                    const targetProgress = step.progress;
+                    const progressFill = document.getElementById('progressFill');
+                    const progressText = document.getElementById('progressText');
+
+                    const increment = (targetProgress - currentProgress) / 50;
+                    let current = currentProgress;
+
+                    const progressInterval = setInterval(() => {
+                        current += increment;
+                        if (current >= targetProgress) {
+                            current = targetProgress;
+                            clearInterval(progressInterval);
+                        }
+                        progressFill.style.width = current + '%';
+                        progressText.textContent = Math.round(current) + '%';
+                    }, step.duration / 50);
+
+                    currentProgress = targetProgress;
+                    currentStep++;
+                    setTimeout(processNextStep, step.duration);
+                } else {
+                    setTimeout(() => {
+                        window.location.href = '/assessment/complete/';
+                    }, 500);
+                }
+            }
+
+            setTimeout(processNextStep, 500);
+        }
+
+        // ============================================================================
+        // TEXT TYPING ANIMATION - IMPROVED SYNC
+        // ============================================================================
+
+        function typeTextSyncedWithVideo() {
+            if (isFinal || !VIDEO_TRANSCRIPTS[questionId] || !questionText) {
+                console.log('No typing needed');
+                return;
+            }
+
+            const transcript = VIDEO_TRANSCRIPTS[questionId];
+            const triggerTime = transcript.triggerTime || 3.5;
+            
+            console.log('✓ Typing will start after first 10 words at:', triggerTime, 'seconds');
+
+            function checkAndStartTyping() {
+                if (!videoPlaying || typingStarted) return;
+
+                const currentTime = video.currentTime;
+                
+                // Start typing AFTER first 10 words have been spoken
+                if (currentTime >= triggerTime) {
+                    console.log('✓ First 10 words spoken! Starting typing animation...');
+                    typingStarted = true;
+                    video.removeEventListener('timeupdate', checkAndStartTyping);
+                    startTypingAnimation();
+                }
+            }
+
+            function startTypingAnimation() {
+                console.log('Beginning SLOW typing animation...');
+                const words = questionText.split(' ');
+                let displayedText = '';
+                let wordIndex = 0;
+
+                function typeNextWord() {
+                    if (wordIndex >= words.length) {
+                        questionContent.innerHTML = displayedText;
+                        console.log('✓ Typing complete!');
+                        return;
+                    }
+
+                    if (wordIndex > 0) {
+                        displayedText += ' ';
+                    }
+                    displayedText += words[wordIndex];
+                    wordIndex++;
+
+                    questionContent.innerHTML = displayedText + '<span class="cursor"></span>';
+
+                    // SLOWER TYPING: 250ms per word (increased from 150ms)
+                    setTimeout(typeNextWord, 250);
+                }
+
+                typeNextWord();
+            }
+
+            video.addEventListener('timeupdate', checkAndStartTyping);
+        }
+
+        // ============================================================================
+        // VIDEO CONTROL - FIXED AUDIO HANDLING
+        // ============================================================================
+
+        function attemptAutoplay() {
+            if (videoStarted || isFinal || autoplayAttempted) return;
+            
+            autoplayAttempted = true;
+            console.log('Attempting autoplay...');
+            
+            // Try unmuted autoplay first
+            video.muted = false;
+            video.volume = 1.0;
+            
+            video.play().then(() => {
+                console.log('✓ Video playing with audio');
+                videoPlaying = true;
+                videoStarted = true;
+                videoLoading.classList.add('hidden');
+                typeTextSyncedWithVideo();
+            }).catch(err => {
+                console.log('✗ Unmuted autoplay blocked, trying muted:', err.message);
+                
+                // Fallback: Try muted autoplay
+                video.muted = true;
+                video.play().then(() => {
+                    console.log('✓ Video playing (muted)');
+                    videoPlaying = true;
+                    videoStarted = true;
+                    videoLoading.classList.add('hidden');
+                    
+                    // Attempt to unmute after a short delay
+                    setTimeout(() => {
+                        video.muted = false;
+                        video.volume = 1.0;
+                        console.log('✓ Attempting to unmute video');
+                    }, 300);
+                    
+                    typeTextSyncedWithVideo();
+                }).catch(err2 => {
+                    console.log('✗ All autoplay attempts blocked:', err2.message);
+                    videoLoading.textContent = '▶ Click to Start Video';
+                });
+            });
+        }
+
+        function startVideoManually() {
+            if (videoStarted || isFinal) return;
+            
+            console.log('Manual play triggered');
+            videoStarted = true;
+            
+            // Ensure audio is enabled for manual play
+            video.muted = false;
+            video.volume = 1.0;
+            
+            video.play().then(() => {
+                videoPlaying = true;
+                videoLoading.classList.add('hidden');
+                console.log('✓ Video playing with audio');
+                typeTextSyncedWithVideo();
+            }).catch(err => {
+                console.log('✗ Play failed:', err.message);
+                videoLoading.textContent = '❌ Click to Retry';
+                videoStarted = false;
+            });
+        }
+
+        // Video event listeners
+        if (!isFinal && video) {
+            video.addEventListener('canplaythrough', () => {
+                console.log('✓ Video ready');
+                if (!autoplayAttempted) {
+                    setTimeout(attemptAutoplay, 300);
+                }
+            });
+
+            videoLoading.addEventListener('click', startVideoManually);
+            video.addEventListener('click', () => {
+                if (!videoStarted) startVideoManually();
+            });
+
+            video.addEventListener('playing', () => {
+                videoPlaying = true;
+                videoLoading.classList.add('hidden');
+                console.log('✓ Video is playing, audio status:', !video.muted);
+            });
+
+            video.addEventListener('pause', () => {
+                videoPlaying = false;
+            });
+
+            video.addEventListener('volumechange', () => {
+                console.log('Volume changed - Muted:', video.muted, 'Volume:', video.volume);
+            });
+
+            video.addEventListener('error', () => {
+                console.log('✗ Video error');
+                videoLoading.textContent = '❌ Video failed to load';
+                videoLoading.style.background = 'rgba(220, 53, 69, 0.9)';
+            });
+
+            video.load();
+        }
+
+        // ============================================================================
+        // ANSWER SAVING
+        // ============================================================================
+
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+
+        function saveAnswer(callback) {
+            if (isFinal) {
+                if (callback) callback();
+                return;
+            }
+
+            const answer = document.getElementById('answerInput').value.trim();
+            const csrftoken = getCookie('csrftoken');
+            
+            if (!csrftoken) {
+                alert('Security token not found. Please refresh the page.');
+                return;
+            }
+            
+            fetch('/assessment/save-answer/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrftoken
+                },
+                credentials: 'same-origin',
+                body: JSON.stringify({
+                    qid: questionId,
+                    answer: answer
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    if (callback) callback();
+                } else {
+                    alert('Failed to save: ' + (data.message || 'Unknown error'));
+                }
+            })
+            .catch(error => {
+                alert('Error saving answer. Please try again.');
+                console.error(error);
+            });
+        }
+
+        function saveAndNext() {
+            saveAnswer(() => {
+                window.location.href = '/assessment/question/' + (questionId + 1) + '/';
+            });
+        }
+
+        function submitAndComplete() {
+            saveAnswer(() => {
+                window.location.href = '/assessment/question/' + (questionId + 1) + '/';
+            });
+        }
+
+        function goToPrevious() {
+            window.location.href = '/assessment/question/' + (questionId - 1) + '/';
+        }
+
+        class EmotionStreamManager {
+            constructor() {
+                this.frameIntervalMs = 1000;
+                this.jpegQuality = 0.7;
+                this.maxReconnect = 5;
+                this.reconnectAttempt = 0;
+                this.running = false;
+                this.connectionReady = false;
+                this.stream = null;
+                this.socket = null;
+                this.captureTimer = null;
+                this.reconnectTimer = null;
+                this.lockHeartbeatTimer = null;
+
+                this.lockKey = `emotion_stream_lock_${assessmentId}`;
+                this.tabId = (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : String(Math.random()).slice(2);
+            }
+
+            setBadge(status, text) {
+                const badge = document.getElementById('cameraBadge');
+                if (!badge) return;
+                badge.classList.remove('connected', 'disconnected', 'warning');
+                badge.classList.add(status);
+                badge.textContent = text;
+            }
+
+            acquireTabLock() {
+                const now = Date.now();
+                const raw = localStorage.getItem(this.lockKey);
+                if (raw) {
+                    try {
+                        const parsed = JSON.parse(raw);
+                        const age = now - parsed.ts;
+                        if (parsed.tabId !== this.tabId && age < 15000) {
+                            this.setBadge('warning', 'Close other interview tab');
+                            return false;
+                        }
+                    } catch (e) {
+                        console.warn('Invalid lock payload', e);
+                    }
+                }
+
+                localStorage.setItem(this.lockKey, JSON.stringify({ tabId: this.tabId, ts: now }));
+                this.lockHeartbeatTimer = setInterval(() => {
+                    localStorage.setItem(this.lockKey, JSON.stringify({ tabId: this.tabId, ts: Date.now() }));
+                }, 5000);
+                return true;
+            }
+
+            releaseTabLock() {
+                if (this.lockHeartbeatTimer) clearInterval(this.lockHeartbeatTimer);
+                const raw = localStorage.getItem(this.lockKey);
+                if (!raw) return;
+                try {
+                    const parsed = JSON.parse(raw);
+                    if (parsed.tabId === this.tabId) localStorage.removeItem(this.lockKey);
+                } catch (e) {
+                    console.warn('Failed to release lock', e);
+                }
+            }
+
+            async start() {
+                if (this.running || isFinal || !assessmentId) return;
+                if (!this.acquireTabLock()) return;
+
+                try {
+                    this.stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+                } catch (err) {
+                    this.setBadge('warning', 'Camera permission denied');
+                    this.releaseTabLock();
+                    return;
+                }
+
+                const preview = document.getElementById('cameraPreview');
+                if (preview) preview.srcObject = this.stream;
+
+                this.running = true;
+                this.reconnectAttempt = 0;
+                this.connectSocket();
+                this.startCaptureLoop();
+            }
+
+            stop() {
+                this.running = false;
+
+                if (this.captureTimer) clearInterval(this.captureTimer);
+                if (this.reconnectTimer) clearTimeout(this.reconnectTimer);
+
+                if (this.socket) {
+                    try {
+                        this.socket.close(1000, 'client_stop');
+                    } catch (e) {
+                        console.warn('socket close failed', e);
+                    }
+                    this.socket = null;
+                }
+
+                if (this.stream) {
+                    this.stream.getTracks().forEach((track) => track.stop());
+                    this.stream = null;
+                }
+
+                const preview = document.getElementById('cameraPreview');
+                if (preview) preview.srcObject = null;
+
+                this.connectionReady = false;
+                this.setBadge('disconnected', 'Camera disconnected');
+                this.releaseTabLock();
+            }
+
+            connectSocket() {
+                const scheme = window.location.protocol === 'https:' ? 'wss' : 'ws';
+                const url = `${scheme}://${window.location.host}/ws/emotion/${assessmentId}/`;
+                this.socket = new WebSocket(url);
+
+                this.socket.onopen = () => {
+                    this.reconnectAttempt = 0;
+                    this.connectionReady = true;
+                    this.setBadge('connected', 'Camera connected');
+                };
+
+                this.socket.onmessage = (event) => {
+                    try {
+                        const data = JSON.parse(event.data);
+                        if (data.type === 'frame_result' && data.status === 'error') {
+                            this.setBadge('warning', 'Analyzer error');
+                        }
+                    } catch (e) {
+                        console.warn('Bad websocket message', e);
+                    }
+                };
+
+                this.socket.onclose = () => {
+                    if (!this.running) return;
+                    this.connectionReady = false;
+                    this.setBadge('warning', 'Socket disconnected');
+                    if (this.reconnectAttempt >= this.maxReconnect) {
+                        this.setBadge('warning', 'Connection failed - refresh page');
+                        return;
+                    }
+
+                    const waitMs = Math.min(1000 * (2 ** this.reconnectAttempt), 8000);
+                    this.reconnectAttempt += 1;
+                    this.reconnectTimer = setTimeout(() => this.connectSocket(), waitMs);
+                };
+
+                this.socket.onerror = () => {
+                    this.connectionReady = false;
+                    this.setBadge('warning', 'Socket error');
+                };
+            }
+
+            startCaptureLoop() {
+                const preview = document.getElementById('cameraPreview');
+                const canvas = document.getElementById('cameraCanvas');
+                if (!preview || !canvas) return;
+
+                const ctx = canvas.getContext('2d');
+
+                this.captureTimer = setInterval(() => {
+                    if (!this.running) return;
+                    if (!this.socket || this.socket.readyState !== WebSocket.OPEN) return;
+                    if (!preview.videoWidth || !preview.videoHeight) return;
+
+                    canvas.width = preview.videoWidth;
+                    canvas.height = preview.videoHeight;
+                    ctx.drawImage(preview, 0, 0, canvas.width, canvas.height);
+
+                    const imageBase64 = canvas.toDataURL('image/jpeg', this.jpegQuality);
+                    const payload = {
+                        type: 'frame',
+                        assessment_id: assessmentId,
+                        question_id: questionId || null,
+                        image_base64: imageBase64,
+                        client_ts: new Date().toISOString(),
+                    };
+                    this.socket.send(JSON.stringify(payload));
+                }, this.frameIntervalMs);
+            }
+
+            isReady() {
+                return (
+                    this.running &&
+                    this.connectionReady &&
+                    this.stream !== null &&
+                    this.socket &&
+                    this.socket.readyState === WebSocket.OPEN
+                );
+            }
+        }
+
+        const emotionManager = new EmotionStreamManager();
+
+        if (!isFinal) {
+            emotionManager.start();
+        }
+
+        window.addEventListener('beforeunload', () => {
+            if (emotionManager.running) emotionManager.stop();
+        });
+
+        const originalSaveAndNext = saveAndNext;
+        saveAndNext = function () {
+            if (!emotionManager.isReady()) {
+                alert('Camera must stay connected for the full interview before moving to next question.');
+                return;
+            }
+            if (emotionManager.running) emotionManager.stop();
+            originalSaveAndNext();
+        };
+
+        const originalSubmitAndComplete = submitAndComplete;
+        submitAndComplete = function () {
+            if (!emotionManager.isReady()) {
+                alert('Camera must stay connected for the full interview before submitting assessment.');
+                return;
+            }
+            if (emotionManager.running) emotionManager.stop();
+            originalSubmitAndComplete();
+        };
+
+        const originalGoToPrevious = goToPrevious;
+        goToPrevious = function () {
+            if (emotionManager.running) emotionManager.stop();
+            originalGoToPrevious();
+        };
+    </script>
+</body>
+</html>
