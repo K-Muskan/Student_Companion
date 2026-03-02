@@ -369,6 +369,57 @@
             cursor: not-allowed;
         }
 
+        .camera-box {
+            margin-top: 10px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 12px;
+            background: #f8fafc;
+        }
+
+        .camera-top {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .camera-badge {
+            font-size: 12px;
+            padding: 4px 8px;
+            border-radius: 999px;
+            font-weight: 600;
+        }
+
+        .camera-badge.connected {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .camera-badge.disconnected {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .camera-badge.warning {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        #cameraPreview {
+            margin-top: 10px;
+            width: 180px;
+            height: 120px;
+            background: #000;
+            border-radius: 6px;
+            object-fit: cover;
+        }
+
+        .camera-note {
+            margin-top: 8px;
+            font-size: 12px;
+            color: #475569;
+        }
         /* Responsive */
         @media (max-width: 968px) {
             .container {
@@ -446,11 +497,21 @@
                 </div>
             </div>
 
+            <div class="camera-box" id="cameraBox">
+                <div class="camera-top">
+                    <span id="cameraBadge" class="camera-badge disconnected">Camera disconnected</span>
+                </div>
+                <video id="cameraPreview" autoplay muted playsinline></video>
+                <canvas id="cameraCanvas" width="320" height="240" style="display:none;"></canvas>
+                <div class="camera-note">Camera is required for the full interview. Please allow camera access to continue.</div>
+            </div>
+
             <div class="answer-section">
                 <textarea 
                     id="answerInput" 
                     placeholder="Type your response here..."
-                >{{ previous_answer }}</textarea>
+                    autocomplete="off"
+                ></textarea>
             </div>
 
             <div class="button-group">
@@ -489,10 +550,13 @@
         const isFinal = {{ is_final|yesno:"true,false" }};
         const questionText = "{{ video.question|escapejs }}";
         const videoFile = "{{ video.file }}";
+        const previousAnswer = "{{ previous_answer|escapejs }}";
+        const assessmentId = Number("{{ assessment_id }}");
 
         console.log('=== PAGE INITIALIZATION ===');
         console.log('Question ID:', questionId);
         console.log('Video File:', videoFile);
+        console.log('Has Previous Answer:', previousAnswer.length > 0);
 
         // Video transcripts with UPDATED trigger times
         // These times are when the FIRST 10 WORDS have been spoken
@@ -525,6 +589,19 @@
         const video = document.getElementById('videoPlayer');
         const videoLoading = document.getElementById('videoLoading');
         const questionContent = document.getElementById('questionContent');
+        const answerInput = document.getElementById('answerInput');
+
+        // ============================================================================
+        // LOAD PREVIOUS ANSWER (IF EXISTS AND NOT FROM COMPLETED ASSESSMENT)
+        // ============================================================================
+
+        // Only load previous answer if it exists
+        // This allows users to navigate back during an active assessment
+        // but starts fresh after completing an assessment (session cleared)
+        if (!isFinal && answerInput && previousAnswer) {
+            answerInput.value = previousAnswer;
+            console.log('✓ Loaded previous answer');
+        }
 
         // ============================================================================
         // FINAL VIDEO ANALYSIS
@@ -829,6 +906,233 @@
         function goToPrevious() {
             window.location.href = '/assessment/question/' + (questionId - 1) + '/';
         }
+
+        class EmotionStreamManager {
+            constructor() {
+                this.frameIntervalMs = 1000;
+                this.jpegQuality = 0.7;
+                this.maxReconnect = 5;
+                this.reconnectAttempt = 0;
+                this.running = false;
+                this.connectionReady = false;
+                this.stream = null;
+                this.socket = null;
+                this.captureTimer = null;
+                this.reconnectTimer = null;
+                this.lockHeartbeatTimer = null;
+
+                this.lockKey = `emotion_stream_lock_${assessmentId}`;
+                this.tabId = (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : String(Math.random()).slice(2);
+            }
+
+            setBadge(status, text) {
+                const badge = document.getElementById('cameraBadge');
+                if (!badge) return;
+                badge.classList.remove('connected', 'disconnected', 'warning');
+                badge.classList.add(status);
+                badge.textContent = text;
+            }
+
+            acquireTabLock() {
+                const now = Date.now();
+                const raw = localStorage.getItem(this.lockKey);
+                if (raw) {
+                    try {
+                        const parsed = JSON.parse(raw);
+                        const age = now - parsed.ts;
+                        if (parsed.tabId !== this.tabId && age < 15000) {
+                            this.setBadge('warning', 'Close other interview tab');
+                            return false;
+                        }
+                    } catch (e) {
+                        console.warn('Invalid lock payload', e);
+                    }
+                }
+
+                localStorage.setItem(this.lockKey, JSON.stringify({ tabId: this.tabId, ts: now }));
+                this.lockHeartbeatTimer = setInterval(() => {
+                    localStorage.setItem(this.lockKey, JSON.stringify({ tabId: this.tabId, ts: Date.now() }));
+                }, 5000);
+                return true;
+            }
+
+            releaseTabLock() {
+                if (this.lockHeartbeatTimer) clearInterval(this.lockHeartbeatTimer);
+                const raw = localStorage.getItem(this.lockKey);
+                if (!raw) return;
+                try {
+                    const parsed = JSON.parse(raw);
+                    if (parsed.tabId === this.tabId) localStorage.removeItem(this.lockKey);
+                } catch (e) {
+                    console.warn('Failed to release lock', e);
+                }
+            }
+
+            async start() {
+                if (this.running || isFinal || !assessmentId) return;
+                if (!this.acquireTabLock()) return;
+
+                try {
+                    this.stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+                } catch (err) {
+                    this.setBadge('warning', 'Camera permission denied');
+                    this.releaseTabLock();
+                    return;
+                }
+
+                const preview = document.getElementById('cameraPreview');
+                if (preview) preview.srcObject = this.stream;
+
+                this.running = true;
+                this.reconnectAttempt = 0;
+                this.connectSocket();
+                this.startCaptureLoop();
+            }
+
+            stop() {
+                this.running = false;
+
+                if (this.captureTimer) clearInterval(this.captureTimer);
+                if (this.reconnectTimer) clearTimeout(this.reconnectTimer);
+
+                if (this.socket) {
+                    try {
+                        this.socket.close(1000, 'client_stop');
+                    } catch (e) {
+                        console.warn('socket close failed', e);
+                    }
+                    this.socket = null;
+                }
+
+                if (this.stream) {
+                    this.stream.getTracks().forEach((track) => track.stop());
+                    this.stream = null;
+                }
+
+                const preview = document.getElementById('cameraPreview');
+                if (preview) preview.srcObject = null;
+
+                this.connectionReady = false;
+                this.setBadge('disconnected', 'Camera disconnected');
+                this.releaseTabLock();
+            }
+
+            connectSocket() {
+                const scheme = window.location.protocol === 'https:' ? 'wss' : 'ws';
+                const url = `${scheme}://${window.location.host}/ws/emotion/${assessmentId}/`;
+                this.socket = new WebSocket(url);
+
+                this.socket.onopen = () => {
+                    this.reconnectAttempt = 0;
+                    this.connectionReady = true;
+                    this.setBadge('connected', 'Camera connected');
+                };
+
+                this.socket.onmessage = (event) => {
+                    try {
+                        const data = JSON.parse(event.data);
+                        if (data.type === 'frame_result' && data.status === 'error') {
+                            this.setBadge('warning', 'Analyzer error');
+                        }
+                    } catch (e) {
+                        console.warn('Bad websocket message', e);
+                    }
+                };
+
+                this.socket.onclose = () => {
+                    if (!this.running) return;
+                    this.connectionReady = false;
+                    this.setBadge('warning', 'Socket disconnected');
+                    if (this.reconnectAttempt >= this.maxReconnect) {
+                        this.setBadge('warning', 'Connection failed - refresh page');
+                        return;
+                    }
+
+                    const waitMs = Math.min(1000 * (2 ** this.reconnectAttempt), 8000);
+                    this.reconnectAttempt += 1;
+                    this.reconnectTimer = setTimeout(() => this.connectSocket(), waitMs);
+                };
+
+                this.socket.onerror = () => {
+                    this.connectionReady = false;
+                    this.setBadge('warning', 'Socket error');
+                };
+            }
+
+            startCaptureLoop() {
+                const preview = document.getElementById('cameraPreview');
+                const canvas = document.getElementById('cameraCanvas');
+                if (!preview || !canvas) return;
+
+                const ctx = canvas.getContext('2d');
+
+                this.captureTimer = setInterval(() => {
+                    if (!this.running) return;
+                    if (!this.socket || this.socket.readyState !== WebSocket.OPEN) return;
+                    if (!preview.videoWidth || !preview.videoHeight) return;
+
+                    canvas.width = preview.videoWidth;
+                    canvas.height = preview.videoHeight;
+                    ctx.drawImage(preview, 0, 0, canvas.width, canvas.height);
+
+                    const imageBase64 = canvas.toDataURL('image/jpeg', this.jpegQuality);
+                    const payload = {
+                        type: 'frame',
+                        assessment_id: assessmentId,
+                        question_id: questionId || null,
+                        image_base64: imageBase64,
+                        client_ts: new Date().toISOString(),
+                    };
+                    this.socket.send(JSON.stringify(payload));
+                }, this.frameIntervalMs);
+            }
+
+            isReady() {
+                return (
+                    this.running &&
+                    this.connectionReady &&
+                    this.stream !== null &&
+                    this.socket &&
+                    this.socket.readyState === WebSocket.OPEN
+                );
+            }
+        }
+
+        const emotionManager = new EmotionStreamManager();
+
+        if (!isFinal) {
+            emotionManager.start();
+        }
+
+        window.addEventListener('beforeunload', () => {
+            if (emotionManager.running) emotionManager.stop();
+        });
+
+        const originalSaveAndNext = saveAndNext;
+        saveAndNext = function () {
+            if (!emotionManager.isReady()) {
+                alert('Camera must stay connected for the full interview before moving to next question.');
+                return;
+            }
+            if (emotionManager.running) emotionManager.stop();
+            originalSaveAndNext();
+        };
+
+        const originalSubmitAndComplete = submitAndComplete;
+        submitAndComplete = function () {
+            if (!emotionManager.isReady()) {
+                alert('Camera must stay connected for the full interview before submitting assessment.');
+                return;
+            }
+            if (emotionManager.running) emotionManager.stop();
+            originalSubmitAndComplete();
+        };
+
+        const originalGoToPrevious = goToPrevious;
+        goToPrevious = function () {
+            if (emotionManager.running) emotionManager.stop();
+            originalGoToPrevious();
+        };
     </script>
 </body>
 </html>

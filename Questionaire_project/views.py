@@ -1,14 +1,14 @@
-from django.shortcuts import render, redirect
-from django.http import JsonResponse, HttpResponse
-from django.views.decorators.csrf import ensure_csrf_cookie
-from django.views.decorators.http import require_http_methods
-from django.conf import settings
-from django.db import transaction
 import json
 
-from .mse_analyzer import analyze_patient_responses
-from .models import Assessment, Answer, Question
+from django.db import transaction
+from django.http import HttpResponse, JsonResponse
+from django.shortcuts import redirect, render
+from django.views.decorators.csrf import ensure_csrf_cookie
+from django.views.decorators.http import require_http_methods
 
+from .emotion_services import build_emotion_summary
+from .models import Assessment, Answer, Question
+from .mse_analyzer import analyze_patient_responses, append_emotion_summary_to_report
 
 # ============================================================================
 # DATA STORE - VIDEOS WITH CORRECT FILE NAMES
@@ -74,7 +74,7 @@ VIDEOS = [
     {
         "id": 9,
         "file": "question8.mp4",
-        "question": "Some people have unusual experiences with their senses. Have you heard voices when no one was there, seen things that others didn't see, or felt strange sensations on your skin—like crawling or tingling—that others don't seem to notice?",
+        "question": "Some people have unusual experiences with their senses. Have you heard voices when no one was there, seen things that others didn't see, or felt strange sensations on your skin-like crawling or tingling-that others don't seem to notice?",
         "type": "text",
         "mse_category": "hallucinations"
     },
@@ -158,51 +158,27 @@ def _get_video(qid):
     return VIDEOS[qid - 1]
 
 
-def _format_answers(answers):
-    """Format answers for display on completion page"""
-    result = []
-    for v in VIDEOS:
-        if v.get('is_final'):
-            continue
-        qid = str(v['id'])
-        ans = answers.get(qid, 'No answer provided')
-        result.append({
-            'question_id': qid,
-            'question': v['question'],
-            'answer': ans,
-            'category': v.get('mse_category', 'general')
-        })
-    return result
-
-
 def _get_or_create_assessment(request):
     """
     Ensure we have an Assessment tied to this session.
     Creates DB record while maintaining session flow.
     """
-    # Ensure session exists
     if not request.session.session_key:
         request.session.save()
 
-    # Check if assessment already exists for this session
     assessment_id = request.session.get("assessment_id")
     if assessment_id:
         assessment = Assessment.objects.filter(id=assessment_id).first()
         if assessment:
             return assessment
 
-    # Create new assessment
     assessment = Assessment.objects.create(
         user=request.user if request.user.is_authenticated else None,
         session_key=request.session.session_key
     )
-    
-    # Store assessment ID in session
+
     request.session["assessment_id"] = assessment.id
     request.session.modified = True
-    
-    print(f"Created new assessment: ID={assessment.id}, Session={request.session.session_key}")
-    
     return assessment
 
 
@@ -219,7 +195,6 @@ def _ensure_questions_in_db():
                 "is_active": True,
             }
         )
-    print(f"Ensured {len(VIDEOS)} questions are in database")
 
 
 # ============================================================================
@@ -230,10 +205,7 @@ def _ensure_questions_in_db():
 def index(request):
     """Landing page with intro video - serves index.html"""
     _init_session(request.session)
-    
-    # Ensure questions are in database
     _ensure_questions_in_db()
-    
     context = {}
     return render(request, 'Questionaire_project/index.html', context)
 
@@ -246,24 +218,18 @@ def question_page(request, qid):
         return redirect('questionnaire:index')
 
     video = _get_video(qid)
-
-    # Get or create assessment for this session
     assessment = _get_or_create_assessment(request)
 
-    # Get previous answer from session if exists
     previous_answer = _get_answers(request.session).get(str(qid), '')
-    
-    # If no answer in session, try to get from database
+
     if not previous_answer:
         try:
             answer_obj = Answer.objects.get(assessment=assessment, question_id=qid)
             previous_answer = answer_obj.answer_text
-            # Also store in session for consistency
             _set_answer(request.session, str(qid), previous_answer)
         except Answer.DoesNotExist:
             pass
 
-    # Determine if this is the final question
     total_questions = len(VIDEOS)
     is_final = video.get('is_final', False)
     is_last = (qid == total_questions - 1)
@@ -274,7 +240,7 @@ def question_page(request, qid):
         'is_last': is_last,
         'total_questions': total_questions,
         'previous_answer': previous_answer,
-        # REMOVED MEDIA_URL - videos are now in static files
+        'assessment_id': assessment.id,
     }
 
     return render(request, 'Questionaire_project/question.html', context)
@@ -294,16 +260,11 @@ def save_answer(request):
         if not _is_valid_qid(int(qid)):
             return JsonResponse({'status': 'error', 'message': 'Invalid question ID'}, status=400)
 
-        # Save in session (existing flow)
         _set_answer(request.session, str(qid), answer)
-        
-        print(f"Saving answer for question {qid}, length: {len(answer)}")
 
-        # Save in database (new addition)
         with transaction.atomic():
             assessment = _get_or_create_assessment(request)
 
-            # Ensure Question exists in database
             video = _get_video(int(qid))
             question, _ = Question.objects.update_or_create(
                 id=int(qid),
@@ -316,18 +277,14 @@ def save_answer(request):
                 }
             )
 
-            # Save or update answer
-            answer_obj, created = Answer.objects.update_or_create(
+            Answer.objects.update_or_create(
                 assessment=assessment,
                 question=question,
                 defaults={"answer_text": answer}
             )
-            
-            action = "created" if created else "updated"
-            print(f"Answer {action} in database: Assessment ID={assessment.id}, Question ID={qid}")
 
         return JsonResponse({
-            'status': 'success', 
+            'status': 'success',
             'message': 'Answer saved successfully',
             'assessment_id': assessment.id
         })
@@ -335,68 +292,66 @@ def save_answer(request):
     except json.JSONDecodeError:
         return JsonResponse({'status': 'error', 'message': 'Invalid JSON data'}, status=400)
     except Exception as e:
-        print(f"Error saving answer: {str(e)}")
-        import traceback
-        traceback.print_exc()
         return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
 
 
 @ensure_csrf_cookie
 def complete(request):
     """Completion page showing MSE analysis report"""
-    # Get answers from session
     session_answers = _get_answers(request.session)
-    
-    # Also try to get from database
+
     assessment_id = request.session.get("assessment_id")
     db_answers = {}
-    
+
     if assessment_id:
         try:
             assessment = Assessment.objects.get(id=assessment_id)
             for answer in Answer.objects.filter(assessment=assessment).select_related('question'):
                 db_answers[str(answer.question.id)] = answer.answer_text
-            print(f"Retrieved {len(db_answers)} answers from database for assessment {assessment_id}")
         except Assessment.DoesNotExist:
             pass
-    
-    # Merge session and database answers (prioritize database)
+
     answers = {**session_answers, **db_answers}
 
     if not answers:
         return redirect('questionnaire:index')
 
-    # Generate analysis using AI analyzer
     try:
         structured_analysis, formatted_report = analyze_patient_responses(answers)
 
-        # Store analysis in session for future reference
-        request.session['mse_analysis'] = structured_analysis
-        
-        # Also save to database if we have an assessment
+        emotion_summary = {"available": False}
         if assessment_id:
             try:
                 assessment = Assessment.objects.get(id=assessment_id)
+                emotion_summary = build_emotion_summary(assessment)
+                structured_analysis["emotion_summary"] = emotion_summary
+                formatted_report = append_emotion_summary_to_report(formatted_report, emotion_summary)
                 assessment.is_completed = True
-                assessment.save()
-                print(f"Marked assessment {assessment_id} as completed")
+                assessment.save(update_fields=["is_completed"])
             except Assessment.DoesNotExist:
                 pass
+
+        request.session['mse_analysis'] = structured_analysis
+        request.session.modified = True
+
+        if 'answers' in request.session:
+            del request.session['answers']
+        if 'assessment_id' in request.session:
+            del request.session['assessment_id']
+        request.session.modified = True
 
         context = {
             'report': formatted_report,
             'analysis': structured_analysis,
             'timestamp': structured_analysis['timestamp'],
             'risk_level': structured_analysis['risk_assessment']['overall_risk'],
-            'immediate_intervention': structured_analysis['risk_assessment']['immediate_intervention_needed']
+            'immediate_intervention': structured_analysis['risk_assessment']['immediate_intervention_needed'],
+            'emotion_summary': emotion_summary,
         }
 
         return render(request, 'Questionaire_project/complete.html', context)
 
     except Exception as e:
-        print(f"Error generating report: {str(e)}")
-        import traceback
-        traceback.print_exc()
         return render(request, 'Questionaire_project/error.html', {
             'error': f'Error generating report: {str(e)}'
         })
@@ -406,11 +361,10 @@ def complete(request):
 def generate_mse_report(request):
     """Generate AI-analyzed Mental Status Exam report"""
     session_answers = _get_answers(request.session)
-    
-    # Try to get from database as well
+
     assessment_id = request.session.get("assessment_id")
     db_answers = {}
-    
+
     if assessment_id:
         try:
             assessment = Assessment.objects.get(id=assessment_id)
@@ -418,7 +372,7 @@ def generate_mse_report(request):
                 db_answers[str(answer.question.id)] = answer.answer_text
         except Assessment.DoesNotExist:
             pass
-    
+
     answers = {**session_answers, **db_answers}
 
     if not answers:
@@ -429,6 +383,16 @@ def generate_mse_report(request):
     try:
         structured_analysis, formatted_report = analyze_patient_responses(answers)
 
+        emotion_summary = {"available": False}
+        if assessment_id:
+            try:
+                assessment = Assessment.objects.get(id=assessment_id)
+                emotion_summary = build_emotion_summary(assessment)
+                structured_analysis["emotion_summary"] = emotion_summary
+                formatted_report = append_emotion_summary_to_report(formatted_report, emotion_summary)
+            except Assessment.DoesNotExist:
+                pass
+
         request.session['mse_analysis'] = structured_analysis
 
         context = {
@@ -436,7 +400,8 @@ def generate_mse_report(request):
             'analysis': structured_analysis,
             'timestamp': structured_analysis['timestamp'],
             'risk_level': structured_analysis['risk_assessment']['overall_risk'],
-            'immediate_intervention': structured_analysis['risk_assessment']['immediate_intervention_needed']
+            'immediate_intervention': structured_analysis['risk_assessment']['immediate_intervention_needed'],
+            'emotion_summary': emotion_summary,
         }
 
         return render(request, 'Questionaire_project/mse_report.html', context)

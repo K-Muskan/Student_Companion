@@ -3,19 +3,35 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mental Status Exam Report</title>
-    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Crimson+Pro:wght@400;600;700&display=swap" rel="stylesheet">
+    <title>Mental Status Examination Report</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            --color-primary: #2D5F8D;
-            --color-primary-dark: #1E4266;
-            --color-accent: #E8925C;
-            --color-danger: #DC3545;
-            --color-warning: #FFC107;
-            --color-success: #28A745;
+            --color-primary: #1a365d;
+            --color-primary-light: #2c5282;
+            --color-accent: #d97706;
+            --color-accent-light: #f59e0b;
+            --color-danger: #dc2626;
+            --color-warning: #f59e0b;
+            --color-success: #059669;
+            --color-info: #0284c7;
             
-            --font-body: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-            --font-display: 'Crimson Pro', Georgia, serif;
+            --bg-primary: #ffffff;
+            --bg-secondary: #f8fafc;
+            --bg-tertiary: #f1f5f9;
+            
+            --text-primary: #1e293b;
+            --text-secondary: #475569;
+            --text-muted: #64748b;
+            
+            --border-color: #e2e8f0;
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+            
+            --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            --font-display: 'Playfair Display', Georgia, serif;
         }
 
         * {
@@ -25,68 +41,146 @@
         }
 
         body {
-            font-family: var(--font-body);
-            background: #f7fafc;
-            color: #2d3748;
-            line-height: 1.6;
-        }
-
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
+            font-family: var(--font-sans);
+            background: var(--gradient-sidebar);
+            color: var(--text-primary);
+            line-height: 1.7;
+            min-height: 100vh;
             padding: 40px 20px;
         }
-
-        .header {
-            text-align: center;
-            margin-bottom: 40px;
-            padding: 30px;
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        
+        :root {
+            --gradient-sidebar: linear-gradient(135deg, #2D5F8D 0%, #1E4266 100%);
         }
 
-        .header h1 {
+        .page-wrapper {
+            max-width: 1100px;
+            margin: 0 auto;
+            background: var(--bg-primary);
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: var(--shadow-xl);
+        }
+
+        /* Header Styles */
+        .report-header {
+            background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-light) 100%);
+            color: white;
+            padding: 50px 40px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .report-header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -10%;
+            width: 400px;
+            height: 400px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 50%;
+        }
+
+        .report-header::after {
+            content: '';
+            position: absolute;
+            bottom: -30%;
+            left: -5%;
+            width: 300px;
+            height: 300px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 50%;
+        }
+
+        .header-content {
+            position: relative;
+            z-index: 1;
+        }
+
+        .report-title {
             font-family: var(--font-display);
-            font-size: 2.5em;
-            color: var(--color-primary-dark);
-            margin-bottom: 10px;
+            font-size: 2.75em;
+            font-weight: 700;
+            margin-bottom: 12px;
+            letter-spacing: -0.02em;
         }
 
-        .header .subtitle {
-            color: #718096;
-            font-size: 1.1em;
+        .report-subtitle {
+            font-size: 1.15em;
+            opacity: 0.9;
+            font-weight: 400;
+            margin-bottom: 8px;
+        }
+
+        .report-meta {
+            display: flex;
+            gap: 30px;
+            margin-top: 25px;
+            flex-wrap: wrap;
+        }
+
+        .meta-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.95em;
+            opacity: 0.95;
+        }
+
+        .meta-item svg {
+            width: 18px;
+            height: 18px;
+        }
+
+        /* Alert Styles */
+        .alert-container {
+            padding: 40px;
+            background: var(--bg-secondary);
         }
 
         .alert {
-            padding: 20px;
-            border-radius: 8px;
-            margin-bottom: 30px;
-            font-weight: 600;
+            padding: 20px 24px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            font-weight: 500;
+            border-left: 4px solid;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .alert-icon {
+            flex-shrink: 0;
+            width: 24px;
+            height: 24px;
         }
 
         .alert-danger {
-            background: #FEE;
-            border-left: 4px solid var(--color-danger);
-            color: var(--color-danger);
+            background: #fef2f2;
+            border-color: var(--color-danger);
+            color: #991b1b;
         }
 
         .alert-warning {
-            background: #FFFBEB;
-            border-left: 4px solid var(--color-warning);
-            color: #B45309;
+            background: #fffbeb;
+            border-color: var(--color-warning);
+            color: #92400e;
         }
 
         .alert-success {
-            background: #F0FDF4;
-            border-left: 4px solid var(--color-success);
-            color: #166534;
+            background: #f0fdf4;
+            border-color: var(--color-success);
+            color: #065f46;
         }
 
-        .action-buttons {
+        /* Action Bar */
+        .action-bar {
+            padding: 30px 40px;
+            background: var(--bg-primary);
+            border-bottom: 1px solid var(--border-color);
             display: flex;
-            gap: 15px;
-            margin-bottom: 30px;
+            gap: 12px;
             flex-wrap: wrap;
         }
 
@@ -94,13 +188,21 @@
             padding: 12px 24px;
             border: none;
             border-radius: 8px;
+            font-family: var(--font-sans);
+            font-size: 0.95em;
             font-weight: 600;
             cursor: pointer;
             text-decoration: none;
             display: inline-flex;
             align-items: center;
             gap: 8px;
-            transition: all 0.3s ease;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+        }
+
+        .btn svg {
+            width: 18px;
+            height: 18px;
         }
 
         .btn-primary {
@@ -109,343 +211,679 @@
         }
 
         .btn-primary:hover {
-            background: var(--color-primary-dark);
-            transform: translateY(-2px);
+            background: var(--color-primary-light);
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-md);
         }
 
         .btn-secondary {
             background: white;
-            color: var(--color-primary);
-            border: 2px solid var(--color-primary);
+            color: var(--text-primary);
+            border: 1.5px solid var(--border-color);
         }
 
         .btn-secondary:hover {
-            background: var(--color-primary);
+            border-color: var(--color-primary);
+            color: var(--color-primary);
+            box-shadow: var(--shadow-sm);
+        }
+
+        /* Content Area */
+        .report-content {
+            padding: 40px;
+        }
+
+        .section {
+            background: var(--bg-primary);
+            padding: 32px;
+            margin-bottom: 24px;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            transition: box-shadow 0.3s ease;
+        }
+
+        .section:hover {
+            box-shadow: var(--shadow-md);
+        }
+
+        .section-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 24px;
+            padding-bottom: 16px;
+            border-bottom: 2px solid var(--bg-tertiary);
+        }
+
+        .section-icon {
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, var(--color-accent) 0%, var(--color-accent-light) 100%);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .section-icon svg {
+            width: 18px;
+            height: 18px;
             color: white;
         }
 
-        .report-section {
-            background: white;
-            padding: 30px;
-            margin-bottom: 25px;
-            border-radius: 12px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-        }
-
-        .report-section h2 {
+        .section-title {
             font-family: var(--font-display);
-            color: var(--color-primary-dark);
-            font-size: 1.8em;
-            margin-bottom: 20px;
-            padding-bottom: 10px;
-            border-bottom: 3px solid var(--color-accent);
-        }
-
-        .report-section h3 {
+            font-size: 1.65em;
+            font-weight: 700;
             color: var(--color-primary);
-            font-size: 1.3em;
-            margin-top: 20px;
-            margin-bottom: 10px;
+            letter-spacing: -0.01em;
         }
 
-        .metric {
-            display: flex;
-            justify-content: space-between;
-            padding: 12px 0;
-            border-bottom: 1px solid #e2e8f0;
-        }
-
-        .metric:last-child {
-            border-bottom: none;
-        }
-
-        .metric-label {
+        .section-subtitle {
+            font-size: 1.2em;
             font-weight: 600;
-            color: #4a5568;
+            color: var(--text-primary);
+            margin-top: 24px;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
 
-        .metric-value {
-            color: #2d3748;
+        .section-subtitle::before {
+            content: '';
+            width: 4px;
+            height: 20px;
+            background: var(--color-accent);
+            border-radius: 2px;
         }
 
+        /* Data Grid */
+        .data-grid {
+            display: grid;
+            gap: 16px;
+        }
+
+        .data-row {
+            display: grid;
+            grid-template-columns: 1fr 1.5fr;
+            gap: 20px;
+            padding: 16px;
+            background: var(--bg-secondary);
+            border-radius: 8px;
+            align-items: center;
+            transition: background 0.2s ease;
+        }
+
+        .data-row:hover {
+            background: var(--bg-tertiary);
+        }
+
+        .data-label {
+            font-weight: 600;
+            color: var(--text-secondary);
+            font-size: 0.95em;
+        }
+
+        .data-value {
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+
+        /* Risk Badges */
         .risk-badge {
-            display: inline-block;
-            padding: 6px 16px;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
             border-radius: 20px;
             font-weight: 700;
-            font-size: 0.9em;
+            font-size: 0.85em;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
 
         .risk-high {
-            background: #FEE;
+            background: #fef2f2;
             color: var(--color-danger);
+            border: 1.5px solid var(--color-danger);
         }
 
         .risk-moderate {
-            background: #FFFBEB;
-            color: #B45309;
+            background: #fffbeb;
+            color: var(--color-warning);
+            border: 1.5px solid var(--color-warning);
         }
 
         .risk-low {
-            background: #F0FDF4;
-            color: #166534;
+            background: #f0fdf4;
+            color: var(--color-success);
+            border: 1.5px solid var(--color-success);
+        }
+
+        /* List Items */
+        .item-list {
+            display: grid;
+            gap: 12px;
         }
 
         .list-item {
-            padding: 10px 0;
-            padding-left: 25px;
+            padding: 14px 18px;
+            padding-left: 42px;
+            background: var(--bg-secondary);
+            border-radius: 8px;
             position: relative;
+            font-size: 0.98em;
+            line-height: 1.6;
+            transition: all 0.2s ease;
         }
 
-        .list-item:before {
-            content: "•";
+        .list-item:hover {
+            background: var(--bg-tertiary);
+            transform: translateX(4px);
+        }
+
+        .list-item::before {
+            content: '';
             position: absolute;
-            left: 8px;
-            color: var(--color-accent);
-            font-size: 1.5em;
-            line-height: 1;
+            left: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 8px;
+            height: 8px;
+            background: var(--color-accent);
+            border-radius: 50%;
+        }
+
+        /* Text Report */
+        .text-report-container {
+            background: #1e293b;
+            padding: 28px;
+            border-radius: 12px;
+            max-height: 500px;
+            overflow-y: auto;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
         }
 
         .text-report {
-            background: #f7fafc;
-            padding: 25px;
-            border-radius: 8px;
-            font-family: 'Courier New', monospace;
-            font-size: 0.9em;
+            font-family: 'SF Mono', 'Monaco', 'Consolas', 'Courier New', monospace;
+            font-size: 0.88em;
+            line-height: 1.7;
+            color: #e2e8f0;
             white-space: pre-wrap;
-            overflow-x: auto;
-            max-height: 600px;
-            overflow-y: auto;
+            word-wrap: break-word;
         }
 
+        /* Scrollbar Styling */
+        .text-report-container::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .text-report-container::-webkit-scrollbar-track {
+            background: #0f172a;
+            border-radius: 4px;
+        }
+
+        .text-report-container::-webkit-scrollbar-thumb {
+            background: #475569;
+            border-radius: 4px;
+        }
+
+        .text-report-container::-webkit-scrollbar-thumb:hover {
+            background: #64748b;
+        }
+
+        /* Disclaimer */
         .disclaimer {
-            background: #FFF9DB;
-            border: 2px solid #F59E0B;
-            padding: 20px;
-            border-radius: 8px;
-            margin-top: 30px;
+            background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+            border: 2px solid var(--color-warning);
+            padding: 28px;
+            border-radius: 12px;
+            margin-top: 32px;
+        }
+
+        .disclaimer-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+
+        .disclaimer-icon {
+            width: 28px;
+            height: 28px;
+            color: var(--color-warning);
         }
 
         .disclaimer-title {
             font-weight: 700;
-            color: #B45309;
-            margin-bottom: 10px;
+            font-size: 1.1em;
+            color: #92400e;
         }
 
+        .disclaimer-text {
+            color: #78350f;
+            line-height: 1.7;
+            font-size: 0.95em;
+        }
+
+        /* Print Styles */
         @media print {
-            .action-buttons, .btn {
+            body {
+                background: white;
+                padding: 0;
+            }
+
+            .page-wrapper {
+                box-shadow: none;
+                border-radius: 0;
+            }
+
+            .action-bar {
+                display: none !important;
+            }
+
+            .section {
+                page-break-inside: avoid;
+                box-shadow: none;
+                border: 1px solid #e2e8f0;
+            }
+
+            .report-header::before,
+            .report-header::after {
                 display: none;
             }
             
-            .report-section {
-                page-break-inside: avoid;
+            /* Hide the complete text report section in print */
+            .section:has(.text-report-container) {
+                display: none !important;
             }
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            body {
+                padding: 0;
+            }
+
+            .page-wrapper {
+                border-radius: 0;
+            }
+
+            .report-header {
+                padding: 40px 24px;
+            }
+
+            .report-title {
+                font-size: 2em;
+            }
+
+            .action-bar,
+            .alert-container,
+            .report-content {
+                padding: 24px;
+            }
+
+            .section {
+                padding: 24px;
+            }
+
+            .data-row {
+                grid-template-columns: 1fr;
+                gap: 8px;
+            }
+
+            .meta-item {
+                font-size: 0.9em;
+            }
+        }
+
+        /* Utility Classes */
+        .text-center {
+            text-align: center;
+        }
+
+        .mt-2 {
+            margin-top: 16px;
+        }
+
+        .mt-3 {
+            margin-top: 24px;
+        }
+
+        .mb-2 {
+            margin-bottom: 16px;
+        }
+
+        .mb-3 {
+            margin-bottom: 24px;
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <h1>Mental Status Examination Report</h1>
-            <p class="subtitle">AI-Assisted Clinical Analysis</p>
-            <p class="subtitle" style="font-size: 0.9em; margin-top: 10px;">Generated: {{ timestamp }}</p>
+    <div class="page-wrapper">
+        <!-- Header -->
+        <div class="report-header">
+            <div class="header-content">
+                <h1 class="report-title">Mental Status Examination</h1>
+                <p class="report-subtitle">AI-Assisted Clinical Assessment Report</p>
+                <div class="report-meta">
+                    <div class="meta-item">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                        </svg>
+                        <span>Generated: {{ timestamp }}</span>
+                    </div>
+                    <div class="meta-item">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                        </svg>
+                        <span>Report ID: #{{ report_id|default:"MSE-2024-001" }}</span>
+                    </div>
+                </div>
+            </div>
         </div>
 
-        {% if immediate_intervention %}
-        <div class="alert alert-danger">
-            ⚠️ IMMEDIATE INTERVENTION REQUIRED - High-risk assessment detected. Immediate clinical review and safety measures needed.
-        </div>
-        {% elif risk_level == 'Moderate' %}
-        <div class="alert alert-warning">
-            ⚠️ MODERATE RISK - Clinical attention recommended within 24-48 hours.
-        </div>
-        {% else %}
-        <div class="alert alert-success">
-            ✓ LOW RISK - Routine follow-up recommended.
-        </div>
-        {% endif %}
-
-        <div class="action-buttons">
-            <a href="/assessment/download-report-text/" class="btn btn-primary">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                    <polyline points="7 10 12 15 17 10"></polyline>
-                    <line x1="12" y1="15" x2="12" y2="3"></line>
+        <!-- Alert Section -->
+        <div class="alert-container">
+            {% if immediate_intervention %}
+            <div class="alert alert-danger">
+                <svg class="alert-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
                 </svg>
-                Download Text Report
+                <div>
+                    <strong>IMMEDIATE INTERVENTION REQUIRED</strong> – High-risk assessment detected. Immediate clinical review and safety measures needed.
+                </div>
+            </div>
+            {% elif risk_level == 'Moderate' %}
+            <div class="alert alert-warning">
+                <svg class="alert-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                </svg>
+                <div>
+                    <strong>MODERATE RISK</strong> – Clinical attention recommended within 24-48 hours.
+                </div>
+            </div>
+            {% else %}
+            <div class="alert alert-success">
+                <svg class="alert-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                <div>
+                    <strong>LOW RISK</strong> – Routine follow-up recommended.
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Action Bar -->
+        <div class="action-bar">
+            <a href="{% url 'dashboard' %}" class="btn btn-primary">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+                </svg>
+                Dashboard
+            </a>
+            <a href="/assessment/download-report-text/" class="btn btn-primary">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                </svg>
+                Text Report
             </a>
             <a href="/assessment/download-report-json/" class="btn btn-secondary">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                    <polyline points="14 2 14 8 20 8"></polyline>
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
                 </svg>
-                Download JSON Data
+                JSON Data
             </a>
             <button onclick="window.print()" class="btn btn-secondary">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <polyline points="6 9 6 2 18 2 18 9"></polyline>
-                    <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
-                    <rect x="6" y="14" width="12" height="8"></rect>
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/>
                 </svg>
-                Print Report
+                Print
             </button>
         </div>
 
-        <!-- RISK ASSESSMENT -->
-        <div class="report-section">
-            <h2>Risk Assessment Summary</h2>
-            
-            <div class="metric">
-                <span class="metric-label">Overall Risk Level:</span>
-                <span class="metric-value">
-                    <span class="risk-badge risk-{{ risk_level|lower }}">{{ risk_level|upper }}</span>
-                </span>
+        <!-- Main Content -->
+        <div class="report-content">
+            <!-- Risk Assessment Section -->
+            <div class="section">
+                <div class="section-header">
+                    <div class="section-icon">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+                        </svg>
+                    </div>
+                    <h2 class="section-title">Risk Assessment Summary</h2>
+                </div>
+                
+                <div class="data-grid">
+                    <div class="data-row">
+                        <span class="data-label">Overall Risk Level</span>
+                        <span class="data-value">
+                            <span class="risk-badge risk-{{ risk_level|lower }}">
+                                {{ risk_level|upper }}
+                            </span>
+                        </span>
+                    </div>
+                    
+                    <div class="data-row">
+                        <span class="data-label">Suicide Risk</span>
+                        <span class="data-value">{{ analysis.risk_assessment.suicide_risk_level }}</span>
+                    </div>
+                    
+                    <div class="data-row">
+                        <span class="data-label">Homicide Risk</span>
+                        <span class="data-value">{{ analysis.risk_assessment.homicide_risk_level }}</span>
+                    </div>
+                    
+                    <div class="data-row">
+                        <span class="data-label">Substance Use Concern</span>
+                        <span class="data-value">{{ analysis.risk_assessment.substance_use_concern|yesno:"Yes,No" }}</span>
+                    </div>
+                </div>
+                
+                {% if analysis.risk_assessment.risk_factors %}
+                <h3 class="section-subtitle">Risk Factors</h3>
+                <div class="item-list">
+                    {% for factor in analysis.risk_assessment.risk_factors %}
+                    <div class="list-item">{{ factor }}</div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+                
+                {% if analysis.risk_assessment.protective_factors %}
+                <h3 class="section-subtitle">Protective Factors</h3>
+                <div class="item-list">
+                    {% for factor in analysis.risk_assessment.protective_factors %}
+                    <div class="list-item">{{ factor }}</div>
+                    {% endfor %}
+                </div>
+                {% endif %}
             </div>
-            
-            <div class="metric">
-                <span class="metric-label">Suicide Risk:</span>
-                <span class="metric-value">{{ analysis.risk_assessment.suicide_risk_level }}</span>
-            </div>
-            
-            <div class="metric">
-                <span class="metric-label">Homicide Risk:</span>
-                <span class="metric-value">{{ analysis.risk_assessment.homicide_risk_level }}</span>
-            </div>
-            
-            <div class="metric">
-                <span class="metric-label">Substance Use Concern:</span>
-                <span class="metric-value">{{ analysis.risk_assessment.substance_use_concern|yesno:"Yes,No" }}</span>
-            </div>
-            
-            {% if analysis.risk_assessment.risk_factors %}
-            <h3>Risk Factors</h3>
-            {% for factor in analysis.risk_assessment.risk_factors %}
-            <div class="list-item">{{ factor }}</div>
-            {% endfor %}
-            {% endif %}
-            
-            {% if analysis.risk_assessment.protective_factors %}
-            <h3>Protective Factors</h3>
-            {% for factor in analysis.risk_assessment.protective_factors %}
-            <div class="list-item">{{ factor }}</div>
-            {% endfor %}
-            {% endif %}
-        </div>
 
-        <!-- CLINICAL IMPRESSIONS -->
-        <div class="report-section">
-            <h2>Clinical Impressions</h2>
-            {% for impression in analysis.clinical_impressions %}
-            <div class="list-item">{{ impression }}</div>
-            {% endfor %}
-        </div>
+            <!-- Clinical Impressions Section -->
+            <div class="section">
+                <div class="section-header">
+                    <div class="section-icon">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/>
+                        </svg>
+                    </div>
+                    <h2 class="section-title">Clinical Impressions</h2>
+                </div>
+                <div class="item-list">
+                    {% for impression in analysis.clinical_impressions %}
+                    <div class="list-item">{{ impression }}</div>
+                    {% endfor %}
+                </div>
+            </div>
 
-        <!-- RECOMMENDATIONS -->
-        <div class="report-section">
-            <h2>Recommendations</h2>
-            {% for rec in analysis.recommendations %}
-            <div class="list-item">{{ rec }}</div>
-            {% endfor %}
-        </div>
+            <!-- Recommendations Section -->
+            <div class="section">
+                <div class="section-header">
+                    <div class="section-icon">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                        </svg>
+                    </div>
+                    <h2 class="section-title">Recommendations</h2>
+                </div>
+                <div class="item-list">
+                    {% for rec in analysis.recommendations %}
+                    <div class="list-item">{{ rec }}</div>
+                    {% endfor %}
+                </div>
+            </div>
 
-        <!-- MOOD AND AFFECT -->
-        <div class="report-section">
-            <h2>Mood and Affect</h2>
-            
-            <div class="metric">
-                <span class="metric-label">Stated Mood:</span>
-                <span class="metric-value">{{ analysis.mood_affect.mood_category|title }}</span>
+            <!-- Mood and Affect Section -->
+            <div class="section">
+                <div class="section-header">
+                    <div class="section-icon">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                    </div>
+                    <h2 class="section-title">Mood and Affect</h2>
+                </div>
+                
+                <div class="data-grid">
+                    <div class="data-row">
+                        <span class="data-label">Stated Mood</span>
+                        <span class="data-value">{{ analysis.mood_affect.mood_category|title }}</span>
+                    </div>
+                    
+                    <div class="data-row">
+                        <span class="data-label">Sentiment Score</span>
+                        <span class="data-value">{{ analysis.mood_affect.sentiment_score|floatformat:2 }} <span style="color: var(--text-muted); font-size: 0.9em;">(scale: -1 to +1)</span></span>
+                    </div>
+                    
+                    <div class="data-row">
+                        <span class="data-label">Congruence</span>
+                        <span class="data-value">{{ analysis.mood_affect.congruence }}</span>
+                    </div>
+                </div>
             </div>
-            
-            <div class="metric">
-                <span class="metric-label">Sentiment Score:</span>
-                <span class="metric-value">{{ analysis.mood_affect.sentiment_score|floatformat:2 }} (scale: -1 to +1)</span>
-            </div>
-            
-            <div class="metric">
-                <span class="metric-label">Congruence:</span>
-                <span class="metric-value">{{ analysis.mood_affect.congruence }}</span>
-            </div>
-        </div>
 
-        <!-- THOUGHT CONTENT -->
-        <div class="report-section">
-            <h2>Thought Content</h2>
-            
-            <h3>Suicidal Ideation</h3>
-            <div class="metric">
-                <span class="metric-label">Present:</span>
-                <span class="metric-value">{{ analysis.thought_content.suicidal_ideation.present|yesno:"Yes,No" }}</span>
+            <!-- Thought Content Section -->
+            <div class="section">
+                <div class="section-header">
+                    <div class="section-icon">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
+                        </svg>
+                    </div>
+                    <h2 class="section-title">Thought Content</h2>
+                </div>
+                
+                <h3 class="section-subtitle">Suicidal Ideation</h3>
+                <div class="data-grid">
+                    <div class="data-row">
+                        <span class="data-label">Present</span>
+                        <span class="data-value">{{ analysis.thought_content.suicidal_ideation.present|yesno:"Yes,No" }}</span>
+                    </div>
+                    {% if analysis.thought_content.suicidal_ideation.present %}
+                    <div class="data-row">
+                        <span class="data-label">Type</span>
+                        <span class="data-value">{{ analysis.thought_content.suicidal_ideation.type }}</span>
+                    </div>
+                    <div class="data-row">
+                        <span class="data-label">Risk Level</span>
+                        <span class="data-value">
+                            <span class="risk-badge risk-{{ analysis.thought_content.suicidal_ideation.risk_level|lower }}">
+                                {{ analysis.thought_content.suicidal_ideation.risk_level }}
+                            </span>
+                        </span>
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <h3 class="section-subtitle">Hallucinations</h3>
+                <div class="data-grid">
+                    <div class="data-row">
+                        <span class="data-label">Present</span>
+                        <span class="data-value">{{ analysis.thought_content.hallucinations.present|yesno:"Yes,No" }}</span>
+                    </div>
+                    {% if analysis.thought_content.hallucinations.present %}
+                    <div class="data-row">
+                        <span class="data-label">Types</span>
+                        <span class="data-value">{{ analysis.thought_content.hallucinations.types|join:", "|title }}</span>
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <h3 class="section-subtitle">Delusions</h3>
+                <div class="data-grid">
+                    <div class="data-row">
+                        <span class="data-label">Present</span>
+                        <span class="data-value">{{ analysis.thought_content.delusions.present|yesno:"Yes,No" }}</span>
+                    </div>
+                    {% if analysis.thought_content.delusions.present %}
+                    <div class="data-row">
+                        <span class="data-label">Types</span>
+                        <span class="data-value">{{ analysis.thought_content.delusions.types|join:", "|title }}</span>
+                    </div>
+                    {% endif %}
+                </div>
             </div>
-            {% if analysis.thought_content.suicidal_ideation.present %}
-            <div class="metric">
-                <span class="metric-label">Type:</span>
-                <span class="metric-value">{{ analysis.thought_content.suicidal_ideation.type }}</span>
-            </div>
-            <div class="metric">
-                <span class="metric-label">Risk Level:</span>
-                <span class="metric-value">
-                    <span class="risk-badge risk-{{ analysis.thought_content.suicidal_ideation.risk_level|lower }}">
-                        {{ analysis.thought_content.suicidal_ideation.risk_level }}
-                    </span>
-                </span>
-            </div>
-            {% endif %}
-            
-            <h3>Hallucinations</h3>
-            <div class="metric">
-                <span class="metric-label">Present:</span>
-                <span class="metric-value">{{ analysis.thought_content.hallucinations.present|yesno:"Yes,No" }}</span>
-            </div>
-            {% if analysis.thought_content.hallucinations.present %}
-            <div class="metric">
-                <span class="metric-label">Types:</span>
-                <span class="metric-value">{{ analysis.thought_content.hallucinations.types|join:", "|title }}</span>
-            </div>
-            {% endif %}
-            
-            <h3>Delusions</h3>
-            <div class="metric">
-                <span class="metric-label">Present:</span>
-                <span class="metric-value">{{ analysis.thought_content.delusions.present|yesno:"Yes,No" }}</span>
-            </div>
-            {% if analysis.thought_content.delusions.present %}
-            <div class="metric">
-                <span class="metric-label">Types:</span>
-                <span class="metric-value">{{ analysis.thought_content.delusions.types|join:", "|title }}</span>
-            </div>
-            {% endif %}
-        </div>
 
-        <!-- INSIGHT AND JUDGMENT -->
-        <div class="report-section">
-            <h2>Insight and Judgment</h2>
-            
-            <div class="metric">
-                <span class="metric-label">Insight:</span>
-                <span class="metric-value">{{ analysis.insight_judgment.insight }}</span>
+            <!-- Insight and Judgment Section -->
+            <div class="section">
+                <div class="section-header">
+                    <div class="section-icon">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                        </svg>
+                    </div>
+                    <h2 class="section-title">Insight and Judgment</h2>
+                </div>
+                
+                <div class="data-grid">
+                    <div class="data-row">
+                        <span class="data-label">Insight</span>
+                        <span class="data-value">{{ analysis.insight_judgment.insight }}</span>
+                    </div>
+                    
+                    <div class="data-row">
+                        <span class="data-label">Judgment</span>
+                        <span class="data-value">{{ analysis.insight_judgment.judgment }}</span>
+                    </div>
+                    
+                    <div class="data-row">
+                        <span class="data-label">Treatment Acceptance</span>
+                        <span class="data-value">{{ analysis.insight_judgment.treatment_acceptance|yesno:"Yes,No" }}</span>
+                    </div>
+                </div>
             </div>
-            
-            <div class="metric">
-                <span class="metric-label">Judgment:</span>
-                <span class="metric-value">{{ analysis.insight_judgment.judgment }}</span>
-            </div>
-            
-            <div class="metric">
-                <span class="metric-label">Treatment Acceptance:</span>
-                <span class="metric-value">{{ analysis.insight_judgment.treatment_acceptance|yesno:"Yes,No" }}</span>
-            </div>
-        </div>
 
-        <!-- FULL TEXT REPORT -->
-        <div class="report-section">
-            <h2>Complete Text Report</h2>
-            <div class="text-report">{{ report }}</div>
-        </div>
+            <!-- Full Text Report Section -->
+            <div class="section">
+                <div class="section-header">
+                    <div class="section-icon">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                        </svg>
+                    </div>
+                    <h2 class="section-title">Complete Text Report</h2>
+                </div>
+                <div class="text-report-container">
+                    <div class="text-report">{{ report }}</div>
+                </div>
+            </div>
 
-        <div class="disclaimer">
-            <div class="disclaimer-title">⚠️ IMPORTANT DISCLAIMER</div>
-            <p>This is an AI-assisted analysis and should be reviewed by a qualified mental health professional. This report does not constitute a formal diagnosis or treatment plan. All clinical decisions should be made by licensed healthcare providers. In case of emergency, contact emergency services immediately.</p>
+            <!-- Disclaimer -->
+            <div class="disclaimer">
+                <div class="disclaimer-header">
+                    <svg class="disclaimer-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                    </svg>
+                    <div class="disclaimer-title">Important Medical Disclaimer</div>
+                </div>
+                <p class="disclaimer-text">
+                    This is an AI-assisted analysis and should be reviewed by a qualified mental health professional. This report does not constitute a formal diagnosis or treatment plan. All clinical decisions should be made by licensed healthcare providers. In case of emergency, contact emergency services immediately.
+                </p>
+            </div>
         </div>
     </div>
 </body>

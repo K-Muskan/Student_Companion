@@ -32,6 +32,7 @@ ALLOWED_HOSTS = []
 
 # Application definition
 INSTALLED_APPS = [
+    'daphne',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -42,14 +43,11 @@ INSTALLED_APPS = [
     'allauth',
     'allauth.account',
     'allauth.socialaccount',
-    
     'allauth.socialaccount.providers.google',
-
     'rest_framework',
-
+    'channels',
     'Login',
-    'Questionaire_project', 
-
+    'Questionaire_project',
 ]
 
 
@@ -87,7 +85,6 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'allauth.account.middleware.AccountMiddleware',
-
 ]
 
 
@@ -97,7 +94,6 @@ TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
         'DIRS': [BASE_DIR / 'templates'],
-
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -110,28 +106,26 @@ TEMPLATES = [
 ]
 
 STATICFILES_DIRS = [
-       BASE_DIR / 'static',  # ⭐ This line is crucial
-
+    BASE_DIR / 'static',
 ]
 
 WSGI_APPLICATION = 'StudentCompanion.wsgi.application'
+ASGI_APPLICATION = 'StudentCompanion.asgi.application'
 
 
 DATABASES = {
-   'default': { 
-       'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'StudentCompanion', 
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'student-companion',
         'USER': 'postgres',
-        'PASSWORD': 'muskan',
-        'HOST': 'localhost', 
-        'PORT': '5432', 
+        'PASSWORD': 'admin',
+        'HOST': 'localhost',
+        'PORT': '5432',
     }
 }
 
 
-
 # Database
-
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
 
@@ -164,8 +158,9 @@ TIME_ZONE = 'UTC'
 USE_I18N = True
 
 USE_TZ = True
+
 # MEDIA FILES CONFIGURATION
-MEDIA_URL = '/media/'  # ← This must be '/media/' not '/'
+MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 
@@ -179,9 +174,8 @@ STATIC_URL = 'static/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-ACCOUNT_EMAIL_REQUIRED = True
-ACCOUNT_USERNAME_REQUIRED = False
-ACCOUNT_AUTHENTICATION_METHOD = 'email'
+ACCOUNT_LOGIN_METHODS = {'email'}
+ACCOUNT_SIGNUP_FIELDS = ['email*', 'password1*', 'password2*']
 ACCOUNT_EMAIL_VERIFICATION = 'none'
 
 LOGIN_REDIRECT_URL = '/dashboard/'
@@ -198,3 +192,14 @@ EMAIL_HOST_USER = "mallahkhadija97@gmail.com"
 EMAIL_HOST_PASSWORD = "grah kehi eslf nuch"
 
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
+
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels.layers.InMemoryChannelLayer",
+    },
+}
+
+EMOTION_ANALYZE_INTERVAL_SECONDS = 1.0
+EMOTION_MAX_RECONNECT_ATTEMPTS = 5
+EMOTION_FRAME_JPEG_QUALITY = 0.7
+EMOTION_MAX_IMAGE_BYTES = 1500000
