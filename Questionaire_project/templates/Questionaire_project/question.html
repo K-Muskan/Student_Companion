@@ -552,6 +552,7 @@
         const videoFile = "{{ video.file }}";
         const previousAnswer = "{{ previous_answer|escapejs }}";
         const assessmentId = Number("{{ assessment_id }}");
+        const defaultMaxReconnect = Number("{{ emotion_max_reconnect_attempts|default:5 }}");
 
         console.log('=== PAGE INITIALIZATION ===');
         console.log('Question ID:', questionId);
@@ -911,7 +912,11 @@
             constructor() {
                 this.frameIntervalMs = 1000;
                 this.jpegQuality = 0.7;
-                this.maxReconnect = 5;
+                this.maxReconnect = defaultMaxReconnect || 5;
+                this.heartbeatIntervalMs = (Number("{{ emotion_heartbeat_interval_seconds|default:15 }}") || 15) * 1000;
+                this.heartbeatGraceMs = (Number("{{ emotion_heartbeat_grace_seconds|default:120 }}") || 120) * 1000;
+                this.maxFrameWidth = Number("{{ emotion_client_max_frame_width|default:640 }}") || 640;
+                this.maxEncodedBytes = Number("{{ emotion_client_max_encoded_bytes|default:900000 }}") || 900000;
                 this.reconnectAttempt = 0;
                 this.running = false;
                 this.connectionReady = false;
@@ -920,6 +925,17 @@
                 this.captureTimer = null;
                 this.reconnectTimer = null;
                 this.lockHeartbeatTimer = null;
+                this.pingTimer = null;
+                this.heartbeatMonitorTimer = null;
+                this.cameraRecoveryTimer = null;
+                this.getUserMediaPromise = null;
+                this.restartingCamera = false;
+                this.lastPongAt = 0;
+                this.lastServerActivityAt = 0;
+                this.missedHeartbeats = 0;
+                this.visibilityBound = false;
+                this.inflightFrame = false;
+                this.inflightTimer = null;
 
                 this.lockKey = `emotion_stream_lock_${assessmentId}`;
                 this.tabId = (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : String(Math.random()).slice(2);
@@ -972,21 +988,13 @@
                 if (this.running || isFinal || !assessmentId) return;
                 if (!this.acquireTabLock()) return;
 
-                try {
-                    this.stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
-                } catch (err) {
-                    this.setBadge('warning', 'Camera permission denied');
-                    this.releaseTabLock();
-                    return;
-                }
-
-                const preview = document.getElementById('cameraPreview');
-                if (preview) preview.srcObject = this.stream;
-
                 this.running = true;
                 this.reconnectAttempt = 0;
+                await this.ensureCamera();
                 this.connectSocket();
                 this.startCaptureLoop();
+                this.startHeartbeat();
+                this.bindVisibilityHandlers();
             }
 
             stop() {
@@ -994,6 +1002,17 @@
 
                 if (this.captureTimer) clearInterval(this.captureTimer);
                 if (this.reconnectTimer) clearTimeout(this.reconnectTimer);
+                if (this.pingTimer) clearInterval(this.pingTimer);
+                if (this.heartbeatMonitorTimer) clearInterval(this.heartbeatMonitorTimer);
+                if (this.cameraRecoveryTimer) clearTimeout(this.cameraRecoveryTimer);
+                if (this.inflightTimer) clearTimeout(this.inflightTimer);
+                this.captureTimer = null;
+                this.reconnectTimer = null;
+                this.pingTimer = null;
+                this.heartbeatMonitorTimer = null;
+                this.cameraRecoveryTimer = null;
+                this.inflightTimer = null;
+                this.inflightFrame = false;
 
                 if (this.socket) {
                     try {
@@ -1017,7 +1036,100 @@
                 this.releaseTabLock();
             }
 
+            bindVisibilityHandlers() {
+                if (this.visibilityBound) return;
+                this.visibilityBound = true;
+                document.addEventListener('visibilitychange', async () => {
+                    if (!this.running) return;
+                    if (document.hidden) {
+                        this.setBadge('warning', 'Tab in background');
+                        return;
+                    }
+                    await this.ensureCamera();
+                    if (!this.socket || this.socket.readyState === WebSocket.CLOSED) {
+                        this.scheduleReconnect('visible_reconnect');
+                    }
+                });
+            }
+
+            async ensureCamera() {
+                if (!this.running) return false;
+                if (this.stream && this.stream.getVideoTracks().some((t) => t.readyState === 'live')) {
+                    return true;
+                }
+                if (this.getUserMediaPromise) {
+                    return this.getUserMediaPromise;
+                }
+                this.getUserMediaPromise = this._startCamera();
+                try {
+                    return await this.getUserMediaPromise;
+                } finally {
+                    this.getUserMediaPromise = null;
+                }
+            }
+
+            async _startCamera() {
+                if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                    this.setBadge('warning', 'Camera API unavailable');
+                    return false;
+                }
+                try {
+                    const stream = await navigator.mediaDevices.getUserMedia({
+                        video: {
+                            width: { ideal: 640 },
+                            height: { ideal: 480 },
+                            frameRate: { ideal: 8, max: 12 },
+                        },
+                        audio: false
+                    });
+                    this.stream = stream;
+                    const preview = document.getElementById('cameraPreview');
+                    if (preview) preview.srcObject = stream;
+                    this.attachTrackHandlers(stream);
+                    this.setBadge('connected', 'Camera connected');
+                    return true;
+                } catch (err) {
+                    const name = err && err.name ? err.name : 'CameraError';
+                    if (name === 'NotReadableError' || name === 'TrackStartError') {
+                        this.setBadge('warning', 'Camera busy, retrying...');
+                        this.scheduleCameraRecovery(1500);
+                    } else if (name === 'OverconstrainedError') {
+                        this.setBadge('warning', 'Camera constraint fallback');
+                        this.scheduleCameraRecovery(1000);
+                    } else {
+                        this.setBadge('warning', 'Camera permission/device error');
+                    }
+                    return false;
+                }
+            }
+
+            attachTrackHandlers(stream) {
+                const tracks = stream.getVideoTracks ? stream.getVideoTracks() : [];
+                tracks.forEach((track) => {
+                    track.onended = () => this.scheduleCameraRecovery(1200);
+                    track.onmute = () => this.setBadge('warning', 'Camera paused');
+                    track.onunmute = () => this.setBadge('connected', 'Camera connected');
+                });
+            }
+
+            scheduleCameraRecovery(delayMs) {
+                if (!this.running || this.restartingCamera) return;
+                if (this.cameraRecoveryTimer) clearTimeout(this.cameraRecoveryTimer);
+                this.cameraRecoveryTimer = setTimeout(async () => {
+                    this.restartingCamera = true;
+                    try {
+                        await this.ensureCamera();
+                    } finally {
+                        this.restartingCamera = false;
+                    }
+                }, delayMs);
+            }
+
             connectSocket() {
+                if (!this.running) return;
+                if (this.socket && (this.socket.readyState === WebSocket.OPEN || this.socket.readyState === WebSocket.CONNECTING)) {
+                    return;
+                }
                 const scheme = window.location.protocol === 'https:' ? 'wss' : 'ws';
                 const url = `${scheme}://${window.location.host}/ws/emotion/${assessmentId}/`;
                 this.socket = new WebSocket(url);
@@ -1025,14 +1137,44 @@
                 this.socket.onopen = () => {
                     this.reconnectAttempt = 0;
                     this.connectionReady = true;
+                    this.lastPongAt = Date.now();
+                    this.lastServerActivityAt = Date.now();
+                    this.missedHeartbeats = 0;
                     this.setBadge('connected', 'Camera connected');
                 };
 
                 this.socket.onmessage = (event) => {
                     try {
                         const data = JSON.parse(event.data);
+                        this.lastServerActivityAt = Date.now();
+                        if (data.type === 'pong') {
+                            this.lastPongAt = Date.now();
+                            this.missedHeartbeats = 0;
+                            return;
+                        }
+                        if (data.type === 'connection' && data.analysis_interval_seconds) {
+                            this.frameIntervalMs = Math.max(500, Math.round(Number(data.analysis_interval_seconds) * 1000));
+                            if (typeof data.max_reconnect_attempts === 'number') {
+                                this.maxReconnect = data.max_reconnect_attempts;
+                            }
+                            if (typeof data.heartbeat_interval_seconds === 'number') {
+                                this.heartbeatIntervalMs = Math.max(5000, Math.round(Number(data.heartbeat_interval_seconds) * 1000));
+                            }
+                            if (typeof data.heartbeat_grace_seconds === 'number') {
+                                this.heartbeatGraceMs = Math.max(15000, Math.round(Number(data.heartbeat_grace_seconds) * 1000));
+                            }
+                            this.restartCaptureLoop();
+                            this.startHeartbeat();
+                        }
                         if (data.type === 'frame_result' && data.status === 'error') {
                             this.setBadge('warning', 'Analyzer error');
+                        }
+                        if (data.type === 'frame_result') {
+                            this.inflightFrame = false;
+                            if (this.inflightTimer) {
+                                clearTimeout(this.inflightTimer);
+                                this.inflightTimer = null;
+                            }
                         }
                     } catch (e) {
                         console.warn('Bad websocket message', e);
@@ -1043,14 +1185,12 @@
                     if (!this.running) return;
                     this.connectionReady = false;
                     this.setBadge('warning', 'Socket disconnected');
-                    if (this.reconnectAttempt >= this.maxReconnect) {
-                        this.setBadge('warning', 'Connection failed - refresh page');
-                        return;
+                    this.inflightFrame = false;
+                    if (this.inflightTimer) {
+                        clearTimeout(this.inflightTimer);
+                        this.inflightTimer = null;
                     }
-
-                    const waitMs = Math.min(1000 * (2 ** this.reconnectAttempt), 8000);
-                    this.reconnectAttempt += 1;
-                    this.reconnectTimer = setTimeout(() => this.connectSocket(), waitMs);
+                    this.scheduleReconnect('socket_close');
                 };
 
                 this.socket.onerror = () => {
@@ -1059,30 +1199,105 @@
                 };
             }
 
+            scheduleReconnect(reason) {
+                if (!this.running) return;
+                if (this.reconnectTimer) return;
+                if (this.reconnectAttempt >= this.maxReconnect) {
+                    this.setBadge('warning', 'Connection failed - refresh page');
+                    return;
+                }
+                const jitter = Math.floor(Math.random() * 250);
+                const waitMs = Math.min(1000 * (2 ** this.reconnectAttempt), 8000) + jitter;
+                this.reconnectAttempt += 1;
+                this.reconnectTimer = setTimeout(() => {
+                    this.reconnectTimer = null;
+                    this.connectSocket();
+                }, waitMs);
+            }
+
+            startHeartbeat() {
+                if (this.pingTimer) clearInterval(this.pingTimer);
+                if (this.heartbeatMonitorTimer) clearInterval(this.heartbeatMonitorTimer);
+                this.pingTimer = setInterval(() => {
+                    if (!this.running || !this.socket || this.socket.readyState !== WebSocket.OPEN) return;
+                    try {
+                        this.socket.send(JSON.stringify({ type: 'ping', ts: Date.now(), assessment_id: assessmentId }));
+                    } catch (e) {
+                        this.scheduleReconnect('ping_send_failed');
+                    }
+                }, this.heartbeatIntervalMs);
+                this.heartbeatMonitorTimer = setInterval(() => {
+                    if (!this.running || !this.socket || this.socket.readyState !== WebSocket.OPEN) return;
+                    const now = Date.now();
+                    const lastActivity = Math.max(this.lastServerActivityAt || 0, this.lastPongAt || 0);
+                    if (lastActivity && now - lastActivity > this.heartbeatGraceMs) {
+                        this.missedHeartbeats += 1;
+                        if (this.missedHeartbeats >= 2) {
+                            this.setBadge('warning', 'Reconnecting stream...');
+                            try {
+                                this.socket.close(4000, 'missed_heartbeat');
+                            } catch (e) {
+                                this.scheduleReconnect('heartbeat_close_failed');
+                            }
+                        }
+                    }
+                }, 5000);
+            }
+
             startCaptureLoop() {
                 const preview = document.getElementById('cameraPreview');
                 const canvas = document.getElementById('cameraCanvas');
                 if (!preview || !canvas) return;
 
                 const ctx = canvas.getContext('2d');
+                this.restartCaptureLoop(ctx, preview, canvas);
+            }
+
+            restartCaptureLoop(ctxArg, previewArg, canvasArg) {
+                const preview = previewArg || document.getElementById('cameraPreview');
+                const canvas = canvasArg || document.getElementById('cameraCanvas');
+                if (!preview || !canvas) return;
+                const ctx = ctxArg || canvas.getContext('2d');
+                if (this.captureTimer) clearInterval(this.captureTimer);
 
                 this.captureTimer = setInterval(() => {
                     if (!this.running) return;
                     if (!this.socket || this.socket.readyState !== WebSocket.OPEN) return;
-                    if (!preview.videoWidth || !preview.videoHeight) return;
+                    if (this.inflightFrame) return;
+                    if (typeof this.socket.bufferedAmount === 'number' && this.socket.bufferedAmount > 512000) return;
+                    if (!this.stream || !preview.videoWidth || !preview.videoHeight) {
+                        this.scheduleCameraRecovery(1200);
+                        return;
+                    }
 
-                    canvas.width = preview.videoWidth;
-                    canvas.height = preview.videoHeight;
+                    const sourceW = preview.videoWidth;
+                    const sourceH = preview.videoHeight;
+                    const targetW = Math.min(sourceW, this.maxFrameWidth);
+                    const targetH = Math.max(1, Math.round((sourceH * targetW) / sourceW));
+                    canvas.width = targetW;
+                    canvas.height = targetH;
                     ctx.drawImage(preview, 0, 0, canvas.width, canvas.height);
 
-                    const imageBase64 = canvas.toDataURL('image/jpeg', this.jpegQuality);
+                    let quality = this.jpegQuality;
+                    let imageBase64 = canvas.toDataURL('image/jpeg', quality);
+                    while ((imageBase64.length * 0.75) > this.maxEncodedBytes && quality > 0.45) {
+                        quality = quality - 0.1;
+                        imageBase64 = canvas.toDataURL('image/jpeg', quality);
+                    }
                     const payload = {
                         type: 'frame',
+                        frame_id: (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : String(Date.now()),
                         assessment_id: assessmentId,
                         question_id: questionId || null,
                         image_base64: imageBase64,
                         client_ts: new Date().toISOString(),
                     };
+                    this.inflightFrame = true;
+                    if (this.inflightTimer) clearTimeout(this.inflightTimer);
+                    this.inflightTimer = setTimeout(() => {
+                        this.inflightFrame = false;
+                        this.inflightTimer = null;
+                    }, 10000);
                     this.socket.send(JSON.stringify(payload));
                 }, this.frameIntervalMs);
             }

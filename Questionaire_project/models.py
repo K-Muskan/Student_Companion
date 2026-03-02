@@ -32,8 +32,13 @@ class Assessment(models.Model):
         related_name="assessments",
     )
     session_key = models.CharField(max_length=64, db_index=True)
+    assessment_token = models.CharField(max_length=128, unique=True, db_index=True)
     created_at = models.DateTimeField(auto_now_add=True)
     is_completed = models.BooleanField(default=False)
+    finalized_at = models.DateTimeField(null=True, blank=True)
+    report_generated_at = models.DateTimeField(null=True, blank=True)
+    report_text = models.TextField(blank=True)
+    report_json = models.JSONField(default=dict, blank=True)
 
     def __str__(self):
         return f"Assessment {self.pk}"
@@ -64,11 +69,15 @@ class EmotionRecord(models.Model):
     STATUS_OK = "ok"
     STATUS_NO_FACE = "no_face"
     STATUS_ERROR = "error"
+    STATUS_QUALITY_LOW = "quality_low"
+    STATUS_RATE_LIMITED = "rate_limited"
 
     STATUS_CHOICES = [
         (STATUS_OK, "OK"),
         (STATUS_NO_FACE, "No Face"),
         (STATUS_ERROR, "Error"),
+        (STATUS_QUALITY_LOW, "Quality Low"),
+        (STATUS_RATE_LIMITED, "Rate Limited"),
     ]
 
     assessment = models.ForeignKey(

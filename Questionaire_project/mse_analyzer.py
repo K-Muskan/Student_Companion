@@ -65,7 +65,15 @@ class MSEAnalyzer:
     NEGATION_CUES = [
         'no', 'not', 'never', 'none', 'without', 'denies', 'deny', 'denied',
         "don't", "dont", "didn't", "didnt", "isn't", "isnt", "wasn't", "wasnt",
-        "can't", "cant", "won't", "wont", "free", "lack", "lacking"
+        "can't", "cant", "won't", "wont", "cannot", "neither", "nor"
+    ]
+
+    BENIGN_IDIOM_EXCLUSIONS = [
+        "kill time",
+        "dead tired",
+        "suicide squad",
+        "this assignment is killing me",
+        "killed it",
     ]
 
     INTENSIFIERS = [
@@ -221,6 +229,93 @@ class MSEAnalyzer:
             'intensity_hits': intensity_hits
         }
 
+    def _edit_distance(self, a: str, b: str) -> int:
+        if a == b:
+            return 0
+        if not a:
+            return len(b)
+        if not b:
+            return len(a)
+        prev = list(range(len(b) + 1))
+        for i, ca in enumerate(a, start=1):
+            cur = [i]
+            for j, cb in enumerate(b, start=1):
+                insert = cur[j - 1] + 1
+                delete = prev[j] + 1
+                replace = prev[j - 1] + (ca != cb)
+                cur.append(min(insert, delete, replace))
+            prev = cur
+        return prev[-1]
+
+    def _contains_benign_idiom(self, text: str) -> bool:
+        text_norm = self._normalize(text)
+        return any(phrase in text_norm for phrase in self.BENIGN_IDIOM_EXCLUSIONS)
+
+    def _fuzzy_phrase_present(self, text: str, phrase: str, max_ratio: float = 0.22) -> bool:
+        text_tokens = self._tokenize(text)
+        phrase_tokens = self._tokenize(phrase)
+        n = len(phrase_tokens)
+        if n == 0 or len(text_tokens) < n:
+            return False
+        phrase_joined = " ".join(phrase_tokens)
+        max_edits = max(1, int(len(phrase_joined) * max_ratio))
+        for i in range(len(text_tokens) - n + 1):
+            candidate = " ".join(text_tokens[i:i + n])
+            if self._edit_distance(candidate, phrase_joined) <= max_edits:
+                return True
+        return False
+
+    def _detect_plan_like(self, text: str) -> bool:
+        text_norm = self._normalize(text)
+        benign = ["plan my day", "plan my week", "study plan", "project plan"]
+        if any(b in text_norm for b in benign):
+            return False
+        patterns = [
+            r"\b(i|im|i am)\s+(going to|gonna|will)\s+(use|take|do)\b",
+            r"\b(method|means|dose|rope|knife|gun|pills|bridge)\b",
+            r"\b(tonight|tomorrow|this week|at \d{1,2}(:\d{2})?\s?(am|pm)?)\b",
+            r"\bwhen everyone is asleep\b",
+            r"\bno one will find me\b",
+        ]
+        return any(re.search(pattern, text_norm) for pattern in patterns)
+
+    def _first_person_intent(self, text: str) -> bool:
+        text_norm = self._normalize(text)
+        third_person_prefix = re.match(
+            r"^\s*(he|she|they|someone|my friend|a friend|friend)\b",
+            text_norm,
+        )
+        if third_person_prefix:
+            return False
+
+        # Guard against quoted/reported speech (e.g., "he said i want to die")
+        # so third-person context is not escalated as direct first-person intent.
+        reported_speech_cues = [
+            r"\b(he|she|they|friend|someone|teacher|mother|father|brother|sister)\s+(said|says|told|mentioned|wrote)\b",
+            r"\b(my friend|a friend|someone)\s+(said|says|told|mentioned|wrote)\b",
+            r"\b(i heard|i read|i saw)\b",
+        ]
+        if any(re.search(pattern, text_norm) for pattern in reported_speech_cues):
+            # Keep this conservative to avoid false High risk from quoted content.
+            if " but i " not in f" {text_norm} " and " and i " not in f" {text_norm} ":
+                return False
+        first_person = [" i ", " i'm ", " im ", " my ", " myself "]
+        if any(fp in f" {text_norm} " for fp in first_person):
+            return True
+        return text_norm.startswith("i ")
+
+    def _build_domain_meta(self, evidence: List[str], negated: List[str]) -> Dict[str, Any]:
+        ev = list(dict.fromkeys(evidence))
+        confidence = min(0.95, 0.35 + (0.15 * len(ev)))
+        if not ev:
+            confidence = 0.25
+        return {
+            "confidence": round(confidence, 3),
+            "evidence": ev[:10],
+            "negated_evidence": list(dict.fromkeys(negated))[:10],
+            "uncertainty": "high" if confidence < 0.45 else ("medium" if confidence < 0.7 else "low"),
+        }
+
     def _estimate_duration_days(self, text: str) -> Tuple[int, bool]:
         """
         Returns (estimated_days, duration_2_weeks_or_more)
@@ -337,10 +432,14 @@ class MSEAnalyzer:
             'protective_factors': [],
             'risk_level': 'Low',
             'triggered_phrases': [],
-            'negated_phrases': []
+            'negated_phrases': [],
+            'confidence': 0.25,
+            'evidence': []
         }
         
         if not q7 or q7 in ['no', 'none', 'n/a']:
+            return risk
+        if self._contains_benign_idiom(q7):
             return risk
         
         # Check for passive ideation with negation handling
@@ -351,34 +450,55 @@ class MSEAnalyzer:
             risk['severity'] = 'Moderate'
             risk['risk_level'] = 'Moderate'
             risk['triggered_phrases'].append(phrase)
+            risk['evidence'].append(phrase)
         for phrase in passive_matches['negated']:
             risk['negated_phrases'].append(phrase)
         
         # Check for active ideation
         active_matches = self._match_lexicon(q7, self.SUICIDAL_INDICATORS['active'])
         for phrase in active_matches['present']:
+            is_first_person = self._first_person_intent(q7)
             risk['present'] = True
-            risk['type'] = 'Active ideation'
-            risk['severity'] = 'Severe'
-            risk['risk_level'] = 'High'
+            risk['type'] = 'Active ideation' if is_first_person else 'Possible third-person/quoted suicidal content'
+            risk['severity'] = 'Severe' if is_first_person else 'Moderate'
+            risk['risk_level'] = 'High' if is_first_person else 'Moderate'
             risk['triggered_phrases'].append(phrase)
+            risk['evidence'].append(phrase)
         for phrase in active_matches['negated']:
             risk['negated_phrases'].append(phrase)
         
         # Check for self-harm
         self_harm_matches = self._match_lexicon(q7, self.SUICIDAL_INDICATORS['self_harm'])
         for phrase in self_harm_matches['present']:
+            is_first_person = self._first_person_intent(q7)
             risk['present'] = True
             if 'self_harm' not in risk['type']:
                 risk['type'] += ' with self-harm behaviors'
-            risk['risk_level'] = 'High'
+            risk['risk_level'] = 'High' if is_first_person else 'Moderate'
             risk['triggered_phrases'].append(phrase)
+            risk['evidence'].append(phrase)
+
+        # Fuzzy matching for typos in critical self-harm phrases
+        for phrase in self.SUICIDAL_INDICATORS['active'] + self.SUICIDAL_INDICATORS['self_harm']:
+            if phrase in risk["triggered_phrases"]:
+                continue
+            if self._fuzzy_phrase_present(q7, phrase) and not self._contains_benign_idiom(q7):
+                is_first_person = self._first_person_intent(q7)
+                risk['present'] = True
+                risk['risk_level'] = 'High' if is_first_person else 'Moderate'
+                risk['severity'] = 'Severe' if is_first_person else 'Moderate'
+                if 'self harm' in phrase or 'cut' in phrase or 'burn' in phrase:
+                    risk['type'] = 'Active ideation with self-harm behaviors'
+                else:
+                    risk['type'] = 'Active ideation'
+                risk['triggered_phrases'].append(f"fuzzy:{phrase}")
+                risk['evidence'].append(f"fuzzy:{phrase}")
         for phrase in self_harm_matches['negated']:
             risk['negated_phrases'].append(phrase)
         
         # Check for plan
         plan_words = ['plan', 'method', 'how i would', 'going to', 'will use']
-        if any(word in q7 for word in plan_words):
+        if (any(word in q7 for word in plan_words) and not any(b in q7 for b in ['plan my day', 'study plan'])) or self._detect_plan_like(q7):
             risk['plan'] = True
             risk['risk_level'] = 'High'
         
@@ -387,7 +507,11 @@ class MSEAnalyzer:
         for factor in protective:
             if factor in q7:
                 risk['protective_factors'].append(factor)
-        
+
+        meta = self._build_domain_meta(risk['evidence'], risk['negated_phrases'])
+        risk['confidence'] = meta['confidence']
+        risk['evidence'] = meta['evidence']
+
         return risk
     
     def _assess_homicidal_ideation(self, answers: Dict[str, str]) -> Dict[str, Any]:
@@ -400,7 +524,9 @@ class MSEAnalyzer:
             'plan': False,
             'risk_level': 'Low',
             'triggered_phrases': [],
-            'negated_phrases': []
+            'negated_phrases': [],
+            'confidence': 0.25,
+            'evidence': []
         }
         
         if not q8 or q8 in ['no', 'none', 'n/a']:
@@ -412,6 +538,7 @@ class MSEAnalyzer:
             risk['present'] = True
             risk['risk_level'] = 'Moderate'
             risk['triggered_phrases'].extend(harm_matches['present'])
+            risk['evidence'].extend(harm_matches['present'])
         if harm_matches['negated']:
             risk['negated_phrases'].extend(harm_matches['negated'])
         
@@ -422,7 +549,11 @@ class MSEAnalyzer:
         if any(word in q8 for word in ['plan', 'going to', 'will', 'method']):
             risk['plan'] = True
             risk['risk_level'] = 'High'
-        
+
+        meta = self._build_domain_meta(risk['evidence'], risk['negated_phrases'])
+        risk['confidence'] = meta['confidence']
+        risk['evidence'] = meta['evidence']
+
         return risk
     
     def _assess_hallucinations(self, answers: Dict[str, str]) -> Dict[str, Any]:
@@ -433,7 +564,9 @@ class MSEAnalyzer:
             'present': False,
             'types': [],
             'frequency': 'Unknown',
-            'distressing': False
+            'distressing': False,
+            'confidence': 0.25,
+            'evidence': [],
         }
         
         if not q9 or q9 in ['no', 'none', 'n/a']:
@@ -446,6 +579,7 @@ class MSEAnalyzer:
                 hallucinations['present'] = True
                 if h_type not in hallucinations['types']:
                     hallucinations['types'].append(h_type)
+                hallucinations['evidence'].extend(matches['present'])
         
         # Check frequency
         if any(word in q9 for word in ['often', 'frequently', 'always', 'constantly', 'daily']):
@@ -456,7 +590,8 @@ class MSEAnalyzer:
         # Check if distressing
         if any(word in q9 for word in ['scared', 'afraid', 'frightening', 'disturbing', 'distressing']):
             hallucinations['distressing'] = True
-        
+        hallucinations['confidence'] = self._build_domain_meta(hallucinations['evidence'], [])['confidence']
+
         return hallucinations
     
     def _assess_delusions(self, answers: Dict[str, str]) -> Dict[str, Any]:
@@ -466,7 +601,9 @@ class MSEAnalyzer:
         delusions = {
             'present': False,
             'types': [],
-            'fixed': False
+            'fixed': False,
+            'confidence': 0.25,
+            'evidence': [],
         }
         
         if not q10 or q10 in ['no', 'none', 'n/a']:
@@ -478,10 +615,12 @@ class MSEAnalyzer:
                 delusions['present'] = True
                 if d_type not in delusions['types']:
                     delusions['types'].append(d_type)
+                delusions['evidence'].extend(matches['present'])
         
         # Check if beliefs are fixed
         if any(word in q10 for word in ['know it\'s true', 'definitely', 'certain', 'sure']):
             delusions['fixed'] = True
+        delusions['confidence'] = self._build_domain_meta(delusions['evidence'], [])['confidence']
         
         return delusions
     
@@ -650,7 +789,9 @@ class MSEAnalyzer:
                 'immediate_intervention_needed': True,
                 'risk_factors': ['Non-negated suicidal/homicidal content detected (C-SSRS rule)'],
                 'protective_factors': suicide_risk.get('protective_factors', []),
-                'critical_flag': True
+                'critical_flag': True,
+                'confidence': max(suicide_risk.get('confidence', 0.25), homicide_risk.get('confidence', 0.25)),
+                'evidence': suicide_risk.get('evidence', []) + homicide_risk.get('evidence', []),
             }
         
         # Assess other risk factors
@@ -671,7 +812,9 @@ class MSEAnalyzer:
             'immediate_intervention_needed': False,
             'risk_factors': [],
             'protective_factors': [],
-            'critical_flag': False
+            'critical_flag': False,
+            'confidence': 0.3,
+            'evidence': [],
         }
         
         # Substance use
@@ -728,7 +871,21 @@ class MSEAnalyzer:
         
         if suicide_risk.get('protective_factors'):
             risk_assessment['protective_factors'].extend(suicide_risk['protective_factors'])
-        
+
+        # Contradiction detection: denied in Q7 but self-harm/suicide-like content elsewhere.
+        q7 = answers.get('7', '').lower()
+        if any(deny in q7 for deny in ['no', 'none', "don't", "do not"]) and (
+            self._match_lexicon(' '.join(answers.values()).lower(), self.SUICIDAL_INDICATORS['active'])['present']
+            or self._match_lexicon(' '.join(answers.values()).lower(), self.SUICIDAL_INDICATORS['self_harm'])['present']
+        ):
+            risk_assessment['risk_factors'].append('Contradiction detected: denied suicidality in Q7 but concerning content appears elsewhere')
+            risk_assessment['needs_clinician_review'] = True
+            risk_assessment['overall_risk'] = 'Moderate' if risk_assessment['overall_risk'] == 'Low' else risk_assessment['overall_risk']
+
+        meta = self._build_domain_meta(risk_assessment['risk_factors'], [])
+        risk_assessment['confidence'] = meta['confidence']
+        risk_assessment['evidence'] = meta['evidence']
+
         return risk_assessment
     
     def _generate_clinical_impressions(self, answers: Dict[str, str], scales: Dict[str, Any]) -> List[str]:
@@ -797,6 +954,8 @@ class MSEAnalyzer:
         
         if not impressions:
             impressions.append('No acute psychiatric symptoms identified - further assessment recommended')
+        if risk.get('needs_clinician_review'):
+            impressions.append('Needs clinician review due to internal response contradiction.')
         
         return impressions
     
@@ -859,9 +1018,20 @@ class MSEAnalyzer:
         negative_words = ['bad', 'sad', 'depressed', 'anxious', 'worried', 'terrible', 'awful', 
                          'horrible', 'miserable', 'hopeless', 'worthless']
         
-        text_lower = text.lower()
-        pos_count = sum(1 for word in positive_words if word in text_lower)
-        neg_count = sum(1 for word in negative_words if word in text_lower)
+        tokens = self._tokenize(text)
+        pos_count = 0
+        neg_count = 0
+        for i, token in enumerate(tokens):
+            if token in positive_words:
+                if any(t in self.NEGATION_CUES for t in tokens[max(0, i - 2):i]):
+                    neg_count += 1
+                else:
+                    pos_count += 1
+            if token in negative_words:
+                if any(t in self.NEGATION_CUES for t in tokens[max(0, i - 2):i]):
+                    pos_count += 1
+                else:
+                    neg_count += 1
         
         total = pos_count + neg_count
         if total == 0:
@@ -940,6 +1110,7 @@ class MSEAnalyzer:
         report_lines.append("=" * 80)
         report_lines.append("MENTAL STATUS EXAMINATION REPORT")
         report_lines.append("AI-Assisted Analysis")
+        report_lines.append("Heuristic Confidence: Medium (rule-based, non-diagnostic)")
         report_lines.append("=" * 80)
         report_lines.append(f"Assessment Date: {analysis['timestamp']}")
         report_lines.append("")
@@ -1043,6 +1214,7 @@ class MSEAnalyzer:
         report_lines.append("-" * 80)
         risk = analysis['risk_assessment']
         report_lines.append(f"OVERALL RISK LEVEL: {risk['overall_risk']}")
+        report_lines.append(f"Risk Confidence: {risk.get('confidence', 0.0):.2f}")
         report_lines.append(f"Immediate Intervention Needed: {'YES' if risk['immediate_intervention_needed'] else 'No'}")
         report_lines.append(f"Suicide Risk: {risk['suicide_risk_level']}")
         report_lines.append(f"Homicide Risk: {risk['homicide_risk_level']}")
@@ -1104,6 +1276,7 @@ class MSEAnalyzer:
         report_lines.append("NOTE: This is an AI-assisted analysis and should be reviewed by a")
         report_lines.append("qualified mental health professional. This report does not constitute")
         report_lines.append("a formal diagnosis or treatment plan.")
+        report_lines.append("Uncertainty notice: Outputs are heuristic and may contain false positives/negatives.")
         
         return '\n'.join(report_lines)
 
@@ -1134,6 +1307,7 @@ def append_emotion_summary_to_report(formatted_report: str, emotion_summary: Dic
         return "\n".join(lines)
 
     lines.append(f"Sample Size: {emotion_summary.get('sample_size', 0)}")
+    lines.append(f"Total Records: {emotion_summary.get('total_records', emotion_summary.get('sample_size', 0))}")
     lines.append(f"Overall Dominant Emotion: {emotion_summary.get('overall_dominant_emotion')}")
     lines.append("")
 
@@ -1168,6 +1342,7 @@ def append_emotion_summary_to_report(formatted_report: str, emotion_summary: Dic
     lines.append(
         f"Distress Proxy: flag={distress.get('flag')} ratio={distress.get('ratio')} threshold={distress.get('threshold')}"
     )
+    lines.append(f"Distress Proxy Lower Bound: {distress.get('ratio_lower_bound')}")
     lines.append(f"Note: {distress.get('note', 'Soft indicator only; not a diagnosis.')}" )
 
     return "\n".join(lines)

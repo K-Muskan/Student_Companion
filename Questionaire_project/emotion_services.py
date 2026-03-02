@@ -1,3 +1,4 @@
+import math
 from collections import Counter, defaultdict
 from typing import Any, Dict, List
 
@@ -30,8 +31,9 @@ def build_emotion_summary(assessment: Assessment) -> Dict[str, Any]:
                 "note": "Soft indicator only; not a diagnosis.",
             },
         }
-
+    
     dominant_list: List[str] = [r.dominant_emotion for r in records if r.dominant_emotion]
+    valid_records = [r for r in records if r.dominant_emotion]
     dominant_counter = Counter(dominant_list)
     overall_dominant = dominant_counter.most_common(1)[0][0] if dominant_counter else None
 
@@ -55,14 +57,25 @@ def build_emotion_summary(assessment: Assessment) -> Dict[str, Any]:
     for question_id, emotions in by_question.items():
         per_question_dominant[str(question_id)] = Counter(emotions).most_common(1)[0][0]
 
-    distress_count = sum(1 for e in dominant_list if e in DISTRESS_EMOTIONS)
-    sample_size = len(dominant_list)
-    distress_ratio = (distress_count / sample_size) if sample_size else 0.0
-    distress_flag = sample_size >= 5 and distress_ratio >= 0.4
+    weighted_total = 0.0
+    weighted_distress = 0.0
+    for record in valid_records:
+        weight = float(record.confidence) if record.confidence is not None else 0.5
+        weight = min(max(weight, 0.05), 1.0)
+        weighted_total += weight
+        if record.dominant_emotion in DISTRESS_EMOTIONS:
+            weighted_distress += weight
+    sample_size = len(valid_records)
+    distress_ratio = (weighted_distress / weighted_total) if weighted_total else 0.0
+    # Small-sample guard using normal approximation margin.
+    margin = 1.96 * math.sqrt((distress_ratio * (1 - distress_ratio)) / max(sample_size, 1)) if sample_size else 1.0
+    lower_bound = max(0.0, distress_ratio - margin)
+    distress_flag = sample_size >= 8 and lower_bound >= 0.4
 
     return {
         "available": True,
-        "sample_size": len(records),
+        "sample_size": sample_size,
+        "total_records": len(records),
         "overall_dominant_emotion": overall_dominant,
         "distribution_counts": dict(dominant_counter),
         "average_emotion_scores": average_scores,
@@ -71,7 +84,9 @@ def build_emotion_summary(assessment: Assessment) -> Dict[str, Any]:
             "enabled": True,
             "flag": distress_flag,
             "ratio": round(distress_ratio, 4),
+            "ratio_lower_bound": round(lower_bound, 4),
             "threshold": 0.4,
             "note": "Soft indicator only; not a diagnosis.",
+            "min_valid_frames": 8,
         },
     }
