@@ -185,33 +185,55 @@ def _get_or_create_assessment(request):
     assessment_id = request.session.get("assessment_id")
     if assessment_id:
         assessment = Assessment.objects.filter(id=assessment_id).first()
-        if assessment:
+        if assessment and not assessment.is_completed:
             return assessment
 
-    cycle = int(request.session.get("assessment_cycle", 1))
-    assessment_token = f"{request.session.session_key}:{cycle}"
+    try:
+        cycle = max(1, int(request.session.get("assessment_cycle", 1)))
+    except (TypeError, ValueError):
+        cycle = 1
+    user = request.user if request.user.is_authenticated else None
     with transaction.atomic():
-        assessment, _ = Assessment.objects.get_or_create(
-            assessment_token=assessment_token,
-            defaults={
-                "user": request.user if request.user.is_authenticated else None,
-                "session_key": request.session.session_key,
-            },
-        )
+        # Reuse active token if present, but roll forward if the token points to
+        # a completed attempt to avoid write conflicts.
+        while True:
+            assessment_token = f"{request.session.session_key}:{cycle}"
+            assessment, _ = Assessment.objects.get_or_create(
+                assessment_token=assessment_token,
+                defaults={
+                    "user": user,
+                    "session_key": request.session.session_key,
+                },
+            )
+            if not assessment.is_completed:
+                if assessment.session_key != request.session.session_key:
+                    assessment.session_key = request.session.session_key
+                    assessment.save(update_fields=["session_key"])
+                if user and assessment.user_id != user.id:
+                    assessment.user = user
+                    assessment.save(update_fields=["user"])
+                break
+            cycle += 1
 
     request.session["assessment_id"] = assessment.id
+    request.session["assessment_cycle"] = cycle
     request.session.modified = True
     return assessment
 
 
 def _ensure_questions_in_db():
     """Ensure all questions from VIDEOS are in the database"""
-    missing = []
-    for video in VIDEOS:
-        if not Question.objects.filter(id=video["id"]).exists():
+    try:
+        ids = [int(video["id"]) for video in VIDEOS if "id" in video]
+        existing_ids = set(Question.objects.filter(id__in=ids).values_list("id", flat=True))
+        missing = []
+        for video in VIDEOS:
+            qid = int(video["id"])
+            if qid in existing_ids:
+                continue
             missing.append(
                 Question(
-                    id=video["id"],
+                    id=qid,
                     video_file=video.get("file", ""),
                     question_text=video.get("question", ""),
                     mse_category=video.get("mse_category", ""),
@@ -219,8 +241,33 @@ def _ensure_questions_in_db():
                     is_active=True,
                 )
             )
-    if missing:
-        Question.objects.bulk_create(missing, ignore_conflicts=True)
+        if missing:
+            Question.objects.bulk_create(missing, ignore_conflicts=True)
+    except Exception:
+        logger.exception("question_seed_failed")
+
+
+def _get_or_seed_question(qid):
+    """Get question row or seed it from VIDEOS as a fallback."""
+    question = Question.objects.filter(id=qid).first()
+    if question is not None:
+        return question
+    if not _is_valid_qid(int(qid)):
+        return None
+    video = _get_video(int(qid))
+    try:
+        question = Question.objects.create(
+            id=int(video["id"]),
+            video_file=video.get("file", ""),
+            question_text=video.get("question", ""),
+            mse_category=video.get("mse_category", ""),
+            is_final=video.get("is_final", False),
+            is_active=True,
+        )
+        logger.warning("question_seeded_on_demand", extra={"qid": int(qid)})
+    except Exception:
+        question = Question.objects.filter(id=qid).first()
+    return question
 
 
 def _snapshot_answers(assessment, session_answers):
@@ -238,7 +285,7 @@ def _persist_session_answers(assessment, session_answers):
         qid_int = int(qid)
         if not _is_valid_qid(qid_int):
             continue
-        question = Question.objects.filter(id=qid_int).first()
+        question = _get_or_seed_question(qid_int)
         if question is None:
             continue
         Answer.objects.update_or_create(
@@ -302,6 +349,7 @@ def _get_report_assessment(request):
 def index(request):
     """Landing page with intro video - serves index.html"""
     _init_session(request.session)
+    _ensure_questions_in_db()
     context = {}
     return render(request, 'Questionaire_project/index.html', context)
 
@@ -309,6 +357,7 @@ def index(request):
 @ensure_csrf_cookie
 def question_page(request, qid):
     """Display a question video and answer form"""
+    _ensure_questions_in_db()
 
     if not _is_valid_qid(qid):
         return redirect('questionnaire:index')
@@ -338,6 +387,10 @@ def question_page(request, qid):
         'previous_answer': previous_answer,
         'assessment_id': assessment.id,
         'emotion_max_reconnect_attempts': int(getattr(settings, "EMOTION_MAX_RECONNECT_ATTEMPTS", 5)),
+        'emotion_heartbeat_interval_seconds': int(getattr(settings, "EMOTION_HEARTBEAT_INTERVAL_SECONDS", 15)),
+        'emotion_heartbeat_grace_seconds': int(getattr(settings, "EMOTION_HEARTBEAT_GRACE_SECONDS", 90)),
+        'emotion_client_max_frame_width': int(getattr(settings, "EMOTION_CLIENT_MAX_FRAME_WIDTH", 640)),
+        'emotion_client_max_encoded_bytes': int(getattr(settings, "EMOTION_CLIENT_MAX_ENCODED_BYTES", 900000)),
     }
 
     return render(request, 'Questionaire_project/question.html', context)
@@ -352,6 +405,7 @@ def save_answer(request):
         qid = data.get('qid')
         answer = data.get('answer', '')
         max_chars = int(getattr(settings, "ASSESSMENT_MAX_ANSWER_CHARS", 5000))
+        payload_assessment_id = data.get("assessment_id")
 
         if not qid:
             return JsonResponse({'status': 'error', 'message': 'Question ID is required'}, status=400)
@@ -371,7 +425,23 @@ def save_answer(request):
         _set_answer(request.session, str(qid), answer)
 
         with transaction.atomic():
+            _ensure_questions_in_db()
             assessment = _get_or_create_assessment(request)
+            if payload_assessment_id is not None:
+                try:
+                    payload_assessment_id = int(payload_assessment_id)
+                except (TypeError, ValueError):
+                    return _safe_error_response("Invalid assessment ID", status=400)
+                if payload_assessment_id != assessment.id:
+                    logger.warning(
+                        "save_answer_assessment_mismatch",
+                        extra={
+                            "correlation_id": cid,
+                            "session_assessment_id": assessment.id,
+                            "payload_assessment_id": payload_assessment_id,
+                            "qid": qid_int,
+                        },
+                    )
             if assessment.is_completed:
                 logger.warning(
                     "write_rejected_completed_assessment",
@@ -379,9 +449,17 @@ def save_answer(request):
                 )
                 return _safe_error_response("Assessment is already finalized", status=409)
 
-            question = Question.objects.filter(id=qid_int).first()
+            question = _get_or_seed_question(qid_int)
             if question is None:
-                return _safe_error_response("Question catalog missing. Please contact support.", status=503)
+                # Keep session answer even if DB catalog temporarily unavailable.
+                logger.error("question_catalog_unavailable", extra={"correlation_id": cid, "qid": qid_int})
+                return JsonResponse(
+                    {
+                        "status": "success",
+                        "message": "Answer saved in session. Question catalog will sync shortly.",
+                        "assessment_id": assessment.id,
+                    }
+                )
 
             Answer.objects.update_or_create(
                 assessment=assessment,
@@ -410,6 +488,7 @@ def save_answer(request):
 def complete(request):
     """Completion page showing MSE analysis report"""
     cid = _correlation_id(request)
+    _ensure_questions_in_db()
     session_answers = _get_answers(request.session)
 
     assessment_id = request.session.get("assessment_id")
@@ -501,6 +580,7 @@ def complete(request):
 @ensure_csrf_cookie
 def generate_mse_report(request):
     """Generate AI-analyzed Mental Status Exam report"""
+    _ensure_questions_in_db()
     session_answers = _get_answers(request.session)
 
     assessment_id = request.session.get("assessment_id")

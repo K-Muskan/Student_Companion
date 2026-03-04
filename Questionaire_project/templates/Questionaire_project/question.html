@@ -875,10 +875,11 @@
                 credentials: 'same-origin',
                 body: JSON.stringify({
                     qid: questionId,
-                    answer: answer
+                    answer: answer,
+                    assessment_id: assessmentId
                 })
             })
-            .then(response => response.json())
+            .then(response => response.json().catch(() => ({ status: 'error', message: `HTTP ${response.status}` })))
             .then(data => {
                 if (data.status === 'success') {
                     if (callback) callback();
@@ -936,6 +937,9 @@
                 this.visibilityBound = false;
                 this.inflightFrame = false;
                 this.inflightTimer = null;
+                this.intentionalSocketClose = false;
+                this.socketCloseReason = null;
+                this.connecting = false;
 
                 this.lockKey = `emotion_stream_lock_${assessmentId}`;
                 this.tabId = (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : String(Math.random()).slice(2);
@@ -990,7 +994,11 @@
 
                 this.running = true;
                 this.reconnectAttempt = 0;
-                await this.ensureCamera();
+                const cameraReady = await this.ensureCamera();
+                if (!cameraReady) {
+                    this.setBadge('warning', 'Waiting for camera...');
+                    this.scheduleCameraRecovery(1200);
+                }
                 this.connectSocket();
                 this.startCaptureLoop();
                 this.startHeartbeat();
@@ -1016,6 +1024,8 @@
 
                 if (this.socket) {
                     try {
+                        this.intentionalSocketClose = true;
+                        this.socketCloseReason = 'stop';
                         this.socket.close(1000, 'client_stop');
                     } catch (e) {
                         console.warn('socket close failed', e);
@@ -1032,6 +1042,8 @@
                 if (preview) preview.srcObject = null;
 
                 this.connectionReady = false;
+                this.connecting = false;
+                this.socketCloseReason = null;
                 this.setBadge('disconnected', 'Camera disconnected');
                 this.releaseTabLock();
             }
@@ -1074,6 +1086,10 @@
                     return false;
                 }
                 try {
+                    if (this.stream) {
+                        this.stream.getTracks().forEach((track) => track.stop());
+                        this.stream = null;
+                    }
                     const stream = await navigator.mediaDevices.getUserMedia({
                         video: {
                             width: { ideal: 640 },
@@ -1095,7 +1111,18 @@
                         this.scheduleCameraRecovery(1500);
                     } else if (name === 'OverconstrainedError') {
                         this.setBadge('warning', 'Camera constraint fallback');
-                        this.scheduleCameraRecovery(1000);
+                        try {
+                            const fallbackStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+                            this.stream = fallbackStream;
+                            const preview = document.getElementById('cameraPreview');
+                            if (preview) preview.srcObject = fallbackStream;
+                            this.attachTrackHandlers(fallbackStream);
+                            this.setBadge('connected', 'Camera connected');
+                            return true;
+                        } catch (fallbackErr) {
+                            console.warn('camera fallback failed', fallbackErr);
+                            this.scheduleCameraRecovery(1000);
+                        }
                     } else {
                         this.setBadge('warning', 'Camera permission/device error');
                     }
@@ -1118,7 +1145,10 @@
                 this.cameraRecoveryTimer = setTimeout(async () => {
                     this.restartingCamera = true;
                     try {
-                        await this.ensureCamera();
+                        const ready = await this.ensureCamera();
+                        if (ready && (!this.socket || this.socket.readyState === WebSocket.CLOSED)) {
+                            this.scheduleReconnect('camera_recovered');
+                        }
                     } finally {
                         this.restartingCamera = false;
                     }
@@ -1127,15 +1157,32 @@
 
             connectSocket() {
                 if (!this.running) return;
+                if (this.connecting) return;
+                if (this.socket && this.socket.readyState === WebSocket.CLOSING) return;
                 if (this.socket && (this.socket.readyState === WebSocket.OPEN || this.socket.readyState === WebSocket.CONNECTING)) {
+                    return;
+                }
+                if (this.socket && this.socket.readyState !== WebSocket.CLOSED) {
+                    try {
+                        this.intentionalSocketClose = true;
+                        this.socketCloseReason = 'replace';
+                        this.socket.close(1000, 'replace_socket');
+                    } catch (e) {
+                        console.warn('replace socket close failed', e);
+                    }
                     return;
                 }
                 const scheme = window.location.protocol === 'https:' ? 'wss' : 'ws';
                 const url = `${scheme}://${window.location.host}/ws/emotion/${assessmentId}/`;
-                this.socket = new WebSocket(url);
+                this.connecting = true;
+                this.intentionalSocketClose = false;
+                const socket = new WebSocket(url);
+                this.socket = socket;
 
-                this.socket.onopen = () => {
+                socket.onopen = () => {
                     this.reconnectAttempt = 0;
+                    this.connecting = false;
+                    this.socketCloseReason = null;
                     this.connectionReady = true;
                     this.lastPongAt = Date.now();
                     this.lastServerActivityAt = Date.now();
@@ -1143,7 +1190,7 @@
                     this.setBadge('connected', 'Camera connected');
                 };
 
-                this.socket.onmessage = (event) => {
+                socket.onmessage = (event) => {
                     try {
                         const data = JSON.parse(event.data);
                         this.lastServerActivityAt = Date.now();
@@ -1169,6 +1216,9 @@
                         if (data.type === 'frame_result' && data.status === 'error') {
                             this.setBadge('warning', 'Analyzer error');
                         }
+                        if (data.type === 'frame_result' && data.status === 'rate_limited') {
+                            this.setBadge('warning', 'Frame rate limited');
+                        }
                         if (data.type === 'frame_result') {
                             this.inflightFrame = false;
                             if (this.inflightTimer) {
@@ -1181,9 +1231,22 @@
                     }
                 };
 
-                this.socket.onclose = () => {
+                socket.onclose = () => {
+                    this.connecting = false;
+                    if (this.socket === socket) {
+                        this.socket = null;
+                    }
                     if (!this.running) return;
                     this.connectionReady = false;
+                    if (this.intentionalSocketClose) {
+                        const closeReason = this.socketCloseReason;
+                        this.intentionalSocketClose = false;
+                        this.socketCloseReason = null;
+                        if (this.running && closeReason === 'replace') {
+                            this.connectSocket();
+                        }
+                        return;
+                    }
                     this.setBadge('warning', 'Socket disconnected');
                     this.inflightFrame = false;
                     if (this.inflightTimer) {
@@ -1193,7 +1256,8 @@
                     this.scheduleReconnect('socket_close');
                 };
 
-                this.socket.onerror = () => {
+                socket.onerror = () => {
+                    this.connecting = false;
                     this.connectionReady = false;
                     this.setBadge('warning', 'Socket error');
                 };
@@ -1209,8 +1273,12 @@
                 const jitter = Math.floor(Math.random() * 250);
                 const waitMs = Math.min(1000 * (2 ** this.reconnectAttempt), 8000) + jitter;
                 this.reconnectAttempt += 1;
-                this.reconnectTimer = setTimeout(() => {
+                this.reconnectTimer = setTimeout(async () => {
                     this.reconnectTimer = null;
+                    if (this.socket && this.socket.readyState === WebSocket.OPEN) {
+                        return;
+                    }
+                    await this.ensureCamera();
                     this.connectSocket();
                 }, waitMs);
             }
@@ -1298,7 +1366,16 @@
                         this.inflightFrame = false;
                         this.inflightTimer = null;
                     }, 10000);
-                    this.socket.send(JSON.stringify(payload));
+                    try {
+                        this.socket.send(JSON.stringify(payload));
+                    } catch (e) {
+                        this.inflightFrame = false;
+                        if (this.inflightTimer) {
+                            clearTimeout(this.inflightTimer);
+                            this.inflightTimer = null;
+                        }
+                        this.scheduleReconnect('frame_send_failed');
+                    }
                 }, this.frameIntervalMs);
             }
 
@@ -1322,31 +1399,35 @@
         window.addEventListener('beforeunload', () => {
             if (emotionManager.running) emotionManager.stop();
         });
+        window.addEventListener('pagehide', () => {
+            if (emotionManager.running) emotionManager.stop();
+        });
 
-        const originalSaveAndNext = saveAndNext;
         saveAndNext = function () {
             if (!emotionManager.isReady()) {
                 alert('Camera must stay connected for the full interview before moving to next question.');
                 return;
             }
-            if (emotionManager.running) emotionManager.stop();
-            originalSaveAndNext();
+            saveAnswer(() => {
+                if (emotionManager.running) emotionManager.stop();
+                window.location.href = '/assessment/question/' + (questionId + 1) + '/';
+            });
         };
 
-        const originalSubmitAndComplete = submitAndComplete;
         submitAndComplete = function () {
             if (!emotionManager.isReady()) {
                 alert('Camera must stay connected for the full interview before submitting assessment.');
                 return;
             }
-            if (emotionManager.running) emotionManager.stop();
-            originalSubmitAndComplete();
+            saveAnswer(() => {
+                if (emotionManager.running) emotionManager.stop();
+                window.location.href = '/assessment/question/' + (questionId + 1) + '/';
+            });
         };
 
-        const originalGoToPrevious = goToPrevious;
         goToPrevious = function () {
             if (emotionManager.running) emotionManager.stop();
-            originalGoToPrevious();
+            window.location.href = '/assessment/question/' + (questionId - 1) + '/';
         };
     </script>
 </body>

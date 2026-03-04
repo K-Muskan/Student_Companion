@@ -63,9 +63,30 @@ def try_acquire_connection(
     lease_seen_key = _lease_seen_key(lease_id)
 
     cache.add(ip_key, 0, ttl_seconds)
+    now = int(time.time())
     existing_lease = cache.get(assessment_key)
     if existing_lease and existing_lease != lease_id and int(max_assessment) <= 1:
-        return False
+        existing_seen = cache.get(_lease_seen_key(str(existing_lease)))
+        existing_meta_raw = cache.get(_lease_meta_key(str(existing_lease)))
+        stale = False
+        try:
+            existing_seen_int = int(existing_seen)
+            stale = (now - existing_seen_int) > int(ttl_seconds)
+        except (TypeError, ValueError):
+            stale = True
+
+        same_ip = False
+        if existing_meta_raw:
+            try:
+                existing_meta = json.loads(existing_meta_raw)
+                same_ip = str(existing_meta.get("client_ip", "") or "") == str(client_ip or "")
+            except (TypeError, ValueError):
+                same_ip = False
+
+        if stale or same_ip:
+            release_connection(str(existing_lease), ttl_seconds=ttl_seconds)
+        else:
+            return False
 
     ip_count = int(cache.get(ip_key, 0))
     if ip_count >= int(max_ip):
@@ -76,7 +97,6 @@ def try_acquire_connection(
     except ValueError:
         cache.set(ip_key, 1, ttl_seconds)
 
-    now = int(time.time())
     cache.set(assessment_key, lease_id, ttl_seconds)
     cache.set(lease_meta_key, json.dumps({"client_ip": client_ip, "assessment_id": assessment_id}), ttl_seconds)
     cache.set(lease_seen_key, now, ttl_seconds)
@@ -127,6 +147,9 @@ def touch_connection(lease_id: str, ttl_seconds: int = 120):
     except (TypeError, ValueError):
         return
     assessment_id = meta.get("assessment_id")
+    client_ip = str(meta.get("client_ip", "") or "")
+    if client_ip:
+        cache.set(_ip_count_key(client_ip), max(1, int(cache.get(_ip_count_key(client_ip), 1))), ttl_seconds)
     if assessment_id is not None:
         cache.set(_assessment_lease_key(int(assessment_id)), lease_id, ttl_seconds)
 
@@ -134,12 +157,13 @@ def touch_connection(lease_id: str, ttl_seconds: int = 120):
 def consume_frame_quota(assessment_id: int, max_frames: int, window_seconds: int) -> Tuple[bool, int]:
     _warn_degraded_once()
     quota_key = _key(f"assessment:{assessment_id}:quota")
-    count = cache.get(quota_key)
-    if count is None:
-        cache.set(quota_key, 1, window_seconds)
+    if cache.add(quota_key, 1, window_seconds):
         return True, 1
-    count = int(count)
-    if count >= int(max_frames):
+    try:
+        count = int(cache.incr(quota_key))
+    except Exception:
+        count = int(cache.get(quota_key, 0)) + 1
+        cache.set(quota_key, count, window_seconds)
+    if count > int(max_frames):
         return False, count
-    cache.set(quota_key, count + 1, window_seconds)
-    return True, count + 1
+    return True, count

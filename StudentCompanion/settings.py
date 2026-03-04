@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
 import os
+import importlib.util
 
 from pathlib import Path
 
@@ -33,7 +34,6 @@ ALLOWED_HOSTS = ["crunodal-libbie-preconsciously.ngrok-free.dev","127.0.0.1",
 
 # Application definition
 INSTALLED_APPS = [
-    'daphne',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -51,6 +51,11 @@ INSTALLED_APPS = [
     'Questionaire_project',
 ]
 
+# Allow local development to run even if Daphne is not installed in the active interpreter.
+# Channels will still work with Django's dev server for local testing.
+if importlib.util.find_spec("daphne") is not None:
+    INSTALLED_APPS.insert(0, "daphne")
+
 
 SITE_ID = 1
 
@@ -61,7 +66,10 @@ SOCIALACCOUNT_PROVIDERS = {
             'email',
         ],
         'AUTH_PARAMS': {
-            'access_type': 'online',
+            # Force Google to issue/refresh offline token deterministically.
+            'access_type': 'offline',
+            'prompt': 'consent',
+            'include_granted_scopes': 'true',
         },
         'APP': {
             'client_id': "799103574658-8kdno7qkq5j2pgd03t3jf4ooa5l6s576.apps.googleusercontent.com",
@@ -168,7 +176,8 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
-STATIC_URL = 'static/'
+STATIC_URL = '/static/'
+STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
@@ -178,6 +187,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 ACCOUNT_LOGIN_METHODS = {'email'}
 ACCOUNT_SIGNUP_FIELDS = ['email*', 'password1*', 'password2*']
 ACCOUNT_EMAIL_VERIFICATION = 'none'
+SOCIALACCOUNT_STORE_TOKENS = True
 
 LOGIN_REDIRECT_URL = '/dashboard/'
 LOGOUT_REDIRECT_URL = '/'

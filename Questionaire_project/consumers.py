@@ -121,7 +121,8 @@ class EmotionStreamConsumer(AsyncJsonWebsocketConsumer):
 
     async def receive_json(self, content: Dict[str, Any], **kwargs):
         self.last_message_at = time.monotonic()
-        touch_connection(self.lease_id, ttl_seconds=max(30, self.connection_ttl_seconds))
+        if self._connection_acquired:
+            touch_connection(self.lease_id, ttl_seconds=max(30, self.connection_ttl_seconds))
         msg_type = content.get("type")
         if msg_type == "ping":
             self.last_ping_at = time.monotonic()
@@ -149,6 +150,18 @@ class EmotionStreamConsumer(AsyncJsonWebsocketConsumer):
             await self.send_json({"type": "error", "message": "image_base64 missing", "correlation_id": self.correlation_id})
             return
 
+        now = time.monotonic()
+        if self.processing:
+            await self.send_json(
+                {"type": "frame_result", "frame_id": frame_id, "status": "dropped", "reason": "busy", "correlation_id": self.correlation_id}
+            )
+            return
+        if now - self.last_analyzed_at < self.analysis_interval:
+            await self.send_json(
+                {"type": "frame_result", "frame_id": frame_id, "status": "dropped", "reason": "throttled", "correlation_id": self.correlation_id}
+            )
+            return
+
         quota_ok, quota_count = consume_frame_quota(
             self.assessment_id,
             self.max_frames_per_assessment_window,
@@ -169,18 +182,6 @@ class EmotionStreamConsumer(AsyncJsonWebsocketConsumer):
                 extra={"correlation_id": self.correlation_id, "assessment_id": self.assessment_id, "quota_count": quota_count},
             )
             await self.send_json({"type": "frame_result", "frame_id": frame_id, "status": STATUS_RATE_LIMITED, "correlation_id": self.correlation_id})
-            return
-
-        now = time.monotonic()
-        if self.processing:
-            await self.send_json(
-                {"type": "frame_result", "frame_id": frame_id, "status": "dropped", "reason": "busy", "correlation_id": self.correlation_id}
-            )
-            return
-        if now - self.last_analyzed_at < self.analysis_interval:
-            await self.send_json(
-                {"type": "frame_result", "frame_id": frame_id, "status": "dropped", "reason": "throttled", "correlation_id": self.correlation_id}
-            )
             return
 
         self.processing = True
@@ -210,6 +211,8 @@ class EmotionStreamConsumer(AsyncJsonWebsocketConsumer):
             }
             if result.get("message"):
                 payload["message"] = result["message"]
+            if result.get("details"):
+                payload["details"] = result["details"]
             logger.info(
                 "emotion_frame_processed",
                 extra={
@@ -298,8 +301,16 @@ class EmotionStreamConsumer(AsyncJsonWebsocketConsumer):
             return self._error_result("invalid_dimensions")
         if h > self.max_height or w > self.max_width or (h * w) > self.max_pixels:
             return self._error_result("oversize_dimensions")
-        if not self._passes_quality_gate(frame):
-            return {"status": STATUS_QUALITY_LOW, "dominant_emotion": "", "emotion_scores": {}, "confidence": None}
+        passes_quality, quality_meta = self._passes_quality_gate(frame)
+        if not passes_quality:
+            return {
+                "status": STATUS_QUALITY_LOW,
+                "dominant_emotion": "",
+                "emotion_scores": {},
+                "confidence": None,
+                "message": quality_meta.get("reason", "quality_low"),
+                "details": quality_meta,
+            }
 
         worker = get_inference_worker(self.inference_max_memory_mb)
         request_id = uuid.uuid4().hex
@@ -315,31 +326,49 @@ class EmotionStreamConsumer(AsyncJsonWebsocketConsumer):
             },
         )
         if not queued:
-            return self._error_result("worker_queue_full")
+            return self._error_result("worker_queue_full", {"reason": "inference_backpressure"})
 
         worker_result = await asyncio.to_thread(worker.wait_for, request_id, self.inference_timeout)
         if worker_result is None:
             await asyncio.to_thread(worker.register_timeout, self.inference_restart_threshold)
             logger.warning("emotion_inference_timeout", extra={"correlation_id": self.correlation_id, "assessment_id": self.assessment_id})
-            return self._error_result("timeout")
+            return self._error_result("timeout", {"reason": "inference_timeout"})
 
         if worker_result.get("status") != WORKER_STATUS_OK:
+            worker_error = str(worker_result.get("error", "worker_error"))[:200]
+            lower_err = worker_error.lower()
+            if "no module named 'deepface'" in lower_err or "deepface_import_failed" in lower_err:
+                # Import/config issue should not trigger crash-restart loops.
+                return self._error_result("model_unavailable", {"reason": worker_error})
             if worker_result.get("error") == "worker_crashed":
                 await asyncio.to_thread(worker.register_crash, self.inference_restart_threshold)
-            return self._error_result("worker_error")
+            else:
+                await asyncio.to_thread(worker.register_error, self.inference_restart_threshold)
+            return self._error_result("worker_error", {"reason": worker_error})
+        await asyncio.to_thread(worker.register_success)
 
         faces = worker_result.get("faces") or []
         if not faces:
-            return {"status": STATUS_NO_FACE, "dominant_emotion": "", "emotion_scores": {}, "confidence": None}
+            return {"status": STATUS_NO_FACE, "dominant_emotion": "", "emotion_scores": {}, "confidence": None, "message": "no_face_detected"}
         if len(faces) > 1 and self.subject_box is None:
-            return {"status": STATUS_NO_FACE, "dominant_emotion": "", "emotion_scores": {}, "confidence": None}
+            return {"status": STATUS_NO_FACE, "dominant_emotion": "", "emotion_scores": {}, "confidence": None, "message": "multiple_faces_detected"}
 
         best_face = self._pick_subject_face(faces)
         if best_face is None:
-            return {"status": STATUS_NO_FACE, "dominant_emotion": "", "emotion_scores": {}, "confidence": None}
+            return {"status": STATUS_NO_FACE, "dominant_emotion": "", "emotion_scores": {}, "confidence": None, "message": "subject_tracking_lost"}
         confidence = self._face_conf(best_face)
         if confidence < self.min_face_confidence:
-            return {"status": STATUS_QUALITY_LOW, "dominant_emotion": "", "emotion_scores": {}, "confidence": confidence}
+            return {
+                "status": STATUS_QUALITY_LOW,
+                "dominant_emotion": "",
+                "emotion_scores": {},
+                "confidence": confidence,
+                "message": "face_confidence_low",
+                "details": {
+                    "face_confidence": confidence,
+                    "min_face_confidence": self.min_face_confidence,
+                },
+            }
 
         dominant_emotion = str(best_face.get("dominant_emotion", "") or "")
         raw_scores = best_face.get("emotion", {}) or {}
@@ -350,7 +379,13 @@ class EmotionStreamConsumer(AsyncJsonWebsocketConsumer):
             except (TypeError, ValueError):
                 continue
         if not dominant_emotion:
-            return {"status": STATUS_NO_FACE, "dominant_emotion": "", "emotion_scores": emotion_scores, "confidence": confidence}
+            return {
+                "status": STATUS_NO_FACE,
+                "dominant_emotion": "",
+                "emotion_scores": emotion_scores,
+                "confidence": confidence,
+                "message": "dominant_emotion_missing",
+            }
         return {
             "status": STATUS_OK,
             "dominant_emotion": dominant_emotion,
@@ -371,14 +406,38 @@ class EmotionStreamConsumer(AsyncJsonWebsocketConsumer):
         except binascii.Error as exc:
             raise ValueError("invalid base64 payload") from exc
 
-    def _error_result(self, message: str) -> Dict[str, Any]:
-        return {"status": STATUS_ERROR, "message": message, "dominant_emotion": "", "emotion_scores": {}, "confidence": None}
+    def _error_result(self, message: str, details: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+        payload = {"status": STATUS_ERROR, "message": message, "dominant_emotion": "", "emotion_scores": {}, "confidence": None}
+        if details:
+            payload["details"] = details
+        return payload
 
-    def _passes_quality_gate(self, frame: np.ndarray) -> bool:
+    def _passes_quality_gate(self, frame: np.ndarray) -> Tuple[bool, Dict[str, Any]]:
         gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
         blur_var = float(cv2.Laplacian(gray, cv2.CV_64F).var())
         brightness = float(np.mean(gray))
-        return blur_var >= self.min_blur_variance and self.min_brightness <= brightness <= self.max_brightness
+        if blur_var < self.min_blur_variance:
+            return False, {
+                "reason": "blur_low",
+                "blur_variance": blur_var,
+                "min_blur_variance": self.min_blur_variance,
+                "brightness": brightness,
+            }
+        if brightness < self.min_brightness:
+            return False, {
+                "reason": "brightness_low",
+                "brightness": brightness,
+                "min_brightness": self.min_brightness,
+                "blur_variance": blur_var,
+            }
+        if brightness > self.max_brightness:
+            return False, {
+                "reason": "brightness_high",
+                "brightness": brightness,
+                "max_brightness": self.max_brightness,
+                "blur_variance": blur_var,
+            }
+        return True, {"reason": "ok", "blur_variance": blur_var, "brightness": brightness}
 
     def _face_conf(self, face: Dict[str, Any]) -> float:
         value = face.get("face_confidence")
@@ -489,6 +548,11 @@ class EmotionStreamConsumer(AsyncJsonWebsocketConsumer):
         assessment = Assessment.objects.filter(id=assessment_id).first()
         if not assessment:
             return
+        if question_id is not None:
+            try:
+                question_id = int(question_id)
+            except (TypeError, ValueError):
+                question_id = None
         question = Question.objects.filter(id=question_id).first() if question_id is not None else None
         client_ts = parse_datetime(client_ts_raw) if client_ts_raw else None
         EmotionRecord.objects.create(

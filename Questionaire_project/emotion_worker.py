@@ -31,6 +31,12 @@ def _set_process_memory_limit(max_mb: int):
 
 def _worker_main(input_queue: "mp.Queue", output_queue: "mp.Queue", max_memory_mb: int):
     os.environ.setdefault("TF_CPP_MIN_LOG_LEVEL", "2")
+    def _safe_put(payload: Dict[str, Any]):
+        try:
+            output_queue.put(payload, timeout=0.2)
+        except Exception:
+            return
+
     try:
         import warnings
 
@@ -66,17 +72,17 @@ def _worker_main(input_queue: "mp.Queue", output_queue: "mp.Queue", max_memory_m
         if not request_id:
             continue
         if deepface is None:
-            output_queue.put({"request_id": request_id, "status": STATUS_ERROR, "error": deepface_error or "deepface_import_failed"})
+            _safe_put({"request_id": request_id, "status": STATUS_ERROR, "error": deepface_error or "deepface_import_failed"})
             continue
         if not isinstance(image_bytes, (bytes, bytearray)):
-            output_queue.put({"request_id": request_id, "status": STATUS_ERROR, "error": "invalid_image_bytes"})
+            _safe_put({"request_id": request_id, "status": STATUS_ERROR, "error": "invalid_image_bytes"})
             continue
 
         try:
             np_arr = np.frombuffer(image_bytes, dtype=np.uint8)
             frame = cv2.imdecode(np_arr, cv2.IMREAD_COLOR)
             if frame is None:
-                output_queue.put({"request_id": request_id, "status": STATUS_ERROR, "error": "decode_failed"})
+                _safe_put({"request_id": request_id, "status": STATUS_ERROR, "error": "decode_failed"})
                 continue
 
             analysis = deepface.analyze(
@@ -86,9 +92,9 @@ def _worker_main(input_queue: "mp.Queue", output_queue: "mp.Queue", max_memory_m
                 detector_backend="opencv",
             )
             faces = analysis if isinstance(analysis, list) else [analysis]
-            output_queue.put({"request_id": request_id, "status": STATUS_OK, "faces": faces})
+            _safe_put({"request_id": request_id, "status": STATUS_OK, "faces": faces})
         except Exception as exc:
-            output_queue.put({"request_id": request_id, "status": STATUS_ERROR, "error": str(exc)})
+            _safe_put({"request_id": request_id, "status": STATUS_ERROR, "error": str(exc)})
 
 
 class EmotionInferenceWorker:
@@ -99,9 +105,11 @@ class EmotionInferenceWorker:
         self.output_queue: Optional[mp.Queue] = None
         self.process: Optional[mp.Process] = None
         self._pending: Dict[str, Dict[str, Any]] = {}
+        self._pending_ts: Dict[str, float] = {}
         self._lock = threading.Lock()
         self._timeout_failures = 0
         self._crash_failures = 0
+        self._error_failures = 0
 
     def ensure_running(self):
         if self.process is not None and self.process.is_alive():
@@ -117,8 +125,10 @@ class EmotionInferenceWorker:
         self.process.start()
         with self._lock:
             self._pending = {}
+            self._pending_ts = {}
             self._timeout_failures = 0
             self._crash_failures = 0
+            self._error_failures = 0
 
     def stop(self):
         if self.input_queue is not None:
@@ -158,12 +168,26 @@ class EmotionInferenceWorker:
             if req:
                 with self._lock:
                     self._pending[str(req)] = item
+                    self._pending_ts[str(req)] = time.monotonic()
+
+    def _cleanup_stale_pending(self, max_age_seconds: float):
+        now = time.monotonic()
+        stale = []
+        with self._lock:
+            for req, ts in self._pending_ts.items():
+                if now - ts > max_age_seconds:
+                    stale.append(req)
+            for req in stale:
+                self._pending.pop(req, None)
+                self._pending_ts.pop(req, None)
 
     def wait_for(self, request_id: str, timeout: float) -> Optional[Dict[str, Any]]:
         deadline = time.monotonic() + max(0.01, timeout)
         while time.monotonic() < deadline:
+            self._cleanup_stale_pending(max_age_seconds=max(5.0, timeout * 3))
             with self._lock:
                 existing = self._pending.pop(request_id, None)
+                self._pending_ts.pop(request_id, None)
                 if existing is not None:
                     return existing
             self._read_output_once(timeout=min(0.15, max(0.01, deadline - time.monotonic())))
@@ -189,3 +213,17 @@ class EmotionInferenceWorker:
         if failures >= max(1, int(restart_threshold)):
             logger.warning("emotion_worker_restart_crash_threshold", extra={"failures": failures})
             self.restart()
+
+    def register_error(self, restart_threshold: int):
+        with self._lock:
+            self._error_failures += 1
+            failures = self._error_failures
+        if failures >= max(1, int(restart_threshold)):
+            logger.warning("emotion_worker_restart_error_threshold", extra={"failures": failures})
+            self.restart()
+
+    def register_success(self):
+        with self._lock:
+            self._timeout_failures = 0
+            self._crash_failures = 0
+            self._error_failures = 0
