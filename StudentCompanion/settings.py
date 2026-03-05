@@ -125,9 +125,9 @@ ASGI_APPLICATION = 'StudentCompanion.asgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'student-companion',
+        'NAME': 'Student_Companion35',
         'USER': 'postgres',
-        'PASSWORD': 'admin',
+        'PASSWORD': 'muskan',
         'HOST': 'localhost',
         'PORT': '5432',
     }
