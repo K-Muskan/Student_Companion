@@ -12,121 +12,186 @@ from django.views.decorators.http import require_http_methods
 
 from .emotion_services import build_emotion_summary
 from .models import Assessment, Answer, Question
-from .mse_analyzer import analyze_patient_responses, append_emotion_summary_to_report
+from .depression_analyzer import analyze_depression
+from .stress_analyzer import analyze_stress
+from .anxiety_analyzer import analyze_anxiety
 
 logger = logging.getLogger(__name__)
 
 # ============================================================================
-# DATA STORE - VIDEOS WITH CORRECT FILE NAMES
+# SCALE DEFINITIONS
+# ID scheme:
+#   1        = Depression title screen
+#   2–22     = BDI items 1–21
+#   23       = Stress title screen
+#   24–33    = PSS-10 items 1–10
+#   34       = Anxiety title screen
+#   35–55    = BAI items 1–21
+#   56       = Final/loading screen
 # ============================================================================
 
-VIDEOS = [
+BDI_OPTIONS = [
+    "Not at all / Does not apply",
+    "Mild — occasionally",
+    "Moderate — a good part of the time",
+    "Severe — most of the time",
+]
+
+PSS_OPTIONS = [
+    "Never",
+    "Almost Never",
+    "Sometimes",
+    "Fairly Often",
+    "Very Often",
+]
+
+BAI_OPTIONS = [
+    "Not at all",
+    "Mildly — it didn't bother me much",
+    "Moderately — it wasn't pleasant at times",
+    "Severely — it bothered me a lot",
+]
+
+PSS_REVERSE_ITEMS = {4, 5, 7, 8}
+
+QUESTIONS = [
+    # ── Depression Title Screen ──────────────────────────────────────────────
     {
         "id": 1,
-        "file": "question1.mp4",
-        "question": "Can you tell me about your mood over the past few weeks? Describe your predominant mood in your own words.",
-        "type": "text",
-        "mse_category": "mood"
+        "scale": "title",
+        "is_title_screen": True,
+        "is_final": False,
+        "title": "Depression Assessment",
+        "subtitle": "Beck's Depression Inventory (BDI)",
+        "description": (
+            "The following 21 statements describe different feelings and attitudes. "
+            "For each one, select the statement that best describes how you have been "
+            "feeling over the past two weeks, including today."
+        ),
+        "item_count": 21,
+        "scale_item_number": None,
+        "max_score": 0,
+        "is_reverse_scored": False,
+        "options": [],
     },
+
+    # ── BDI Items 1–21 (IDs 2–22) ────────────────────────────────────────────
+    {"id": 2,  "scale": "depression", "scale_item_number": 1,  "max_score": 3, "is_reverse_scored": False, "is_title_screen": False, "is_final": False, "question_text": "Sadness",               "options": ["I do not feel sad.", "I feel sad.", "I am sad all the time and I can't snap out of it.", "I am so sad and unhappy that I can't stand it."]},
+    {"id": 3,  "scale": "depression", "scale_item_number": 2,  "max_score": 3, "is_reverse_scored": False, "is_title_screen": False, "is_final": False, "question_text": "Pessimism",              "options": ["I am not particularly discouraged about the future.", "I feel discouraged about the future.", "I feel I have nothing to look forward to.", "I feel the future is hopeless and that things cannot improve."]},
+    {"id": 4,  "scale": "depression", "scale_item_number": 3,  "max_score": 3, "is_reverse_scored": False, "is_title_screen": False, "is_final": False, "question_text": "Past Failure",           "options": ["I do not feel like a failure.", "I feel I have failed more than the average person.", "As I look back on my life, all I can see is a lot of failures.", "I feel I am a complete failure as a person."]},
+    {"id": 5,  "scale": "depression", "scale_item_number": 4,  "max_score": 3, "is_reverse_scored": False, "is_title_screen": False, "is_final": False, "question_text": "Loss of Pleasure",      "options": ["I get as much satisfaction out of things as I used to.", "I don't enjoy things the way I used to.", "I don't get real satisfaction out of anything anymore.", "I am dissatisfied or bored with everything."]},
+    {"id": 6,  "scale": "depression", "scale_item_number": 5,  "max_score": 3, "is_reverse_scored": False, "is_title_screen": False, "is_final": False, "question_text": "Guilty Feelings",       "options": ["I don't feel particularly guilty.", "I feel guilty a good part of the time.", "I feel quite guilty most of the time.", "I feel guilty all of the time."]},
+    {"id": 7,  "scale": "depression", "scale_item_number": 6,  "max_score": 3, "is_reverse_scored": False, "is_title_screen": False, "is_final": False, "question_text": "Punishment Feelings",   "options": ["I don't feel I am being punished.", "I feel I may be punished.", "I expect to be punished.", "I feel I am being punished."]},
+    {"id": 8,  "scale": "depression", "scale_item_number": 7,  "max_score": 3, "is_reverse_scored": False, "is_title_screen": False, "is_final": False, "question_text": "Self-Dislike",          "options": ["I don't feel disappointed in myself.", "I am disappointed in myself.", "I am disgusted with myself.", "I hate myself."]},
+    {"id": 9,  "scale": "depression", "scale_item_number": 8,  "max_score": 3, "is_reverse_scored": False, "is_title_screen": False, "is_final": False, "question_text": "Self-Criticalness",     "options": ["I don't feel I am any worse than anybody else.", "I am critical of myself for my weaknesses or mistakes.", "I blame myself all the time for my faults.", "I blame myself for everything bad that happens."]},
+    {"id": 10, "scale": "depression", "scale_item_number": 9,  "max_score": 3, "is_reverse_scored": False, "is_title_screen": False, "is_final": False, "question_text": "Suicidal Thoughts",     "options": ["I don't have any thoughts of killing myself.", "I have thoughts of killing myself, but I would not carry them out.", "I would like to kill myself.", "I would kill myself if I had the chance."]},
+    {"id": 11, "scale": "depression", "scale_item_number": 10, "max_score": 3, "is_reverse_scored": False, "is_title_screen": False, "is_final": False, "question_text": "Crying",                "options": ["I don't cry any more than usual.", "I cry more now than I used to.", "I cry all the time now.", "I used to be able to cry, but now I can't cry even though I want to."]},
+    {"id": 12, "scale": "depression", "scale_item_number": 11, "max_score": 3, "is_reverse_scored": False, "is_title_screen": False, "is_final": False, "question_text": "Agitation",             "options": ["I am no more irritated than I ever was.", "I am slightly more irritated now than usual.", "I am quite annoyed or irritated a good deal of the time.", "I feel irritated all the time."]},
+    {"id": 13, "scale": "depression", "scale_item_number": 12, "max_score": 3, "is_reverse_scored": False, "is_title_screen": False, "is_final": False, "question_text": "Loss of Interest",      "options": ["I have not lost interest in other people.", "I am less interested in other people than I used to be.", "I have lost most of my interest in other people.", "I have lost all of my interest in other people."]},
+    {"id": 14, "scale": "depression", "scale_item_number": 13, "max_score": 3, "is_reverse_scored": False, "is_title_screen": False, "is_final": False, "question_text": "Indecisiveness",        "options": ["I make decisions about as well as I ever could.", "I put off making decisions more than I used to.", "I have greater difficulty in making decisions than I used to.", "I can't make decisions at all anymore."]},
+    {"id": 15, "scale": "depression", "scale_item_number": 14, "max_score": 3, "is_reverse_scored": False, "is_title_screen": False, "is_final": False, "question_text": "Worthlessness",         "options": ["I don't feel that I look any worse than I used to.", "I am worried that I am looking old or unattractive.", "I feel there are permanent changes in my appearance that make me look unattractive.", "I believe that I look ugly."]},
+    {"id": 16, "scale": "depression", "scale_item_number": 15, "max_score": 3, "is_reverse_scored": False, "is_title_screen": False, "is_final": False, "question_text": "Loss of Energy",        "options": ["I can work about as well as before.", "It takes an extra effort to get started at doing something.", "I have to push myself very hard to do anything.", "I can't do any work at all."]},
+    {"id": 17, "scale": "depression", "scale_item_number": 16, "max_score": 3, "is_reverse_scored": False, "is_title_screen": False, "is_final": False, "question_text": "Sleep Changes",         "options": ["I can sleep as well as usual.", "I don't sleep as well as I used to.", "I wake up 1–2 hours earlier than usual and find it hard to get back to sleep.", "I wake up several hours earlier than I used to and cannot get back to sleep."]},
+    {"id": 18, "scale": "depression", "scale_item_number": 17, "max_score": 3, "is_reverse_scored": False, "is_title_screen": False, "is_final": False, "question_text": "Irritability",          "options": ["I don't get more tired than usual.", "I get tired more easily than I used to.", "I get tired from doing almost anything.", "I am too tired to do anything."]},
+    {"id": 19, "scale": "depression", "scale_item_number": 18, "max_score": 3, "is_reverse_scored": False, "is_title_screen": False, "is_final": False, "question_text": "Appetite Changes",      "options": ["My appetite is no worse than usual.", "My appetite is not as good as it used to be.", "My appetite is much worse now.", "I have no appetite at all anymore."]},
+    {"id": 20, "scale": "depression", "scale_item_number": 19, "max_score": 3, "is_reverse_scored": False, "is_title_screen": False, "is_final": False, "question_text": "Weight Loss",           "options": ["I haven't lost much weight, if any, lately.", "I have lost more than five pounds.", "I have lost more than ten pounds.", "I have lost more than fifteen pounds."]},
+    {"id": 21, "scale": "depression", "scale_item_number": 20, "max_score": 3, "is_reverse_scored": False, "is_title_screen": False, "is_final": False, "question_text": "Health Worry",          "options": ["I am no more worried about my health than usual.", "I am worried about physical problems like aches, pains, or upset stomach.", "I am very worried about physical problems and it's hard to think of much else.", "I am so worried about my physical problems that I cannot think of anything else."]},
+    {"id": 22, "scale": "depression", "scale_item_number": 21, "max_score": 3, "is_reverse_scored": False, "is_title_screen": False, "is_final": False, "question_text": "Loss of Interest in Sex", "options": ["I have not noticed any recent change in my interest in sex.", "I am less interested in sex than I used to be.", "I have almost no interest in sex.", "I have lost interest in sex completely."]},
+
+    # ── Stress Title Screen ──────────────────────────────────────────────────
     {
-        "id": 2,
-        "file": "question2.mp4",
-        "question": "Does what you show to others match how you actually feel inside? And do you notice your emotions changing throughout the day?",
-        "type": "text",
-        "mse_category": "affect"
+        "id": 23,
+        "scale": "title",
+        "is_title_screen": True,
+        "is_final": False,
+        "title": "Stress Assessment",
+        "subtitle": "Perceived Stress Scale (PSS-10)",
+        "description": (
+            "The following questions ask about your feelings and thoughts during "
+            "the last month. For each question, indicate how often you felt or "
+            "thought a certain way."
+        ),
+        "item_count": 10,
+        "scale_item_number": None,
+        "max_score": 0,
+        "is_reverse_scored": False,
+        "options": [],
     },
+
+    # ── PSS-10 Items 1–10 (IDs 24–33) ────────────────────────────────────────
+    {"id": 24, "scale": "stress", "scale_item_number": 1,  "max_score": 4, "is_reverse_scored": False, "is_title_screen": False, "is_final": False, "question_text": "In the last month, how often have you been upset because of something that happened unexpectedly?",                           "options": PSS_OPTIONS},
+    {"id": 25, "scale": "stress", "scale_item_number": 2,  "max_score": 4, "is_reverse_scored": False, "is_title_screen": False, "is_final": False, "question_text": "In the last month, how often have you felt that you were unable to control the important things in your life?",             "options": PSS_OPTIONS},
+    {"id": 26, "scale": "stress", "scale_item_number": 3,  "max_score": 4, "is_reverse_scored": False, "is_title_screen": False, "is_final": False, "question_text": "In the last month, how often have you felt nervous and 'stressed'?",                                                         "options": PSS_OPTIONS},
+    {"id": 27, "scale": "stress", "scale_item_number": 4,  "max_score": 4, "is_reverse_scored": True,  "is_title_screen": False, "is_final": False, "question_text": "In the last month, how often have you felt confident about your ability to handle your personal problems?",                   "options": PSS_OPTIONS},
+    {"id": 28, "scale": "stress", "scale_item_number": 5,  "max_score": 4, "is_reverse_scored": True,  "is_title_screen": False, "is_final": False, "question_text": "In the last month, how often have you felt that things were going your way?",                                                 "options": PSS_OPTIONS},
+    {"id": 29, "scale": "stress", "scale_item_number": 6,  "max_score": 4, "is_reverse_scored": False, "is_title_screen": False, "is_final": False, "question_text": "In the last month, how often have you found that you could not cope with all the things that you had to do?",                 "options": PSS_OPTIONS},
+    {"id": 30, "scale": "stress", "scale_item_number": 7,  "max_score": 4, "is_reverse_scored": True,  "is_title_screen": False, "is_final": False, "question_text": "In the last month, how often have you been able to control irritations in your life?",                                        "options": PSS_OPTIONS},
+    {"id": 31, "scale": "stress", "scale_item_number": 8,  "max_score": 4, "is_reverse_scored": True,  "is_title_screen": False, "is_final": False, "question_text": "In the last month, how often have you felt that you were on top of things?",                                                  "options": PSS_OPTIONS},
+    {"id": 32, "scale": "stress", "scale_item_number": 9,  "max_score": 4, "is_reverse_scored": False, "is_title_screen": False, "is_final": False, "question_text": "In the last month, how often have you been angered because of things that were outside of your control?",                     "options": PSS_OPTIONS},
+    {"id": 33, "scale": "stress", "scale_item_number": 10, "max_score": 4, "is_reverse_scored": False, "is_title_screen": False, "is_final": False, "question_text": "In the last month, how often have you felt difficulties were piling up so high that you could not overcome them?",           "options": PSS_OPTIONS},
+
+    # ── Anxiety Title Screen ─────────────────────────────────────────────────
     {
-        "id": 3,
-        "file": "question3pt1.mp4",
-        "question": "Have you been feeling anxious, nervous, or worried a lot lately? If so, what kinds of things tend to trigger these feelings?",
-        "type": "text",
-        "mse_category": "anxiety"
+        "id": 34,
+        "scale": "title",
+        "is_title_screen": True,
+        "is_final": False,
+        "title": "Anxiety Assessment",
+        "subtitle": "Beck Anxiety Inventory (BAI)",
+        "description": (
+            "Below is a list of common symptoms of anxiety. "
+            "Please carefully read each item in the list. "
+            "Indicate how much you have been bothered by each symptom "
+            "during the past month, including today."
+        ),
+        "item_count": 21,
+        "scale_item_number": None,
+        "max_score": 0,
+        "is_reverse_scored": False,
+        "options": [],
     },
+
+    # ── BAI Items 1–21 (IDs 35–55) ───────────────────────────────────────────
+    {"id": 35, "scale": "anxiety", "scale_item_number": 1,  "max_score": 3, "is_reverse_scored": False, "is_title_screen": False, "is_final": False, "question_text": "Numbness or tingling",     "options": BAI_OPTIONS},
+    {"id": 36, "scale": "anxiety", "scale_item_number": 2,  "max_score": 3, "is_reverse_scored": False, "is_title_screen": False, "is_final": False, "question_text": "Feeling hot",               "options": BAI_OPTIONS},
+    {"id": 37, "scale": "anxiety", "scale_item_number": 3,  "max_score": 3, "is_reverse_scored": False, "is_title_screen": False, "is_final": False, "question_text": "Wobbliness in legs",        "options": BAI_OPTIONS},
+    {"id": 38, "scale": "anxiety", "scale_item_number": 4,  "max_score": 3, "is_reverse_scored": False, "is_title_screen": False, "is_final": False, "question_text": "Unable to relax",           "options": BAI_OPTIONS},
+    {"id": 39, "scale": "anxiety", "scale_item_number": 5,  "max_score": 3, "is_reverse_scored": False, "is_title_screen": False, "is_final": False, "question_text": "Fear of worst happening",  "options": BAI_OPTIONS},
+    {"id": 40, "scale": "anxiety", "scale_item_number": 6,  "max_score": 3, "is_reverse_scored": False, "is_title_screen": False, "is_final": False, "question_text": "Dizzy or lightheaded",      "options": BAI_OPTIONS},
+    {"id": 41, "scale": "anxiety", "scale_item_number": 7,  "max_score": 3, "is_reverse_scored": False, "is_title_screen": False, "is_final": False, "question_text": "Heart pounding or racing", "options": BAI_OPTIONS},
+    {"id": 42, "scale": "anxiety", "scale_item_number": 8,  "max_score": 3, "is_reverse_scored": False, "is_title_screen": False, "is_final": False, "question_text": "Unsteady",                  "options": BAI_OPTIONS},
+    {"id": 43, "scale": "anxiety", "scale_item_number": 9,  "max_score": 3, "is_reverse_scored": False, "is_title_screen": False, "is_final": False, "question_text": "Terrified or afraid",       "options": BAI_OPTIONS},
+    {"id": 44, "scale": "anxiety", "scale_item_number": 10, "max_score": 3, "is_reverse_scored": False, "is_title_screen": False, "is_final": False, "question_text": "Nervous",                   "options": BAI_OPTIONS},
+    {"id": 45, "scale": "anxiety", "scale_item_number": 11, "max_score": 3, "is_reverse_scored": False, "is_title_screen": False, "is_final": False, "question_text": "Feeling of choking",        "options": BAI_OPTIONS},
+    {"id": 46, "scale": "anxiety", "scale_item_number": 12, "max_score": 3, "is_reverse_scored": False, "is_title_screen": False, "is_final": False, "question_text": "Hands trembling",           "options": BAI_OPTIONS},
+    {"id": 47, "scale": "anxiety", "scale_item_number": 13, "max_score": 3, "is_reverse_scored": False, "is_title_screen": False, "is_final": False, "question_text": "Shaky or unsteady",         "options": BAI_OPTIONS},
+    {"id": 48, "scale": "anxiety", "scale_item_number": 14, "max_score": 3, "is_reverse_scored": False, "is_title_screen": False, "is_final": False, "question_text": "Fear of losing control",   "options": BAI_OPTIONS},
+    {"id": 49, "scale": "anxiety", "scale_item_number": 15, "max_score": 3, "is_reverse_scored": False, "is_title_screen": False, "is_final": False, "question_text": "Difficulty in breathing",  "options": BAI_OPTIONS},
+    {"id": 50, "scale": "anxiety", "scale_item_number": 16, "max_score": 3, "is_reverse_scored": False, "is_title_screen": False, "is_final": False, "question_text": "Fear of dying",             "options": BAI_OPTIONS},
+    {"id": 51, "scale": "anxiety", "scale_item_number": 17, "max_score": 3, "is_reverse_scored": False, "is_title_screen": False, "is_final": False, "question_text": "Scared",                    "options": BAI_OPTIONS},
+    {"id": 52, "scale": "anxiety", "scale_item_number": 18, "max_score": 3, "is_reverse_scored": False, "is_title_screen": False, "is_final": False, "question_text": "Indigestion",               "options": BAI_OPTIONS},
+    {"id": 53, "scale": "anxiety", "scale_item_number": 19, "max_score": 3, "is_reverse_scored": False, "is_title_screen": False, "is_final": False, "question_text": "Faint or lightheaded",      "options": BAI_OPTIONS},
+    {"id": 54, "scale": "anxiety", "scale_item_number": 20, "max_score": 3, "is_reverse_scored": False, "is_title_screen": False, "is_final": False, "question_text": "Face flushed",              "options": BAI_OPTIONS},
+    {"id": 55, "scale": "anxiety", "scale_item_number": 21, "max_score": 3, "is_reverse_scored": False, "is_title_screen": False, "is_final": False, "question_text": "Hot or cold sweats",        "options": BAI_OPTIONS},
+
+    # ── Final / Loading Screen ───────────────────────────────────────────────
     {
-        "id": 4,
-        "file": "question3pt3.mp4",
-        "question": "Do you ever have panic attacks? If yes: How often would you say these happen?",
-        "type": "text",
-        "mse_category": "anxiety"
+        "id": 56,
+        "scale": "final",
+        "is_title_screen": False,
+        "is_final": True,
+        "question_text": "",
+        "scale_item_number": None,
+        "max_score": 0,
+        "is_reverse_scored": False,
+        "options": [],
     },
-    {
-        "id": 5,
-        "file": "question4.mp4",
-        "question": "Do you experience any difficulties with your sleep? If so, please describe the problems in detail. Also let me know if you are currently using anything to help you sleep, such as medications or supplements.",
-        "type": "text",
-        "mse_category": "sleep"
-    },
-    {
-        "id": 6,
-        "file": "question5.mp4",
-        "question": "Do your thoughts feel like they're completely your own and under your control?, or have you ever felt as if someone else was putting thoughts into your mind?",
-        "type": "text",
-        "mse_category": "thought_control"
-    },
-    {
-        "id": 7,
-        "file": "question6.mp4",
-        "question": "Have you had thoughts about death, wishing you were dead, or a specific plan to actively end your life? Have you hurt yourself on purpose in any way like cutting, burning, or other ways of causing yourself pain?",
-        "type": "text",
-        "mse_category": "suicidal_ideation"
-    },
-    {
-        "id": 8,
-        "file": "question7.mp4",
-        "question": "Have you had thoughts about hurting or harming anyone else? If yes, is there a specific person, or do you have any kind of plan?",
-        "type": "text",
-        "mse_category": "homicidal_ideation"
-    },
-    {
-        "id": 9,
-        "file": "question8.mp4",
-        "question": "Some people have unusual experiences with their senses. Have you heard voices when no one was there, seen things that others didn't see, or felt strange sensations on your skin-like crawling or tingling-that others don't seem to notice?",
-        "type": "text",
-        "mse_category": "hallucinations"
-    },
-    {
-        "id": 10,
-        "file": "question9.mp4",
-        "question": "Do you have any beliefs that others seem to have trouble understanding or accepting? Do you ever feel like certain people, events, or things have a special meaning meant just for you?",
-        "type": "text",
-        "mse_category": "delusions"
-    },
-    {
-        "id": 11,
-        "file": "question13.mp4",
-        "question": "I want to understand your use of alcohol, drugs, or any medications you take that weren't prescribed to you. Do you use any of these? If so, what do you use, how often, and how much?",
-        "type": "text",
-        "mse_category": "substance_use"
-    },
-    {
-        "id": 12,
-        "file": "question10.mp4",
-        "question": "Let's talk about how you make decisions. Do you tend to act on urges without thinking of the consequences, and do you believe your recent choices in life have been reasonable and appropriate?",
-        "type": "text",
-        "mse_category": "judgment"
-    },
-    {
-        "id": 13,
-        "file": "question11.mp4",
-        "question": "Do you believe you're currently experiencing any mental health or emotional difficulties? and are you willing to accept professional help or treatment?",
-        "type": "text",
-        "mse_category": "insight"
-    },
-    {
-        "id": 14,
-        "file": "question14.mp4",
-        "question": "Before we conclude, do you have any questions for me or is there anything else that you'd like to discuss that we haven't covered?",
-        "type": "text",
-        "mse_category": "additional"
-    },
-    {
-        "id": 15,
-        "file": "finalvideo.mp4",
-        "question": "",
-        "type": "final",
-        "is_final": True
-    }
 ]
+
+QUESTIONS_BY_ID = {q["id"]: q for q in QUESTIONS}
+TOTAL_QUESTIONS = len(QUESTIONS)
+FIRST_QID = QUESTIONS[0]["id"]   # 1
+LAST_QID  = QUESTIONS[-1]["id"]  # 56
 
 
 # ============================================================================
@@ -134,7 +199,6 @@ VIDEOS = [
 # ============================================================================
 
 def _init_session(session):
-    """Initialize session with empty answers dictionary"""
     if 'answers' not in session:
         session['answers'] = {}
     if 'assessment_cycle' not in session:
@@ -150,34 +214,27 @@ def _correlation_id(request):
 
 
 def _get_answers(session):
-    """Get all answers from session"""
     return session.get('answers', {})
 
 
-def _set_answer(session, qid, answer):
-    """Save an answer to the session"""
+def _set_answer(session, qid, score):
     if 'answers' not in session:
         session['answers'] = {}
-    answers = session['answers']
-    answers[str(qid)] = answer
-    session['answers'] = answers
+    session['answers'][str(qid)] = score
     session.modified = True
 
 
 def _is_valid_qid(qid):
-    """Check if question ID is valid"""
-    return 1 <= qid <= len(VIDEOS)
+    return qid in QUESTIONS_BY_ID
 
 
-def _get_video(qid):
-    """Get video data for a specific question ID"""
-    return VIDEOS[qid - 1]
+def _get_question(qid):
+    return QUESTIONS_BY_ID.get(qid)
 
 
 def _get_or_create_assessment(request):
     """
-    Ensure we have an Assessment tied to this session.
-    Creates DB record while maintaining session flow.
+    Robust version from teammate: uses while-loop cycle to skip completed assessments.
     """
     if not request.session.session_key:
         request.session.save()
@@ -192,10 +249,10 @@ def _get_or_create_assessment(request):
         cycle = max(1, int(request.session.get("assessment_cycle", 1)))
     except (TypeError, ValueError):
         cycle = 1
+
     user = request.user if request.user.is_authenticated else None
+
     with transaction.atomic():
-        # Reuse active token if present, but roll forward if the token points to
-        # a completed attempt to avoid write conflicts.
         while True:
             assessment_token = f"{request.session.session_key}:{cycle}"
             assessment, _ = Assessment.objects.get_or_create(
@@ -222,102 +279,120 @@ def _get_or_create_assessment(request):
 
 
 def _ensure_questions_in_db():
-    """Ensure all questions from VIDEOS are in the database"""
+    """Seed all scale questions in to the DB if not already present."""
     try:
-        ids = [int(video["id"]) for video in VIDEOS if "id" in video]
-        existing_ids = set(Question.objects.filter(id__in=ids).values_list("id", flat=True))
-        missing = []
-        for video in VIDEOS:
-            qid = int(video["id"])
-            if qid in existing_ids:
-                continue
-            missing.append(
-                Question(
-                    id=qid,
-                    video_file=video.get("file", ""),
-                    question_text=video.get("question", ""),
-                    mse_category=video.get("mse_category", ""),
-                    is_final=video.get("is_final", False),
+        existing_ids = set(Question.objects.values_list('id', flat=True))
+        to_create = []
+        for q in QUESTIONS:
+            if q["id"] not in existing_ids:
+                to_create.append(Question(
+                    id=q["id"],
+                    video_file="",
+                    question_text=q.get("question_text", ""),
+                    mse_category=q.get("scale", ""),
+                    scale=q.get("scale", ""),
+                    scale_item_number=q.get("scale_item_number"),
+                    max_score=q.get("max_score", 3),
+                    is_reverse_scored=q.get("is_reverse_scored", False),
+                    is_title_screen=q.get("is_title_screen", False),
+                    is_final=q.get("is_final", False),
                     is_active=True,
-                )
-            )
-        if missing:
-            Question.objects.bulk_create(missing, ignore_conflicts=True)
+                ))
+        if to_create:
+            Question.objects.bulk_create(to_create, ignore_conflicts=True)
     except Exception:
         logger.exception("question_seed_failed")
 
 
 def _get_or_seed_question(qid):
-    """Get question row or seed it from VIDEOS as a fallback."""
+    """Get question row or seed it on demand as a fallback."""
     question = Question.objects.filter(id=qid).first()
     if question is not None:
         return question
     if not _is_valid_qid(int(qid)):
         return None
-    video = _get_video(int(qid))
+    q = _get_question(int(qid))
+    if not q:
+        return None
     try:
         question = Question.objects.create(
-            id=int(video["id"]),
-            video_file=video.get("file", ""),
-            question_text=video.get("question", ""),
-            mse_category=video.get("mse_category", ""),
-            is_final=video.get("is_final", False),
+            id=q["id"],
+            video_file="",
+            question_text=q.get("question_text", ""),
+            mse_category=q.get("scale", ""),
+            scale=q.get("scale", ""),
+            scale_item_number=q.get("scale_item_number"),
+            max_score=q.get("max_score", 3),
+            is_reverse_scored=q.get("is_reverse_scored", False),
+            is_title_screen=q.get("is_title_screen", False),
+            is_final=q.get("is_final", False),
             is_active=True,
         )
-        logger.warning("question_seeded_on_demand", extra={"qid": int(qid)})
+        logger.warning("question_seeded_on_demand", extra={"qid": qid})
     except Exception:
         question = Question.objects.filter(id=qid).first()
     return question
-
-
-def _snapshot_answers(assessment, session_answers):
-    db_answers = {
-        str(answer.question_id): answer.answer_text
-        for answer in Answer.objects.filter(assessment=assessment).select_related("question")
-    }
-    return {**session_answers, **db_answers}
-
-
-def _persist_session_answers(assessment, session_answers):
-    for qid, text in session_answers.items():
-        if not str(qid).isdigit():
-            continue
-        qid_int = int(qid)
-        if not _is_valid_qid(qid_int):
-            continue
-        question = _get_or_seed_question(qid_int)
-        if question is None:
-            continue
-        Answer.objects.update_or_create(
-            assessment=assessment,
-            question=question,
-            defaults={"answer_text": text},
-        )
 
 
 def _safe_error_response(message, status=500):
     return JsonResponse({"status": "error", "message": message}, status=status)
 
 
-def _apply_emotion_text_incongruence(structured_analysis, emotion_summary):
+def _extract_scale_scores(answers_dict):
+    """
+    Extract per-scale {item_number: raw_score} dicts from saved answers.
+    answers_dict: {str(qid): score}
+    """
+    depression_scores = {}
+    stress_scores = {}
+    anxiety_scores = {}
+
+    for qid_str, score in answers_dict.items():
+        try:
+            qid = int(qid_str)
+            score = int(score)
+        except (ValueError, TypeError):
+            continue
+
+        q = QUESTIONS_BY_ID.get(qid)
+        if not q or q.get("is_title_screen") or q.get("is_final "):
+            continue
+
+        item_num = q.get("scale_item_number")
+        if item_num is None:
+            continue
+
+        scale = q.get("scale")
+        if scale == "depression":
+            depression_scores[item_num] = score
+        elif scale == "stress":
+            stress_scores[item_num] = score
+        elif scale == "anxiety":
+            anxiety_scores[str(item_num)] = score
+
+    return depression_scores, stress_scores, anxiety_scores
+
+
+def _apply_emotion_text_incongruence(report_json, emotion_summary):
+    """
+    From teammate: flag emotion/text incongruence in report if DeepFace
+    detects sustained distress but scale scores suggest otherwise.
+    Adapted for new scale-based report structure.
+    """
     if not emotion_summary.get("available"):
-        return structured_analysis
+        return report_json
     distress = emotion_summary.get("distress_proxy", {})
     if not distress.get("flag"):
-        return structured_analysis
+        return report_json
 
-    mood = structured_analysis.get("mood_affect", {})
-    risk = structured_analysis.get("risk_assessment", {})
-    mood_label = mood.get("mood_category", "unknown")
-    sentiment = mood.get("sentiment_score", 0.0)
-    if mood_label in {"euthymic", "elevated"} or sentiment > 0.2:
-        incongruence_note = "Emotion-text incongruence detected: reported stable mood with sustained distress signals."
-        risk.setdefault("risk_factors", []).append(incongruence_note)
-        risk.setdefault("incongruence_flags", []).append("emotion_text_incongruence")
-        structured_analysis.setdefault("clinical_impressions", []).append(
-            "Needs clinician review: emotion stream indicates sustained distress despite reassuring text."
+    depression = report_json.get("depression", {})
+    risk_level = depression.get("risk_level", "normal")
+    if risk_level in {"normal", "mild"}:
+        report_json.setdefault("incongruence_flags", []).append(
+            "Emotion-text incongruence: DeepFace detected sustained distress "
+            "despite low depression score. Clinician review recommended."
         )
-    return structured_analysis
+    return report_json
 
 
 def _get_report_assessment(request):
@@ -334,7 +409,9 @@ def _get_report_assessment(request):
         )
     if request.session.session_key:
         return (
-            Assessment.objects.filter(session_key=request.session.session_key, is_completed=True)
+            Assessment.objects.filter(
+                session_key=request.session.session_key, is_completed=True
+            )
             .order_by("-finalized_at", "-created_at")
             .first()
         )
@@ -347,86 +424,124 @@ def _get_report_assessment(request):
 
 @ensure_csrf_cookie
 def index(request):
-    """Landing page with intro video - serves index.html"""
     _init_session(request.session)
     _ensure_questions_in_db()
-    context = {}
-    return render(request, 'Questionaire_project/index.html', context)
+    return render(request, 'Questionaire_project/index.html', {})
 
 
 @ensure_csrf_cookie
 def question_page(request, qid):
-    """Display a question video and answer form"""
-    _ensure_questions_in_db()
-
     if not _is_valid_qid(qid):
         return redirect('questionnaire:index')
 
-    video = _get_video(qid)
+    _ensure_questions_in_db()
+    question = _get_question(qid)
     assessment = _get_or_create_assessment(request)
 
-    previous_answer = _get_answers(request.session).get(str(qid), '')
-
-    if not previous_answer:
+    # Previous score (for back navigation)
+    previous_score = _get_answers(request.session).get(str(qid), None)
+    if previous_score is None:
         try:
-            answer_obj = Answer.objects.get(assessment=assessment, question_id=qid)
-            previous_answer = answer_obj.answer_text
-            _set_answer(request.session, str(qid), previous_answer)
+            ans = Answer.objects.get(assessment=assessment, question_id=qid)
+            previous_score = ans.answer_score
+            if previous_score is not None:
+                _set_answer(request.session, str(qid), previous_score)
         except Answer.DoesNotExist:
             pass
 
-    total_questions = len(VIDEOS)
-    is_final = video.get('is_final', False)
-    is_last = (qid == total_questions - 1)
+    # Progress calculation (exclude title screens and final)
+    scorable_ids = [
+        q["id"] for q in QUESTIONS
+        if not q.get("is_title_screen") and not q.get("is_final")
+    ]
+    answered_count = sum(
+        1 for sid in scorable_ids
+        if str(sid) in _get_answers(request.session)
+    )
+    total_scorable = len(scorable_ids)
+
+    # Position within current scale
+    scale_questions = [
+        q for q in QUESTIONS
+        if q.get("scale") == question.get("scale")
+        and not q.get("is_title_screen")
+        and not q.get("is_final")
+    ] if not question.get("is_title_screen") and not question.get("is_final") else []
+
+    scale_position = 0
+    scale_total = len(scale_questions)
+    if scale_questions:
+        for i, sq in enumerate(scale_questions, 1):
+            if sq["id"] == qid:
+                scale_position = i
+                break
+
+    # Next and previous IDs
+    current_index = next(
+        (i for i, q in enumerate(QUESTIONS) if q["id"] == qid), 0
+    )
+    next_qid = QUESTIONS[current_index + 1]["id"] if current_index + 1 < TOTAL_QUESTIONS else None
+    prev_qid = QUESTIONS[current_index - 1]["id"] if current_index > 0 else None
 
     context = {
-        'video': video,
-        'is_final': is_final,
-        'is_last': is_last,
-        'total_questions': total_questions,
-        'previous_answer': previous_answer,
+        'question': question,
+        'qid': qid,
+        'is_final': question.get("is_final", False),
+        'is_title_screen': question.get("is_title_screen", False),
+        'next_qid': next_qid,
+        'prev_qid': prev_qid,
+        'previous_score': previous_score,
         'assessment_id': assessment.id,
+        'answered_count': answered_count,
+        'total_scorable': total_scorable,
+        'scale_position': scale_position,
+        'scale_total': scale_total,
+        'progress_percent': round((answered_count / total_scorable) * 100) if total_scorable else 0,
         'emotion_max_reconnect_attempts': int(getattr(settings, "EMOTION_MAX_RECONNECT_ATTEMPTS", 5)),
         'emotion_heartbeat_interval_seconds': int(getattr(settings, "EMOTION_HEARTBEAT_INTERVAL_SECONDS", 15)),
         'emotion_heartbeat_grace_seconds': int(getattr(settings, "EMOTION_HEARTBEAT_GRACE_SECONDS", 90)),
         'emotion_client_max_frame_width': int(getattr(settings, "EMOTION_CLIENT_MAX_FRAME_WIDTH", 640)),
         'emotion_client_max_encoded_bytes': int(getattr(settings, "EMOTION_CLIENT_MAX_ENCODED_BYTES", 900000)),
     }
-
     return render(request, 'Questionaire_project/question.html', context)
 
 
 @require_http_methods(["POST"])
-def save_answer(request):
-    """API endpoint to save an answer to both session and database"""
+def save_answer(request):   
     cid = _correlation_id(request)
     try:
         data = json.loads(request.body)
         qid = data.get('qid')
-        answer = data.get('answer', '')
-        max_chars = int(getattr(settings, "ASSESSMENT_MAX_ANSWER_CHARS", 5000))
+        score = data.get('score')   # integer 0–4
         payload_assessment_id = data.get("assessment_id")
 
-        if not qid:
-            return JsonResponse({'status': 'error', 'message': 'Question ID is required'}, status=400)
+        if qid is None or score is None:
+            return _safe_error_response('qid and score are required', status=400)
 
         try:
             qid_int = int(qid)
+            score_int = int(score)
         except (TypeError, ValueError):
-            return _safe_error_response("Invalid question ID", status=400)
+            return _safe_error_response('Invalid qid or score', status=400)
 
         if not _is_valid_qid(qid_int):
-            return _safe_error_response("Invalid question ID", status=400)
-        if not isinstance(answer, str):
-            return _safe_error_response("Invalid answer payload", status=400)
-        if len(answer) > max_chars:
-            return _safe_error_response(f"Answer too long (max {max_chars} chars)", status=400)
+            return _safe_error_response('Invalid question ID', status=400)
 
-        _set_answer(request.session, str(qid), answer)
+        q = _get_question(qid_int)
+        max_score = q.get("max_score", 3)
+
+        if not (0 <= score_int <= max_score):
+            return _safe_error_response(
+                f'Score must be 0–{max_score} for this question', status=400
+            )
+
+        _set_answer(request.session, str(qid_int), score_int)
 
         with transaction.atomic():
             _ensure_questions_in_db()
             assessment = _get_or_create_assessment(request)
+
+            # Validate payload assessment ID matches session (from teammate)
             if payload_assessment_id is not None:
                 try:
                     payload_assessment_id = int(payload_assessment_id)
@@ -442,63 +557,64 @@ def save_answer(request):
                             "qid": qid_int,
                         },
                     )
+
             if assessment.is_completed:
                 logger.warning(
                     "write_rejected_completed_assessment",
                     extra={"correlation_id": cid, "assessment_id": assessment.id, "qid": qid_int},
                 )
-                return _safe_error_response("Assessment is already finalized", status=409)
+                return _safe_error_response('Assessment already finalized', status=409)
 
-            question = _get_or_seed_question(qid_int)
-            if question is None:
-                # Keep session answer even if DB catalog temporarily unavailable.
+            question_obj = _get_or_seed_question(qid_int)
+            if question_obj is None:
                 logger.error("question_catalog_unavailable", extra={"correlation_id": cid, "qid": qid_int})
-                return JsonResponse(
-                    {
-                        "status": "success",
-                        "message": "Answer saved in session. Question catalog will sync shortly.",
-                        "assessment_id": assessment.id,
-                    }
-                )
+                return JsonResponse({
+                    "status": "success",
+                    "message": "Answer saved in session. Question catalog will sync shortly.",
+                    "assessment_id": assessment.id,
+                })
 
             Answer.objects.update_or_create(
                 assessment=assessment,
-                question=question,
-                defaults={"answer_text": answer}
+                question=question_obj,
+                defaults={
+                    "answer_text": str(score_int),
+                    "answer_score": score_int,
+                },
             )
+
         logger.info(
             "answer_saved",
             extra={"correlation_id": cid, "assessment_id": assessment.id, "qid": qid_int},
         )
-
         return JsonResponse({
             'status': 'success',
-            'message': 'Answer saved successfully',
-            'assessment_id': assessment.id
+            'message': 'Score saved',
+            'assessment_id': assessment.id,
         })
 
     except json.JSONDecodeError:
-        return _safe_error_response('Invalid JSON data', status=400)
-    except Exception as e:
+        return _safe_error_response('Invalid JSON', status=400)
+    except Exception:
         logger.exception("save_answer_failed", extra={"correlation_id": cid})
-        return _safe_error_response('Unable to save answer at this time.', status=500)
+        return _safe_error_response('Unable to save answer', status=500)
 
 
 @ensure_csrf_cookie
 def complete(request):
-    """Completion page showing MSE analysis report"""
     cid = _correlation_id(request)
     _ensure_questions_in_db()
-    session_answers = _get_answers(request.session)
 
+    session_answers = _get_answers(request.session)
     assessment_id = request.session.get("assessment_id")
     db_answers = {}
 
     if assessment_id:
         try:
             assessment = Assessment.objects.get(id=assessment_id)
-            for answer in Answer.objects.filter(assessment=assessment).select_related('question'):
-                db_answers[str(answer.question.id)] = answer.answer_text
+            for ans in Answer.objects.filter(assessment=assessment).select_related('question'):
+                if ans.answer_score is not None:
+                    db_answers[str(ans.question_id)] = ans.answer_score
         except Assessment.DoesNotExist:
             pass
 
@@ -520,193 +636,169 @@ def complete(request):
                 )
                 if assessment is None:
                     raise Assessment.DoesNotExist()
-            if assessment.is_completed and assessment.report_text and assessment.report_json:
-                structured_analysis = assessment.report_json
-                formatted_report = assessment.report_text
-                emotion_summary = structured_analysis.get("emotion_summary", {"available": False})
+
+            if assessment.is_completed and assessment.report_json:
+                report_json = assessment.report_json
+                emotion_summary = report_json.get("emotion_summary", {"available": False})
             else:
-                _persist_session_answers(assessment, session_answers)
-                answers = _snapshot_answers(assessment, session_answers)
-                structured_analysis, formatted_report = analyze_patient_responses(answers)
+                depression_scores, stress_scores, anxiety_scores = _extract_scale_scores(answers)
+
+                depression_result = analyze_depression(depression_scores)
+                stress_result     = analyze_stress(stress_scores)
+                anxiety_result    = analyze_anxiety(anxiety_scores)
+
                 emotion_summary = build_emotion_summary(assessment)
-                structured_analysis["emotion_summary"] = emotion_summary
-                structured_analysis = _apply_emotion_text_incongruence(structured_analysis, emotion_summary)
-                formatted_report = append_emotion_summary_to_report(formatted_report, emotion_summary)
+
+                report_json = {
+                    'timestamp': timezone.now().isoformat(),
+                    'depression': depression_result,
+                    'stress':     stress_result,
+                    'anxiety':    anxiety_result,
+                    'emotion_summary': emotion_summary,
+                }
+
+                # Apply DeepFace incongruence check (from teammate)
+                report_json = _apply_emotion_text_incongruence(report_json, emotion_summary)
+
                 now = timezone.now()
-                assessment.is_completed = True
-                assessment.finalized_at = now
-                assessment.report_generated_at = now
-                assessment.report_text = formatted_report
-                assessment.report_json = structured_analysis
-                assessment.save(
-                    update_fields=[
-                        "is_completed",
-                        "finalized_at",
-                        "report_generated_at",
-                        "report_text",
-                        "report_json",
-                    ]
-                )
+                assessment.is_completed           = True
+                assessment.finalized_at           = now
+                assessment.report_generated_at    = now
+                assessment.report_json            = report_json
 
-        request.session['mse_analysis'] = structured_analysis
-        request.session.modified = True
+                assessment.depression_score       = depression_result.get('total_score')
+                assessment.depression_risk_level  = depression_result.get('risk_level', '')
+                assessment.depression_result_json = depression_result
+
+                assessment.stress_score           = stress_result.get('total_score')
+                assessment.stress_risk_level      = stress_result.get('risk_level', '')
+                assessment.stress_result_json     = stress_result
+
+                assessment.anxiety_score          = anxiety_result.get('total_score')
+                assessment.anxiety_risk_level     = anxiety_result.get('risk_level', '')
+                assessment.anxiety_result_json    = anxiety_result
+
+                assessment.save(update_fields=[
+                    "is_completed", "finalized_at", "report_generated_at",
+                    "report_json",
+                    "depression_score", "depression_risk_level", "depression_result_json",
+                    "stress_score", "stress_risk_level", "stress_result_json",
+                    "anxiety_score", "anxiety_risk_level", "anxiety_result_json",
+                ])
+
         request.session["last_completed_assessment_id"] = assessment.id
-        request.session["assessment_cycle"] = int(request.session.get("assessment_cycle", 1)) + 1
-
-        if 'answers' in request.session:
-            del request.session['answers']
-        if 'assessment_id' in request.session:
-            del request.session['assessment_id']
+        request.session["assessment_cycle"] = int(
+            request.session.get("assessment_cycle", 1)
+        ) + 1
+        request.session.pop('answers', None)
+        request.session.pop('assessment_id', None)
         request.session.modified = True
+
+        risk_order = {'normal': 0, 'low': 0, 'mild': 1, 'borderline': 2,
+                      'moderate': 3, 'severe': 4, 'extreme': 5, 'high': 4}
+        overall_risk = max(
+            report_json['depression'].get('risk_level', 'normal'),
+            report_json['stress'].get('risk_level', 'low'),
+            report_json['anxiety'].get('risk_level', 'low'),
+            key=lambda r: risk_order.get(r, 0)
+        )
+        immediate = any([
+            report_json['depression'].get('immediate_intervention_needed', False),
+            report_json['stress'].get('immediate_intervention_needed', False),
+            report_json['anxiety'].get('immediate_intervention_needed', False),
+        ])
 
         context = {
-            'report': formatted_report,
-            'analysis': structured_analysis,
-            'timestamp': structured_analysis['timestamp'],
-            'risk_level': structured_analysis['risk_assessment']['overall_risk'],
-            'immediate_intervention': structured_analysis['risk_assessment']['immediate_intervention_needed'],
+            'analysis': report_json,
+            'depression': report_json['depression'],
+            'stress':     report_json['stress'],
+            'anxiety':    report_json['anxiety'],
             'emotion_summary': emotion_summary,
+            'overall_risk': overall_risk,
+            'immediate_intervention': immediate,
+            'timestamp': report_json['timestamp'],
         }
-
         return render(request, 'Questionaire_project/complete.html', context)
 
-    except Exception as e:
-        logger.exception("complete_failed", extra={"correlation_id": cid, "assessment_id": assessment_id})
+    except Exception:
+        logger.exception("complete_failed", extra={"correlation_id": cid})
         return render(request, 'Questionaire_project/error.html', {
             'error': 'Error generating report. Please try again.'
         })
-
-
-@ensure_csrf_cookie
-def generate_mse_report(request):
-    """Generate AI-analyzed Mental Status Exam report"""
-    _ensure_questions_in_db()
-    session_answers = _get_answers(request.session)
-
-    assessment_id = request.session.get("assessment_id")
-    db_answers = {}
-
-    if assessment_id:
-        try:
-            assessment = Assessment.objects.get(id=assessment_id)
-            for answer in Answer.objects.filter(assessment=assessment).select_related('question'):
-                db_answers[str(answer.question.id)] = answer.answer_text
-        except Assessment.DoesNotExist:
-            pass
-
-    answers = {**session_answers, **db_answers}
-
-    if not answers:
-        return render(request, 'Questionaire_project/error.html', {
-            'error': 'No assessment data found. Please complete the assessment first.'
-        })
-
-    try:
-        assessment = Assessment.objects.filter(id=assessment_id).first() if assessment_id else None
-        if assessment and assessment.is_completed and assessment.report_json and assessment.report_text:
-            structured_analysis = assessment.report_json
-            formatted_report = assessment.report_text
-            emotion_summary = structured_analysis.get("emotion_summary", {"available": False})
-        else:
-            structured_analysis, formatted_report = analyze_patient_responses(answers)
-            emotion_summary = {"available": False}
-            if assessment_id:
-                try:
-                    assessment = Assessment.objects.get(id=assessment_id)
-                    emotion_summary = build_emotion_summary(assessment)
-                    structured_analysis["emotion_summary"] = emotion_summary
-                    structured_analysis = _apply_emotion_text_incongruence(structured_analysis, emotion_summary)
-                    formatted_report = append_emotion_summary_to_report(formatted_report, emotion_summary)
-                except Assessment.DoesNotExist:
-                    pass
-
-        request.session['mse_analysis'] = structured_analysis
-
-        context = {
-            'report': formatted_report,
-            'analysis': structured_analysis,
-            'timestamp': structured_analysis['timestamp'],
-            'risk_level': structured_analysis['risk_assessment']['overall_risk'],
-            'immediate_intervention': structured_analysis['risk_assessment']['immediate_intervention_needed'],
-            'emotion_summary': emotion_summary,
-        }
-
-        return render(request, 'Questionaire_project/mse_report.html', context)
-
-    except Exception as e:
-        logger.exception("generate_mse_report_failed")
-        return render(request, 'Questionaire_project/error.html', {
-            'error': 'Error generating report. Please try again.'
-        })
-
-
-@ensure_csrf_cookie
-def download_report_text(request):
-    """Download MSE report as text file"""
-    try:
-        assessment = _get_report_assessment(request)
-        if assessment and assessment.report_text:
-            formatted_report = assessment.report_text
-        else:
-            answers = _get_answers(request.session)
-            if not answers:
-                return HttpResponse('No assessment data found', status=404)
-            _, formatted_report = analyze_patient_responses(answers)
-        response = HttpResponse(formatted_report, content_type='text/plain')
-        response['Content-Disposition'] = 'attachment; filename="mse_report.txt"'
-        return response
-
-    except Exception as e:
-        logger.exception("download_report_text_failed")
-        return HttpResponse('Error generating report', status=500)
 
 
 @ensure_csrf_cookie
 def download_report_json(request):
-    """Download structured MSE analysis as JSON"""
     try:
         assessment = _get_report_assessment(request)
-        if assessment and assessment.report_json:
-            structured_analysis = assessment.report_json
-        else:
-            answers = _get_answers(request.session)
-            if not answers:
-                return JsonResponse({'error': 'No assessment data found'}, status=404)
-            structured_analysis, _ = analyze_patient_responses(answers)
+        data = assessment.report_json if assessment else {}
         response = HttpResponse(
-            json.dumps(structured_analysis, indent=2),
-            content_type='application/json'
+            json.dumps(data, indent=2), content_type='application/json'
         )
-        response['Content-Disposition'] = 'attachment; filename="mse_analysis.json"'
+        response['Content-Disposition'] = 'attachment; filename=\"assessment_report.json\"'
         return response
-
-    except Exception as e:
+    except Exception:
         logger.exception("download_report_json_failed")
         return JsonResponse({'error': 'Error generating report'}, status=500)
 
 
 @ensure_csrf_cookie
-def view_risk_summary(request):
-    """View quick risk summary page"""
-    answers = _get_answers(request.session)
-
-    if not answers:
-        return redirect('questionnaire:index')
-
+def download_report_text(request):
     try:
-        structured_analysis, _ = analyze_patient_responses(answers)
-        risk = structured_analysis['risk_assessment']
+        assessment = _get_report_assessment(request)
+        if not assessment:
+            return HttpResponse('No assessment data found', status=404)
 
-        context = {
-            'risk': risk,
-            'clinical_impressions': structured_analysis['clinical_impressions'],
-            'recommendations': structured_analysis['recommendations'][:5]
-        }
+        d = assessment.depression_result_json or {}
+        s = assessment.stress_result_json or {}
+        a = assessment.anxiety_result_json or {}
 
-        return render(request, 'Questionaire_project/risk_summary.html', context)
+        lines = [
+            "STUDENT COMPANION — MENTAL HEALTH ASSESSMENT REPORT",
+            f"Generated: {assessment.finalized_at}",
+            "=" * 60,
+            "",
+            f"DEPRESSION (BDI)  Score: {d.get('total_score','N/A')}/63  Risk: {d.get('risk_level','N/A').upper()}",
+            d.get('interpretation', ''),
+            "",
+            f"STRESS (PSS-10)   Score: {s.get('total_score','N/A')}/40  Risk: {s.get('risk_level','N/A').upper()}",
+            s.get('interpretation', ''),
+            "",
+            f"ANXIETY (BAI)     Score: {a.get('total_score','N/A')}/63  Risk: {a.get('risk_level','N/A').upper()}",
+            a.get('interpretation', ''),
+            "",
+            "RECOMMENDATIONS",
+            "-" * 40,
+        ]
+        for rec in d.get('recommendations', []):
+            lines.append(f"[Depression] {rec}")
+        for rec in s.get('recommendations', []):
+            lines.append(f"[Stress]     {rec}")
+        for rec in a.get('recommendations', []):
+            lines.append(f"[Anxiety]    {rec}")
 
-    except Exception as e:
-        logger.exception("risk_summary_failed")
-        return render(request, 'Questionaire_project/error.html', {
-            'error': 'Error generating risk summary.'
-        })
+        response = HttpResponse(''.join(lines), content_type='text/plain')
+        response['Content-Disposition'] = 'attachment; filename=\"assessment_report.txt\"'
+        return response
+    except Exception:
+        logger.exception("download_report_text_failed")
+        return HttpResponse('Error generating report', status=500)
+
+
+# ============================================================================
+# LEGACY STUBS — kept so any old bookmarks/links don't 500
+# These routes are no longer in urls.py but kept here as safety nets
+# ============================================================================
+
+@ensure_csrf_cookie
+def generate_mse_report(request):
+    """Deprecated: MSE system replaced by structured scales. Redirect to index."""
+    logger.info("generate_mse_report_deprecated_called")
+    return redirect('questionnaire:index')
+
+
+@ensure_csrf_cookie
+def view_risk_summary(request):
+    """Deprecated: replaced by complete.html three-scale results. Redirect to index."""
+    logger.info("view_risk_summary_deprecated_called ")
+    return redirect('questionnaire:index')

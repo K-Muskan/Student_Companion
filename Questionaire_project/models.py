@@ -3,31 +3,51 @@ from django.db import models
 
 
 class Question(models.Model):
-    """
-    Optional but recommended:
-    id same rakha hai (1..15) as your VIDEOS list.
-    """
+    SCALE_DEPRESSION = 'depression'
+    SCALE_STRESS = 'stress'
+    SCALE_ANXIETY = 'anxiety'
+    SCALE_TITLE = 'title'      # title screen between scales
+    SCALE_FINAL = 'final'
+
+    SCALE_CHOICES = [
+        (SCALE_DEPRESSION, 'Depression (BDI)'),
+        (SCALE_STRESS, 'Stress (PSS-10)'),
+        (SCALE_ANXIETY, 'Anxiety (BAI)'),
+        (SCALE_TITLE, 'Title Screen'),
+        (SCALE_FINAL, 'Final Screen'),
+    ]
 
     id = models.PositiveIntegerField(primary_key=True)
-    video_file = models.CharField(max_length=255)
+    video_file = models.CharField(max_length=255, blank=True)
     question_text = models.TextField(blank=True)
     mse_category = models.CharField(max_length=100, blank=True)
+    scale = models.CharField(
+        max_length=20, choices=SCALE_CHOICES, blank=True, default=''
+    )
+    scale_item_number = models.PositiveSmallIntegerField(
+        null=True, blank=True,
+        help_text="Item number within its scale (1-21 for BDI/BAI, 1-10 for PSS)"
+    )
+    max_score = models.PositiveSmallIntegerField(
+        default=3,
+        help_text="Max score for this item: 3 for BDI/BAI, 4 for PSS"
+    )
+    is_reverse_scored = models.BooleanField(
+        default=False,
+        help_text="True for PSS items 4,5,7,8"
+    )
+    is_title_screen = models.BooleanField(default=False)
     is_final = models.BooleanField(default=False)
     is_active = models.BooleanField(default=True)
 
     def __str__(self):
-        return f"Q{self.id}"
+        return f"Q{self.id} [{self.scale}]"
 
 
 class Assessment(models.Model):
-    """
-    One assessment attempt per session (flow change nahi hota).
-    """
-
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
-        null=True,
-        blank=True,
+        null=True, blank=True,
         on_delete=models.SET_NULL,
         related_name="assessments",
     )
@@ -40,29 +60,49 @@ class Assessment(models.Model):
     report_text = models.TextField(blank=True)
     report_json = models.JSONField(default=dict, blank=True)
 
+    # --- New: individual scale results stored separately ---
+    depression_score = models.PositiveSmallIntegerField(null=True, blank=True)
+    depression_risk_level = models.CharField(max_length=20, blank=True)
+    depression_result_json = models.JSONField(default=dict, blank=True)
+
+    stress_score = models.PositiveSmallIntegerField(null=True, blank=True)
+    stress_risk_level = models.CharField(max_length=20, blank=True)
+    stress_result_json = models.JSONField(default=dict, blank=True)
+
+    anxiety_score = models.PositiveSmallIntegerField(null=True, blank=True)
+    anxiety_risk_level = models.CharField(max_length=20, blank=True)
+    anxiety_result_json = models.JSONField(default=dict, blank=True)
+
     def __str__(self):
         return f"Assessment {self.pk}"
 
 
 class Answer(models.Model):
-    """
-    One answer per (assessment, question)
-    """
-
-    assessment = models.ForeignKey(Assessment, on_delete=models.CASCADE, related_name="answers")
-    question = models.ForeignKey(Question, on_delete=models.PROTECT, related_name="answers")
+    assessment = models.ForeignKey(
+        Assessment, on_delete=models.CASCADE, related_name="answers"
+    )
+    question = models.ForeignKey(
+        Question, on_delete=models.PROTECT, related_name="answers"
+    )
     answer_text = models.TextField(blank=True)
-
+    # New: integer score for structured scale items
+    answer_score = models.SmallIntegerField(
+        null=True, blank=True,
+        help_text="Numeric score (0-4) for scale questions"
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         constraints = [
-            models.UniqueConstraint(fields=["assessment", "question"], name="uq_assessment_question")
+            models.UniqueConstraint(
+                fields=["assessment", "question"],
+                name="uq_assessment_question"
+            )
         ]
 
     def __str__(self):
-        return f"A{self.assessment_id}-Q{self.question_id}"
+        return f"A{self.assessment_id}-Q{self.question_id} score={self.answer_score}"
 
 
 class EmotionRecord(models.Model):
@@ -81,21 +121,18 @@ class EmotionRecord(models.Model):
     ]
 
     assessment = models.ForeignKey(
-        Assessment,
-        on_delete=models.CASCADE,
-        related_name="emotion_records",
+        Assessment, on_delete=models.CASCADE, related_name="emotion_records",
     )
     question = models.ForeignKey(
-        Question,
-        null=True,
-        blank=True,
-        on_delete=models.SET_NULL,
-        related_name="emotion_records",
+        Question, null=True, blank=True,
+        on_delete=models.SET_NULL, related_name="emotion_records",
     )
     dominant_emotion = models.CharField(max_length=32, blank=True)
     emotion_scores = models.JSONField(default=dict, blank=True)
     confidence = models.FloatField(null=True, blank=True)
-    status = models.CharField(max_length=16, choices=STATUS_CHOICES, default=STATUS_OK)
+    status = models.CharField(
+        max_length=16, choices=STATUS_CHOICES, default=STATUS_OK
+    )
     client_ts = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -108,6 +145,6 @@ class EmotionRecord(models.Model):
 
     def __str__(self):
         return (
-            f"EmotionRecord(assessment={self.assessment_id}, status={self.status}, "
-            f"emotion={self.dominant_emotion})"
+            f"EmotionRecord(assessment={self.assessment_id}, "
+            f"status={self.status}, emotion={self.dominant_emotion})"
         )
