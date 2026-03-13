@@ -13,9 +13,11 @@ import numpy as np
 from channels.db import database_sync_to_async
 from channels.generic.websocket import AsyncJsonWebsocketConsumer
 from django.conf import settings
+from django.utils import timezone
 from django.utils.dateparse import parse_datetime
 
 from .emotion_limits import consume_frame_quota, release_connection, touch_connection, try_acquire_connection
+from .emotion_services import finalize_scale_emotion_session
 from .emotion_worker import EmotionInferenceWorker, STATUS_OK as WORKER_STATUS_OK
 
 STATUS_OK = "ok"
@@ -44,6 +46,7 @@ class EmotionStreamConsumer(AsyncJsonWebsocketConsumer):
         self.correlation_id = uuid.uuid4().hex
         self.lease_id = uuid.uuid4().hex
         self.assessment_id = int(self.scope["url_route"]["kwargs"]["assessment_id"])
+        self.scale = str(self.scope["url_route"]["kwargs"]["scale"])
         self.client_ip = self._resolve_client_ip()
         self.analysis_interval = float(getattr(settings, "EMOTION_ANALYZE_INTERVAL_SECONDS", 1.0))
         self.max_image_bytes = int(getattr(settings, "EMOTION_MAX_IMAGE_BYTES", 1500000))
@@ -78,6 +81,10 @@ class EmotionStreamConsumer(AsyncJsonWebsocketConsumer):
         self._connection_acquired = False
         self._heartbeat_task: Optional[asyncio.Task] = None
 
+        if self.scale not in {"depression", "stress", "anxiety"}:
+            await self.close(code=4400)
+            return
+
         if not self._origin_allowed():
             await self.close(code=4403)
             return
@@ -101,16 +108,23 @@ class EmotionStreamConsumer(AsyncJsonWebsocketConsumer):
         self._connection_acquired = True
 
         await self.accept()
+        await self._start_scale_session()
         self._heartbeat_task = asyncio.create_task(self._watch_heartbeat())
         logger.info(
             "emotion_websocket_connected",
-            extra={"correlation_id": self.correlation_id, "assessment_id": self.assessment_id, "client_ip": self.client_ip},
+            extra={
+                "correlation_id": self.correlation_id,
+                "assessment_id": self.assessment_id,
+                "scale": self.scale,
+                "client_ip": self.client_ip,
+            },
         )
         await self.send_json(
             {
                 "type": "connection",
                 "status": "connected",
                 "assessment_id": self.assessment_id,
+                "scale": self.scale,
                 "analysis_interval_seconds": self.analysis_interval,
                 "max_reconnect_attempts": int(getattr(settings, "EMOTION_MAX_RECONNECT_ATTEMPTS", 5)),
                 "heartbeat_interval_seconds": float(getattr(settings, "EMOTION_HEARTBEAT_INTERVAL_SECONDS", 15)),
@@ -144,10 +158,15 @@ class EmotionStreamConsumer(AsyncJsonWebsocketConsumer):
 
         image_base64 = content.get("image_base64")
         question_id = content.get("question_id")
+        payload_scale = str(content.get("scale") or self.scale)
         client_ts_raw = content.get("client_ts")
         frame_id = content.get("frame_id") or uuid.uuid4().hex
         if not image_base64:
             await self.send_json({"type": "error", "message": "image_base64 missing", "correlation_id": self.correlation_id})
+            return
+        if payload_scale != self.scale:
+            await self.send_json({"type": "error", "message": "scale mismatch", "correlation_id": self.correlation_id})
+            await self.close(code=4409)
             return
 
         now = time.monotonic()
@@ -170,7 +189,9 @@ class EmotionStreamConsumer(AsyncJsonWebsocketConsumer):
         if not quota_ok:
             await self._safe_save_record(
                 assessment_id=self.assessment_id,
+                scale=self.scale,
                 question_id=question_id,
+                frame_id=frame_id,
                 dominant_emotion="",
                 emotion_scores={},
                 confidence=None,
@@ -191,7 +212,9 @@ class EmotionStreamConsumer(AsyncJsonWebsocketConsumer):
             result = await self._analyze_frame(image_base64, frame_id)
             await self._safe_save_record(
                 assessment_id=self.assessment_id,
+                scale=self.scale,
                 question_id=question_id,
+                frame_id=frame_id,
                 dominant_emotion=result.get("dominant_emotion", ""),
                 emotion_scores=result.get("emotion_scores", {}),
                 confidence=result.get("confidence"),
@@ -234,7 +257,9 @@ class EmotionStreamConsumer(AsyncJsonWebsocketConsumer):
             )
             await self._safe_save_record(
                 assessment_id=self.assessment_id,
+                scale=self.scale,
                 question_id=question_id,
+                frame_id=frame_id,
                 dominant_emotion="",
                 emotion_scores={},
                 confidence=None,
@@ -254,7 +279,9 @@ class EmotionStreamConsumer(AsyncJsonWebsocketConsumer):
             logger.exception("emotion_analysis_failed", extra={"correlation_id": self.correlation_id, "assessment_id": self.assessment_id})
             await self._safe_save_record(
                 assessment_id=self.assessment_id,
+                scale=self.scale,
                 question_id=question_id,
+                frame_id=frame_id,
                 dominant_emotion="",
                 emotion_scores={},
                 confidence=None,
@@ -274,6 +301,7 @@ class EmotionStreamConsumer(AsyncJsonWebsocketConsumer):
                 self._heartbeat_task = None
         finally:
             try:
+                await self._finish_scale_session()
                 if self._connection_acquired:
                     release_connection(self.lease_id, ttl_seconds=max(30, self.connection_ttl_seconds))
             finally:
@@ -283,6 +311,7 @@ class EmotionStreamConsumer(AsyncJsonWebsocketConsumer):
                     extra={
                         "correlation_id": getattr(self, "correlation_id", "n/a"),
                         "assessment_id": getattr(self, "assessment_id", None),
+                        "scale": getattr(self, "scale", None),
                         "close_code": close_code,
                     },
                 )
@@ -302,15 +331,7 @@ class EmotionStreamConsumer(AsyncJsonWebsocketConsumer):
         if h > self.max_height or w > self.max_width or (h * w) > self.max_pixels:
             return self._error_result("oversize_dimensions")
         passes_quality, quality_meta = self._passes_quality_gate(frame)
-        if not passes_quality:
-            return {
-                "status": STATUS_QUALITY_LOW,
-                "dominant_emotion": "",
-                "emotion_scores": {},
-                "confidence": None,
-                "message": quality_meta.get("reason", "quality_low"),
-                "details": quality_meta,
-            }
+        quality_warning = None if passes_quality else quality_meta
 
         worker = get_inference_worker(self.inference_max_memory_mb)
         request_id = uuid.uuid4().hex
@@ -349,13 +370,25 @@ class EmotionStreamConsumer(AsyncJsonWebsocketConsumer):
 
         faces = worker_result.get("faces") or []
         if not faces:
-            return {"status": STATUS_NO_FACE, "dominant_emotion": "", "emotion_scores": {}, "confidence": None, "message": "no_face_detected"}
+            status = STATUS_QUALITY_LOW if quality_warning else STATUS_NO_FACE
+            payload = {"status": status, "dominant_emotion": "", "emotion_scores": {}, "confidence": None, "message": "no_face_detected"}
+            if quality_warning:
+                payload["details"] = quality_warning
+            return payload
         if len(faces) > 1 and self.subject_box is None:
-            return {"status": STATUS_NO_FACE, "dominant_emotion": "", "emotion_scores": {}, "confidence": None, "message": "multiple_faces_detected"}
+            status = STATUS_QUALITY_LOW if quality_warning else STATUS_NO_FACE
+            payload = {"status": status, "dominant_emotion": "", "emotion_scores": {}, "confidence": None, "message": "multiple_faces_detected"}
+            if quality_warning:
+                payload["details"] = quality_warning
+            return payload
 
         best_face = self._pick_subject_face(faces)
         if best_face is None:
-            return {"status": STATUS_NO_FACE, "dominant_emotion": "", "emotion_scores": {}, "confidence": None, "message": "subject_tracking_lost"}
+            status = STATUS_QUALITY_LOW if quality_warning else STATUS_NO_FACE
+            payload = {"status": status, "dominant_emotion": "", "emotion_scores": {}, "confidence": None, "message": "subject_tracking_lost"}
+            if quality_warning:
+                payload["details"] = quality_warning
+            return payload
         confidence = self._face_conf(best_face)
         if confidence < self.min_face_confidence:
             return {
@@ -391,6 +424,7 @@ class EmotionStreamConsumer(AsyncJsonWebsocketConsumer):
             "dominant_emotion": dominant_emotion,
             "emotion_scores": emotion_scores,
             "confidence": confidence,
+            "details": quality_warning or {},
         }
 
     def _decode_base64_image(self, image_base64: str) -> bytes:
@@ -519,6 +553,38 @@ class EmotionStreamConsumer(AsyncJsonWebsocketConsumer):
         return "unknown"
 
     @database_sync_to_async
+    def _start_scale_session(self):
+        from .models import Assessment, ScaleEmotionSession
+
+        assessment = Assessment.objects.filter(id=self.assessment_id).first()
+        if not assessment:
+            return
+        ScaleEmotionSession.objects.create(
+            assessment=assessment,
+            scale=self.scale,
+        )
+
+    @database_sync_to_async
+    def _finish_scale_session(self):
+        from .models import Assessment
+
+        assessment = Assessment.objects.filter(id=self.assessment_id).first()
+        if not assessment:
+            return
+        session = finalize_scale_emotion_session(assessment, self.scale)
+        if not session:
+            return
+        session.ended_at = timezone.now()
+        session.save(
+            update_fields=[
+                "ended_at",
+                "total_frames",
+                "overall_dominant_emotion",
+                "distress_ratio",
+            ]
+        )
+
+    @database_sync_to_async
     def _can_access_assessment(self, assessment_id: int) -> bool:
         from .models import Assessment
 
@@ -536,7 +602,9 @@ class EmotionStreamConsumer(AsyncJsonWebsocketConsumer):
     def _save_record(
         self,
         assessment_id: int,
+        scale: str,
         question_id: Optional[int],
+        frame_id: str,
         dominant_emotion: str,
         emotion_scores: Dict[str, float],
         confidence: Optional[float],
@@ -555,14 +623,18 @@ class EmotionStreamConsumer(AsyncJsonWebsocketConsumer):
                 question_id = None
         question = Question.objects.filter(id=question_id).first() if question_id is not None else None
         client_ts = parse_datetime(client_ts_raw) if client_ts_raw else None
-        EmotionRecord.objects.create(
+        EmotionRecord.objects.update_or_create(
             assessment=assessment,
-            question=question,
-            dominant_emotion=dominant_emotion,
-            emotion_scores=emotion_scores,
-            confidence=confidence,
-            status=status,
-            client_ts=client_ts,
+            scale=scale,
+            frame_id=frame_id,
+            defaults={
+                "question": question,
+                "dominant_emotion": dominant_emotion,
+                "emotion_scores": emotion_scores,
+                "confidence": confidence,
+                "status": status,
+                "client_ts": client_ts,
+            },
         )
 
     async def _safe_save_record(self, **kwargs):

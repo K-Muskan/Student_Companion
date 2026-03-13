@@ -10,7 +10,7 @@ from django.shortcuts import redirect, render
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.views.decorators.http import require_http_methods
 
-from .emotion_services import build_emotion_summary
+from .emotion_services import build_emotion_summary, build_scale_emotion_summary, empty_emotion_summary
 from .models import Assessment, Answer, Question
 from .depression_analyzer import analyze_depression
 from .stress_analyzer import analyze_stress
@@ -192,6 +192,11 @@ QUESTIONS_BY_ID = {q["id"]: q for q in QUESTIONS}
 TOTAL_QUESTIONS = len(QUESTIONS)
 FIRST_QID = QUESTIONS[0]["id"]   # 1
 LAST_QID  = QUESTIONS[-1]["id"]  # 56
+EMOTION_STREAMABLE_SCALES = {
+    Question.SCALE_DEPRESSION,
+    Question.SCALE_STRESS,
+    Question.SCALE_ANXIETY,
+}
 
 
 # ============================================================================
@@ -338,11 +343,93 @@ def _safe_error_response(message, status=500):
     return JsonResponse({"status": "error", "message": message}, status=status)
 
 
+def _derive_stream_scale(question, next_qid=None):
+    if not question:
+        return ""
+    scale = question.get("scale", "")
+    if scale in EMOTION_STREAMABLE_SCALES:
+        return scale
+    if question.get("is_title_screen") and next_qid:
+        next_question = _get_question(next_qid)
+        next_scale = (next_question or {}).get("scale", "")
+        if next_scale in EMOTION_STREAMABLE_SCALES:
+            return next_scale
+    return ""
+
+
+def _build_question_context(request, qid, assessment=None):
+    question = _get_question(qid)
+    assessment = assessment or _get_or_create_assessment(request)
+
+    previous_score = _get_answers(request.session).get(str(qid), None)
+    if previous_score is None:
+        try:
+            ans = Answer.objects.get(assessment=assessment, question_id=qid)
+            previous_score = ans.answer_score
+            if previous_score is not None:
+                _set_answer(request.session, str(qid), previous_score)
+        except Answer.DoesNotExist:
+            pass
+
+    scorable_ids = [
+        q["id"] for q in QUESTIONS
+        if not q.get("is_title_screen") and not q.get("is_final")
+    ]
+    answered_count = sum(
+        1 for sid in scorable_ids
+        if str(sid) in _get_answers(request.session)
+    )
+    total_scorable = len(scorable_ids)
+
+    scale_questions = [
+        q for q in QUESTIONS
+        if q.get("scale") == question.get("scale")
+        and not q.get("is_title_screen")
+        and not q.get("is_final")
+    ] if not question.get("is_title_screen") and not question.get("is_final") else []
+
+    scale_position = 0
+    scale_total = len(scale_questions)
+    if scale_questions:
+        for i, sq in enumerate(scale_questions, 1):
+            if sq["id"] == qid:
+                scale_position = i
+                break
+
+    current_index = next(
+        (i for i, q in enumerate(QUESTIONS) if q["id"] == qid), 0
+    )
+    next_qid = QUESTIONS[current_index + 1]["id"] if current_index + 1 < TOTAL_QUESTIONS else None
+    prev_qid = QUESTIONS[current_index - 1]["id"] if current_index > 0 else None
+
+    stream_scale = _derive_stream_scale(question, next_qid=next_qid)
+    next_scale = _derive_stream_scale(_get_question(next_qid), next_qid=QUESTIONS[current_index + 2]["id"] if next_qid and current_index + 2 < TOTAL_QUESTIONS else None) if next_qid else ""
+
+    return {
+        'question': question,
+        'qid': qid,
+        'is_final': question.get("is_final", False),
+        'is_title_screen': question.get("is_title_screen", False),
+        'next_qid': next_qid,
+        'prev_qid': prev_qid,
+        'previous_score': previous_score,
+        'assessment_id': assessment.id,
+        'answered_count': answered_count,
+        'total_scorable': total_scorable,
+        'scale_position': scale_position,
+        'scale_total': scale_total,
+        'progress_percent': round((answered_count / total_scorable) * 100) if total_scorable else 0,
+        'stream_scale': stream_scale,
+        'next_stream_scale': next_scale,
+        'emotion_max_reconnect_attempts': int(getattr(settings, "EMOTION_MAX_RECONNECT_ATTEMPTS", 5)),
+        'emotion_heartbeat_interval_seconds': int(getattr(settings, "EMOTION_HEARTBEAT_INTERVAL_SECONDS", 15)),
+        'emotion_heartbeat_grace_seconds': int(getattr(settings, "EMOTION_HEARTBEAT_GRACE_SECONDS", 90)),
+        'emotion_client_max_frame_width': int(getattr(settings, "EMOTION_CLIENT_MAX_FRAME_WIDTH", 640)),
+        'emotion_client_max_encoded_bytes': int(getattr(settings, "EMOTION_CLIENT_MAX_ENCODED_BYTES", 900000)),
+    }
+
+
 def _extract_scale_scores(answers_dict):
-    """
-    Extract per-scale {item_number: raw_score} dicts from saved answers.
-    answers_dict: {str(qid): score}
-    """
     depression_scores = {}
     stress_scores = {}
     anxiety_scores = {}
@@ -395,6 +482,69 @@ def _apply_emotion_text_incongruence(report_json, emotion_summary):
     return report_json
 
 
+def _apply_scale_emotion_incongruence(report_json):
+    scale_thresholds = {
+        "depression": {"normal", "mild"},
+        "stress": {"low", "normal"},
+        "anxiety": {"low", "mild", "normal"},
+    }
+    for scale, low_risk_levels in scale_thresholds.items():
+        scale_result = report_json.get(scale, {})
+        summary = scale_result.get("emotion_summary", {})
+        if not summary.get("available"):
+            continue
+        distress = summary.get("distress_proxy", {})
+        if not distress.get("flag"):
+            continue
+        if scale_result.get("risk_level", "normal") in low_risk_levels:
+            report_json.setdefault("incongruence_flags", []).append(
+                f"{scale.title()} incongruence: facial distress remained elevated despite a low {scale} score."
+            )
+    return report_json
+
+
+def _inject_scale_emotion_summaries(report_json, assessment):
+    scale_emotion_summaries = {
+        "depression": build_scale_emotion_summary(assessment, "depression"),
+        "stress": build_scale_emotion_summary(assessment, "stress"),
+        "anxiety": build_scale_emotion_summary(assessment, "anxiety"),
+    }
+    for scale, summary in scale_emotion_summaries.items():
+        report_json.setdefault(scale, {})
+        report_json[scale]["emotion_summary"] = summary
+    report_json["emotion_summary"] = build_emotion_summary(assessment)
+    return report_json, scale_emotion_summaries
+
+
+def _question_state_payload(context):
+    question = context["question"]
+    return {
+        "question": question,
+        "qid": context["qid"],
+        "is_final": context["is_final"],
+        "is_title_screen": context["is_title_screen"],
+        "next_qid": context["next_qid"],
+        "prev_qid": context["prev_qid"],
+        "previous_score": context["previous_score"],
+        "assessment_id": context["assessment_id"],
+        "answered_count": context["answered_count"],
+        "total_scorable": context["total_scorable"],
+        "scale_position": context["scale_position"],
+        "scale_total": context["scale_total"],
+        "progress_percent": context["progress_percent"],
+        "stream_scale": context["stream_scale"],
+        "next_stream_scale": context["next_stream_scale"],
+        "emotion": {
+            "max_reconnect_attempts": context["emotion_max_reconnect_attempts"],
+            "heartbeat_interval_seconds": context["emotion_heartbeat_interval_seconds"],
+            "heartbeat_grace_seconds": context["emotion_heartbeat_grace_seconds"],
+            "client_max_frame_width": context["emotion_client_max_frame_width"],
+            "client_max_encoded_bytes": context["emotion_client_max_encoded_bytes"],
+            "frame_jpeg_quality": float(getattr(settings, "EMOTION_FRAME_JPEG_QUALITY", 0.85)),
+        },
+    }
+
+
 def _get_report_assessment(request):
     completed_id = request.session.get("last_completed_assessment_id")
     if completed_id:
@@ -435,74 +585,11 @@ def question_page(request, qid):
         return redirect('questionnaire:index')
 
     _ensure_questions_in_db()
-    question = _get_question(qid)
     assessment = _get_or_create_assessment(request)
-
-    # Previous score (for back navigation)
-    previous_score = _get_answers(request.session).get(str(qid), None)
-    if previous_score is None:
-        try:
-            ans = Answer.objects.get(assessment=assessment, question_id=qid)
-            previous_score = ans.answer_score
-            if previous_score is not None:
-                _set_answer(request.session, str(qid), previous_score)
-        except Answer.DoesNotExist:
-            pass
-
-    # Progress calculation (exclude title screens and final)
-    scorable_ids = [
-        q["id"] for q in QUESTIONS
-        if not q.get("is_title_screen") and not q.get("is_final")
-    ]
-    answered_count = sum(
-        1 for sid in scorable_ids
-        if str(sid) in _get_answers(request.session)
-    )
-    total_scorable = len(scorable_ids)
-
-    # Position within current scale
-    scale_questions = [
-        q for q in QUESTIONS
-        if q.get("scale") == question.get("scale")
-        and not q.get("is_title_screen")
-        and not q.get("is_final")
-    ] if not question.get("is_title_screen") and not question.get("is_final") else []
-
-    scale_position = 0
-    scale_total = len(scale_questions)
-    if scale_questions:
-        for i, sq in enumerate(scale_questions, 1):
-            if sq["id"] == qid:
-                scale_position = i
-                break
-
-    # Next and previous IDs
-    current_index = next(
-        (i for i, q in enumerate(QUESTIONS) if q["id"] == qid), 0
-    )
-    next_qid = QUESTIONS[current_index + 1]["id"] if current_index + 1 < TOTAL_QUESTIONS else None
-    prev_qid = QUESTIONS[current_index - 1]["id"] if current_index > 0 else None
-
-    context = {
-        'question': question,
-        'qid': qid,
-        'is_final': question.get("is_final", False),
-        'is_title_screen': question.get("is_title_screen", False),
-        'next_qid': next_qid,
-        'prev_qid': prev_qid,
-        'previous_score': previous_score,
-        'assessment_id': assessment.id,
-        'answered_count': answered_count,
-        'total_scorable': total_scorable,
-        'scale_position': scale_position,
-        'scale_total': scale_total,
-        'progress_percent': round((answered_count / total_scorable) * 100) if total_scorable else 0,
-        'emotion_max_reconnect_attempts': int(getattr(settings, "EMOTION_MAX_RECONNECT_ATTEMPTS", 5)),
-        'emotion_heartbeat_interval_seconds': int(getattr(settings, "EMOTION_HEARTBEAT_INTERVAL_SECONDS", 15)),
-        'emotion_heartbeat_grace_seconds': int(getattr(settings, "EMOTION_HEARTBEAT_GRACE_SECONDS", 90)),
-        'emotion_client_max_frame_width': int(getattr(settings, "EMOTION_CLIENT_MAX_FRAME_WIDTH", 640)),
-        'emotion_client_max_encoded_bytes': int(getattr(settings, "EMOTION_CLIENT_MAX_ENCODED_BYTES", 900000)),
-    }
+    context = _build_question_context(request, qid, assessment=assessment)
+    context["question_state"] = _question_state_payload(context)
+    if request.headers.get("X-Question-Partial") == "1":
+        return JsonResponse(context["question_state"])
     return render(request, 'Questionaire_project/question.html', context)
 
 
@@ -639,7 +726,10 @@ def complete(request):
 
             if assessment.is_completed and assessment.report_json:
                 report_json = assessment.report_json
-                emotion_summary = report_json.get("emotion_summary", {"available": False})
+                report_json, scale_emotion_summaries = _inject_scale_emotion_summaries(report_json, assessment)
+                emotion_summary = report_json.get("emotion_summary", empty_emotion_summary())
+                assessment.report_json = report_json
+                assessment.save(update_fields=["report_json"])
             else:
                 depression_scores, stress_scores, anxiety_scores = _extract_scale_scores(answers)
 
@@ -647,18 +737,31 @@ def complete(request):
                 stress_result     = analyze_stress(stress_scores)
                 anxiety_result    = analyze_anxiety(anxiety_scores)
 
-                emotion_summary = build_emotion_summary(assessment)
-
                 report_json = {
                     'timestamp': timezone.now().isoformat(),
                     'depression': depression_result,
                     'stress':     stress_result,
                     'anxiety':    anxiety_result,
-                    'emotion_summary': emotion_summary,
                 }
+                report_json, scale_emotion_summaries = _inject_scale_emotion_summaries(report_json, assessment)
+                emotion_summary = report_json.get("emotion_summary", empty_emotion_summary())
 
-                # Apply DeepFace incongruence check (from teammate)
+                logger.info(
+                    "assessment_emotion_summary_counts",
+                    extra={
+                        "assessment_id": assessment.id,
+                        "depression_raw": scale_emotion_summaries["depression"].get("raw_record_count", 0),
+                        "depression_ok": scale_emotion_summaries["depression"].get("frames_analyzed", 0),
+                        "stress_raw": scale_emotion_summaries["stress"].get("raw_record_count", 0),
+                        "stress_ok": scale_emotion_summaries["stress"].get("frames_analyzed", 0),
+                        "anxiety_raw": scale_emotion_summaries["anxiety"].get("raw_record_count", 0),
+                        "anxiety_ok": scale_emotion_summaries["anxiety"].get("frames_analyzed", 0),
+                    },
+                )
+
                 report_json = _apply_emotion_text_incongruence(report_json, emotion_summary)
+                report_json = _apply_scale_emotion_incongruence(report_json)
+                logger.info("assessment_report_json_ready", extra={"assessment_id": assessment.id, "report_json_keys": list(report_json.keys())})
 
                 now = timezone.now()
                 assessment.is_completed           = True
@@ -714,6 +817,7 @@ def complete(request):
             'stress':     report_json['stress'],
             'anxiety':    report_json['anxiety'],
             'emotion_summary': emotion_summary,
+            'scale_emotion_summaries': scale_emotion_summaries,
             'overall_risk': overall_risk,
             'immediate_intervention': immediate,
             'timestamp': report_json['timestamp'],
@@ -760,12 +864,15 @@ def download_report_text(request):
             "",
             f"DEPRESSION (BDI)  Score: {d.get('total_score','N/A')}/63  Risk: {d.get('risk_level','N/A').upper()}",
             d.get('interpretation', ''),
+            f"Emotion: {(d.get('emotion_summary') or {}).get('overall_dominant_emotion', 'N/A')}",
             "",
             f"STRESS (PSS-10)   Score: {s.get('total_score','N/A')}/40  Risk: {s.get('risk_level','N/A').upper()}",
             s.get('interpretation', ''),
+            f"Emotion: {(s.get('emotion_summary') or {}).get('overall_dominant_emotion', 'N/A')}",
             "",
             f"ANXIETY (BAI)     Score: {a.get('total_score','N/A')}/63  Risk: {a.get('risk_level','N/A').upper()}",
             a.get('interpretation', ''),
+            f"Emotion: {(a.get('emotion_summary') or {}).get('overall_dominant_emotion', 'N/A')}",
             "",
             "RECOMMENDATIONS",
             "-" * 40,

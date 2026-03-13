@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import Answer, Assessment, EmotionRecord, Question
+from .models import Answer, Assessment, EmotionRecord, Question, ScaleEmotionSession
 
 
 @admin.register(Question)
@@ -29,11 +29,28 @@ class EmotionRecordAdmin(admin.ModelAdmin):
     list_display = (
         "id",
         "assessment",
+        "scale",
         "question",
         "status",
         "dominant_emotion",
         "confidence",
         "created_at",
     )
-    list_filter = ("status", "dominant_emotion", "created_at")
-    search_fields = ("assessment__id", "question__id")
+    list_filter = ("scale", "status", "dominant_emotion", "created_at")
+    search_fields = ("assessment__id", "question__id", "frame_id")
+
+
+@admin.register(ScaleEmotionSession)
+class ScaleEmotionSessionAdmin(admin.ModelAdmin):
+    list_display = (
+        "id",
+        "assessment",
+        "scale",
+        "started_at",
+        "ended_at",
+        "total_frames",
+        "overall_dominant_emotion",
+        "distress_ratio",
+    )
+    list_filter = ("scale", "started_at", "ended_at")
+    search_fields = ("assessment__id",)

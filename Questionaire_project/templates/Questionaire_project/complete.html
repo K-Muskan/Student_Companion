@@ -171,6 +171,23 @@ body { font-family:var(--font); background:linear-gradient(135deg,#2D5F8D,#1E426
         <div class="score-bar-fill fill-{{ depression.risk_level }}" style="width:{{ depression.score_percentage }}%;"></div>
       </div>
       <div class="interpretation">{{ depression.interpretation }}</div>
+      {% if depression.emotion_summary.available %}
+      <div class="interpretation">
+        Emotion: {{ depression.emotion_summary.overall_dominant_emotion|default:"Unknown"|title }}
+        • Frames: {{ depression.emotion_summary.frames_analyzed|default:0 }}
+        • Distress Ratio: {{ depression.emotion_summary.distress_proxy.ratio|default:0 }}
+        {% if depression.emotion_summary.distress_proxy.flag %} • Distress signal detected{% endif %}
+      </div>
+      {% else %}
+      <div class="interpretation">
+        Emotion: Not available.
+        {% if depression.emotion_summary.raw_record_count %}
+        Captured {{ depression.emotion_summary.raw_record_count }} frame(s), but no valid STATUS_OK frame was available.
+        {% else %}
+        {{ depression.emotion_summary.note|default:"No emotion frames were captured." }}
+        {% endif %}
+      </div>
+      {% endif %}
       <div class="recs-title">Recommendations</div>
       {% for rec in depression.recommendations|slice:":3" %}
       <div class="rec-item">{{ rec }}</div>
@@ -192,6 +209,23 @@ body { font-family:var(--font); background:linear-gradient(135deg,#2D5F8D,#1E426
         <div class="score-bar-fill fill-{{ stress.risk_level }}" style="width:{{ stress.score_percentage }}%;"></div>
       </div>
       <div class="interpretation">{{ stress.interpretation }}</div>
+      {% if stress.emotion_summary.available %}
+      <div class="interpretation">
+        Emotion: {{ stress.emotion_summary.overall_dominant_emotion|default:"Unknown"|title }}
+        • Frames: {{ stress.emotion_summary.frames_analyzed|default:0 }}
+        • Distress Ratio: {{ stress.emotion_summary.distress_proxy.ratio|default:0 }}
+        {% if stress.emotion_summary.distress_proxy.flag %} • Distress signal detected{% endif %}
+      </div>
+      {% else %}
+      <div class="interpretation">
+        Emotion: Not available.
+        {% if stress.emotion_summary.raw_record_count %}
+        Captured {{ stress.emotion_summary.raw_record_count }} frame(s), but no valid STATUS_OK frame was available.
+        {% else %}
+        {{ stress.emotion_summary.note|default:"No emotion frames were captured." }}
+        {% endif %}
+      </div>
+      {% endif %}
       <div class="recs-title">Recommendations</div>
       {% for rec in stress.recommendations|slice:":3" %}
       <div class="rec-item">{{ rec }}</div>
@@ -213,6 +247,23 @@ body { font-family:var(--font); background:linear-gradient(135deg,#2D5F8D,#1E426
         <div class="score-bar-fill fill-{{ anxiety.risk_level }}" style="width:{{ anxiety.score_percentage }}%;"></div>
       </div>
       <div class="interpretation">{{ anxiety.interpretation }}</div>
+      {% if anxiety.emotion_summary.available %}
+      <div class="interpretation">
+        Emotion: {{ anxiety.emotion_summary.overall_dominant_emotion|default:"Unknown"|title }}
+        • Frames: {{ anxiety.emotion_summary.frames_analyzed|default:0 }}
+        • Distress Ratio: {{ anxiety.emotion_summary.distress_proxy.ratio|default:0 }}
+        {% if anxiety.emotion_summary.distress_proxy.flag %} • Distress signal detected{% endif %}
+      </div>
+      {% else %}
+      <div class="interpretation">
+        Emotion: Not available.
+        {% if anxiety.emotion_summary.raw_record_count %}
+        Captured {{ anxiety.emotion_summary.raw_record_count }} frame(s), but no valid STATUS_OK frame was available.
+        {% else %}
+        {{ anxiety.emotion_summary.note|default:"No emotion frames were captured." }}
+        {% endif %}
+      </div>
+      {% endif %}
       <div class="recs-title">Recommendations</div>
       {% for rec in anxiety.recommendations|slice:":3" %}
       <div class="rec-item">{{ rec }}</div>

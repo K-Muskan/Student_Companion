@@ -14,8 +14,9 @@ from django.contrib.sessions.middleware import SessionMiddleware
 from django.test import Client, RequestFactory, TestCase, TransactionTestCase, override_settings
 
 from Questionaire_project.consumers import EmotionStreamConsumer
+from Questionaire_project.emotion_services import build_scale_emotion_summary
 from Questionaire_project.emotion_worker import EmotionInferenceWorker
-from Questionaire_project.models import Assessment, Question
+from Questionaire_project.models import Assessment, EmotionRecord, Question
 from Questionaire_project.mse_analyzer import MSEAnalyzer
 from Questionaire_project.views import _get_or_create_assessment
 from StudentCompanion.asgi import application
@@ -108,10 +109,9 @@ class AssessmentFlowTests(TestCase):
         response = self.client.get("/assessment/question/1/")
         self.assertEqual(response.status_code, 200)
         html = response.content.decode("utf-8")
-        self.assertIn("type: 'ping'", html)
-        self.assertIn("track.onended", html)
-        self.assertIn("visibilitychange", html)
-        self.assertIn("scheduleReconnect", html)
+        self.assertIn("X-Question-Partial", html)
+        self.assertIn("/ws/emotion/${assessmentId}/${this.currentScale}/", html)
+        self.assertIn("Continuous capture", html)
 
 
 class AssessmentIdempotencyTests(TransactionTestCase):
@@ -187,6 +187,57 @@ class AnalyzerLogicTests(TestCase):
         self.assertTrue(risk.get("needs_clinician_review", False))
 
 
+class EmotionSummaryTests(TestCase):
+    def test_build_scale_emotion_summary_filters_by_scale(self):
+        assessment = Assessment.objects.create(
+            session_key="summary-session",
+            assessment_token="summary-session:1",
+        )
+        EmotionRecord.objects.create(
+            assessment=assessment,
+            scale="anxiety",
+            dominant_emotion="sad",
+            emotion_scores={"sad": 82.0},
+            confidence=0.9,
+            status=EmotionRecord.STATUS_OK,
+        )
+        EmotionRecord.objects.create(
+            assessment=assessment,
+            scale="stress",
+            dominant_emotion="happy",
+            emotion_scores={"happy": 77.0},
+            confidence=0.8,
+            status=EmotionRecord.STATUS_OK,
+        )
+
+        summary = build_scale_emotion_summary(assessment, "anxiety")
+
+        self.assertTrue(summary["available"])
+        self.assertEqual(summary["frames_analyzed"], 1)
+        self.assertEqual(summary["overall_dominant_emotion"], "sad")
+        self.assertEqual(summary["distribution_counts"], {"sad": 1})
+
+    def test_build_scale_emotion_summary_reports_captured_but_invalid_frames(self):
+        assessment = Assessment.objects.create(
+            session_key="summary-session-2",
+            assessment_token="summary-session-2:1",
+        )
+        EmotionRecord.objects.create(
+            assessment=assessment,
+            scale="anxiety",
+            dominant_emotion="",
+            emotion_scores={},
+            confidence=None,
+            status=EmotionRecord.STATUS_QUALITY_LOW,
+        )
+
+        summary = build_scale_emotion_summary(assessment, "anxiety")
+
+        self.assertFalse(summary["available"])
+        self.assertEqual(summary["raw_record_count"], 1)
+        self.assertEqual(summary["status_counts"], {EmotionRecord.STATUS_QUALITY_LOW: 1})
+
+
 class ConsumerUnitValidationTests(TestCase):
     def _build_consumer(self):
         c = EmotionStreamConsumer()
@@ -218,7 +269,8 @@ class ConsumerUnitValidationTests(TestCase):
     def test_quality_gate_abstain_dark_frame(self):
         c = self._build_consumer()
         frame = np.zeros((80, 80, 3), dtype=np.uint8)
-        self.assertFalse(c._passes_quality_gate(frame))
+        allowed, _ = c._passes_quality_gate(frame)
+        self.assertFalse(allowed)
 
     def test_error_result_shape(self):
         c = self._build_consumer()
@@ -262,10 +314,10 @@ class ConsumerWebsocketTests(TransactionTestCase):
             assessment_token="ws-session:1",
         )
 
-    async def _connect(self, assessment_id):
+    async def _connect(self, assessment_id, scale="anxiety"):
         comm = WebsocketCommunicator(
             application,
-            f"/ws/emotion/{assessment_id}/",
+            f"/ws/emotion/{assessment_id}/{scale}/",
             headers=[(b"origin", b"http://testserver")],
         )
         with mock.patch("Questionaire_project.consumers.EmotionStreamConsumer._can_access_assessment", return_value=True):

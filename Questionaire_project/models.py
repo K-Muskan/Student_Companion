@@ -1,5 +1,6 @@
 from django.conf import settings
 from django.db import models
+from django.db.models import Q
 
 
 class Question(models.Model):
@@ -123,10 +124,14 @@ class EmotionRecord(models.Model):
     assessment = models.ForeignKey(
         Assessment, on_delete=models.CASCADE, related_name="emotion_records",
     )
+    scale = models.CharField(
+        max_length=20, choices=Question.SCALE_CHOICES, blank=True, db_index=True
+    )
     question = models.ForeignKey(
         Question, null=True, blank=True,
         on_delete=models.SET_NULL, related_name="emotion_records",
     )
+    frame_id = models.CharField(max_length=64, blank=True, db_index=True)
     dominant_emotion = models.CharField(max_length=32, blank=True)
     emotion_scores = models.JSONField(default=dict, blank=True)
     confidence = models.FloatField(null=True, blank=True)
@@ -137,8 +142,16 @@ class EmotionRecord(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["assessment", "scale", "frame_id"],
+                condition=~Q(frame_id=""),
+                name="uq_emotionrecord_assessment_scale_frame",
+            )
+        ]
         indexes = [
             models.Index(fields=["assessment", "created_at"]),
+            models.Index(fields=["assessment", "scale", "created_at"]),
             models.Index(fields=["question", "created_at"]),
             models.Index(fields=["status"]),
         ]
@@ -148,3 +161,25 @@ class EmotionRecord(models.Model):
             f"EmotionRecord(assessment={self.assessment_id}, "
             f"status={self.status}, emotion={self.dominant_emotion})"
         )
+
+
+class ScaleEmotionSession(models.Model):
+    assessment = models.ForeignKey(
+        Assessment, on_delete=models.CASCADE, related_name="scale_emotion_sessions"
+    )
+    scale = models.CharField(
+        max_length=20, choices=Question.SCALE_CHOICES, db_index=True
+    )
+    started_at = models.DateTimeField(auto_now_add=True)
+    ended_at = models.DateTimeField(null=True, blank=True)
+    total_frames = models.PositiveIntegerField(default=0)
+    overall_dominant_emotion = models.CharField(max_length=32, blank=True)
+    distress_ratio = models.FloatField(null=True, blank=True)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=["assessment", "scale", "started_at"]),
+        ]
+
+    def __str__(self):
+        return f"ScaleEmotionSession(assessment={self.assessment_id}, scale={self.scale})"

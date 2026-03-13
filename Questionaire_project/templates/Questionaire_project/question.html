@@ -1,511 +1,64 @@
-{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Assessment</title>
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Crimson+Pro:wght@400;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Crimson+Pro:wght@600;700&display=swap" rel="stylesheet">
 <style>
-:root {
-  --primary: #2D5F8D; --primary-dark: #1E4266;
-  --accent: #E8925C; --accent-dark: #D67B47;
-  --font-body: 'DM Sans', sans-serif;
-  --font-display: 'Crimson Pro', Georgia, serif;
-}
-* { margin:0; padding:0; box-sizing:border-box; }
-body { font-family:var(--font-body); background:#f7fafc; min-height:100vh; overflow:hidden; }
-.container { display:flex; min-height:100vh; max-height:100vh; }
-
-/* LEFT PANEL */
-.left-panel { flex:0 0 40%; background:#1E4266; display:flex; align-items:center; justify-content:center; height:100vh; overflow:hidden; position:relative; }
-
-/* TITLE SCREEN (left side) */
-.title-screen { display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:40px; color:white; width:100%; height:100%; background:linear-gradient(135deg,#1E4266,#2D5F8D); }
-.scale-badge { background:rgba(232,146,92,0.2); border:2px solid #E8925C; color:#E8925C; padding:8px 20px; border-radius:999px; font-size:0.85em; font-weight:700; letter-spacing:1px; text-transform:uppercase; margin-bottom:24px; }
-.title-screen h1 { font-family:var(--font-display); font-size:2.4em; font-weight:700; margin-bottom:12px; }
-.title-screen p { opacity:0.85; font-size:1.05em; line-height:1.6; max-width:320px; }
-.item-count-badge { margin-top:24px; background:rgba(255,255,255,0.1); border-radius:12px; padding:16px 28px; font-size:1.1em; font-weight:600; }
-
-/* LOADING SCREEN */
-.loading-screen { display:none; flex-direction:column; align-items:center; justify-content:center; width:100%; height:100%; background:linear-gradient(135deg,#1E4266,#2D5F8D); color:white; text-align:center; padding:40px; }
-.loading-screen.active { display:flex; }
-.loading-title { font-family:var(--font-display); font-size:2em; margin-bottom:16px; font-weight:600; }
-.loading-subtitle { font-size:1em; margin-bottom:32px; opacity:0.85; }
-.progress-bar { width:100%; max-width:400px; height:8px; background:rgba(255,255,255,0.2); border-radius:10px; overflow:hidden; margin-bottom:12px; }
-.progress-fill { height:100%; background:linear-gradient(90deg,#E8925C,#F59E0B); width:0%; transition:width 0.3s ease; border-radius:10px; }
-.progress-text { font-size:1em; font-weight:600; color:#E8925C; margin-bottom:24px; }
-.loading-steps { text-align:left; max-width:360px; width:100%; }
-.loading-step { display:flex; align-items:center; padding:8px 0; opacity:0.5; transition:opacity 0.3s; }
-.loading-step.active { opacity:1; }
-.loading-step.completed { opacity:0.7; }
-.step-icon { width:22px; height:22px; border-radius:50%; background:rgba(255,255,255,0.2); margin-right:12px; display:flex; align-items:center; justify-content:center; flex-shrink:0; font-size:12px; }
-.loading-step.active .step-icon { background:#E8925C; }
-.loading-step.completed .step-icon { background:#28A745; }
-.loading-step.completed .step-icon::after { content:"✓"; color:white; font-weight:bold; }
-.spinner { width:14px; height:14px; border:2px solid rgba(255,255,255,0.3); border-top-color:white; border-radius:50%; animation:spin 0.8s linear infinite; }
-@keyframes spin { to { transform:rotate(360deg); } }
-
-/* RIGHT PANEL */
-.right-panel { flex:0 0 60%; background:white; display:flex; flex-direction:column; padding:36px 40px; overflow-y:auto; height:100vh; }
-
-/* PROGRESS BAR (top of right panel) */
-.progress-header { margin-bottom:20px; }
-.progress-label { display:flex; justify-content:space-between; font-size:0.78em; color:#64748b; font-weight:600; margin-bottom:6px; text-transform:uppercase; letter-spacing:0.5px; }
-.progress-track { width:100%; height:6px; background:#e2e8f0; border-radius:999px; overflow:hidden; }
-.progress-indicator { height:100%; background:linear-gradient(90deg,var(--accent),#F59E0B); border-radius:999px; transition:width 0.4s ease; }
-
-/* SCALE PILL */
-.scale-pill { display:inline-block; padding:4px 14px; border-radius:999px; font-size:0.75em; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:14px; }
-.scale-pill.depression { background:#fce7f3; color:#9d174d; }
-.scale-pill.stress { background:#dbeafe; color:#1e40af; }
-.scale-pill.anxiety { background:#d1fae5; color:#065f46; }
-
-/* QUESTION */
-.question-label { font-size:0.75em; color:var(--accent); font-weight:700; text-transform:uppercase; letter-spacing:1.5px; margin-bottom:10px; }
-.question-text { font-family:var(--font-display); font-size:1.45em; color:var(--primary-dark); line-height:1.5; font-weight:600; margin-bottom:24px; min-height:50px; }
-
-/* OPTION CARDS */
-.options-grid { display:grid; gap:10px; flex:1; }
-.option-card { display:flex; align-items:center; gap:14px; padding:14px 18px; border:2px solid #e2e8f0; border-radius:10px; cursor:pointer; transition:all 0.2s ease; background:white; text-align:left; font-family:var(--font-body); font-size:0.95em; color:#1e293b; }
-.option-card:hover { border-color:var(--accent); background:#fff7f3; transform:translateX(3px); }
-.option-card.selected { border-color:var(--accent); background:#fff7f3; box-shadow:0 0 0 3px rgba(232,146,92,0.15); }
-.option-score { width:32px; height:32px; border-radius:50%; background:#f1f5f9; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:0.85em; color:#64748b; flex-shrink:0; }
-.option-card.selected .option-score { background:var(--accent); color:white; }
-.option-text { line-height:1.4; }
-
-/* CAMERA BOX */
-.camera-box { margin-top:16px; border:1px solid #e2e8f0; border-radius:8px; padding:10px 14px; background:#f8fafc; display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
-.camera-badge { font-size:11px; padding:3px 10px; border-radius:999px; font-weight:600; }
-.camera-badge.connected { background:#dcfce7; color:#166534; }
-.camera-badge.disconnected { background:#fee2e2; color:#991b1b; }
-.camera-badge.warning { background:#fef3c7; color:#92400e; }
-#cameraPreview { width:100px; height:70px; background:#000; border-radius:5px; object-fit:cover; }
-.camera-note { font-size:11px; color:#64748b; flex:1; }
-
-/* BUTTONS */
-.button-group { display:flex; gap:12px; padding-top:16px; margin-top:auto; }
-.btn { padding:12px 24px; font-size:0.9em; font-weight:600; border:none; border-radius:8px; cursor:pointer; transition:all 0.2s ease; display:inline-flex; align-items:center; justify-content:center; gap:8px; font-family:var(--font-body); }
-.btn-primary { background:var(--accent); color:white; flex:1; }
-.btn-primary:hover:not(:disabled) { background:var(--accent-dark); transform:translateY(-1px); }
-.btn-primary:disabled { opacity:0.45; cursor:not-allowed; }
-.btn-secondary { background:white; color:var(--primary); border:2px solid var(--primary); min-width:100px; }
-.btn-secondary:hover { background:var(--primary); color:white; }
-
-/* TITLE SCREEN right side */
-.title-right { display:flex; flex-direction:column; justify-content:center; align-items:flex-start; height:100%; }
-.title-right h2 { font-family:var(--font-display); font-size:2em; color:var(--primary-dark); font-weight:700; margin-bottom:12px; }
-.title-right p { color:#475569; font-size:1.05em; line-height:1.7; margin-bottom:28px; }
-.begin-btn { padding:14px 36px; background:var(--accent); color:white; border:none; border-radius:10px; font-size:1em; font-weight:700; cursor:pointer; font-family:var(--font-body); transition:all 0.2s; }
-.begin-btn:hover { background:var(--accent-dark); transform:translateY(-2px); box-shadow:0 4px 14px rgba(232,146,92,0.35); }
-
-@media(max-width:900px) { .container { flex-direction:column; } .left-panel,.right-panel { flex:none; max-width:100%; height:50vh; } }
+:root{--primary:#2D5F8D;--primary-dark:#1E4266;--accent:#E8925C;--accent-dark:#D67B47;--body:'DM Sans',sans-serif;--display:'Crimson Pro',serif}
+*{box-sizing:border-box;margin:0;padding:0}body{font-family:var(--body);background:#f7fafc;min-height:100vh;overflow:hidden}.container{display:flex;min-height:100vh}.left-panel{flex:0 0 40%;background:#1E4266;height:100vh;overflow:hidden}.right-panel{flex:0 0 60%;background:#fff;padding:36px 40px;height:100vh;overflow-y:auto;display:flex;flex-direction:column}.title,.loading,.camera{height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px}.title,.loading{background:linear-gradient(135deg,#1E4266,#2D5F8D);color:#fff;text-align:center}.camera{background:#000}.camera video{width:100%;max-height:70%;object-fit:cover;border-radius:8px}.badge{padding:6px 16px;border-radius:999px;font-size:.82em;font-weight:700;letter-spacing:1px;text-transform:uppercase}.scale-badge{background:rgba(232,146,92,.2);border:2px solid #E8925C;color:#E8925C;margin-bottom:20px}.title h1,.loading h1{font-family:var(--display);font-size:2.2em;margin-bottom:10px}.title p,.loading p{opacity:.88;line-height:1.6;max-width:360px}.count{margin-top:20px;background:rgba(255,255,255,.12);padding:14px 24px;border-radius:12px;font-weight:700}.status{margin-top:18px;font-size:.92em;color:#cbd5e1}.progress-header{margin-bottom:20px}.progress-label{display:flex;justify-content:space-between;gap:16px;font-size:.78em;color:#64748b;font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px}.track{height:6px;background:#e2e8f0;border-radius:999px;overflow:hidden}.fill{height:100%;background:linear-gradient(90deg,var(--accent),#F59E0B)}.pill{display:inline-block;padding:4px 14px;border-radius:999px;font-size:.75em;font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:14px}.pill.depression{background:#fce7f3;color:#9d174d}.pill.stress{background:#dbeafe;color:#1e40af}.pill.anxiety{background:#d1fae5;color:#065f46}.qlabel{font-size:.75em;color:var(--accent);font-weight:700;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:10px}.qtext{font-family:var(--display);font-size:1.45em;color:var(--primary-dark);line-height:1.5;font-weight:600;margin-bottom:24px}.options{display:grid;gap:10px;flex:1}.opt{display:flex;align-items:center;gap:14px;padding:14px 18px;border:2px solid #e2e8f0;border-radius:10px;background:#fff;text-align:left;cursor:pointer}.opt:hover,.opt.selected{border-color:var(--accent);background:#fff7f3}.score{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:#f1f5f9;font-weight:700;color:#64748b}.opt.selected .score{background:var(--accent);color:#fff}.camera-box,.title-strip{margin-top:16px;border:1px solid #e2e8f0;border-radius:8px;padding:10px 14px;background:#f8fafc;display:flex;gap:12px;align-items:center;flex-wrap:wrap}.cam-badge{font-size:11px;padding:3px 10px;border-radius:999px;font-weight:700}.connected{background:#dcfce7;color:#166534}.disconnected{background:#fee2e2;color:#991b1b}.warning{background:#fef3c7;color:#92400e}.note{font-size:11px;color:#64748b;flex:1}.buttons{display:flex;gap:12px;padding-top:16px;margin-top:auto}.btn{padding:12px 24px;font-size:.9em;font-weight:700;border:none;border-radius:8px;cursor:pointer;font-family:var(--body)}.btn-primary{background:var(--accent);color:#fff;flex:1}.btn-primary:disabled{opacity:.45;cursor:not-allowed}.btn-secondary{background:#fff;color:var(--primary);border:2px solid var(--primary)}.begin{padding:14px 36px;background:var(--accent);color:#fff;border:none;border-radius:10px;font-size:1em;font-weight:700;cursor:pointer}.loading-steps{margin-top:20px;max-width:360px;width:100%;text-align:left}.step{display:flex;align-items:center;padding:8px 0;opacity:.5}.step.active{opacity:1}.step.done{opacity:.7}.icon{width:22px;height:22px;border-radius:50%;background:rgba(255,255,255,.2);margin-right:12px;display:flex;align-items:center;justify-content:center}.step.active .icon{background:#E8925C}.step.done .icon{background:#28A745}.step.done .icon::after{content:"✓";color:#fff;font-weight:700}.spinner{width:14px;height:14px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .8s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}.sr-only{position:absolute;width:1px;height:1px;margin:-1px;overflow:hidden}
+@media(max-width:900px){.container{flex-direction:column}.left-panel,.right-panel{flex:none;max-width:100%;height:50vh}}
 </style>
 </head>
 <body>
-<div class="container">
-
-  <!-- LEFT PANEL -->
-  <div class="left-panel">
-    {% if is_final %}
-    <div class="loading-screen active" id="loadingScreen">
-      <div class="loading-title">Analysing Your Responses</div>
-      <div class="loading-subtitle">Please wait while we process your assessment</div>
-      <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
-      <div class="progress-text" id="progressText">0%</div>
-      <div class="loading-steps">
-        <div class="loading-step active" id="step1"><div class="step-icon"><div class="spinner"></div></div><span>Processing depression responses...</span></div>
-        <div class="loading-step" id="step2"><div class="step-icon"></div><span>Processing stress responses...</span></div>
-        <div class="loading-step" id="step3"><div class="step-icon"></div><span>Processing anxiety responses...</span></div>
-        <div class="loading-step" id="step4"><div class="step-icon"></div><span>Running clinical analysis...</span></div>
-        <div class="loading-step" id="step5"><div class="step-icon"></div><span>Generating report...</span></div>
-      </div>
-    </div>
-
-    {% elif is_title_screen %}
-    <div class="title-screen">
-      <div class="scale-badge">{{ question.scale|capfirst }} Assessment</div>
-      <h1>{{ question.title }}</h1>
-      <p>{{ question.subtitle }}</p>
-      {% if question.item_count %}
-      <div class="item-count-badge">{{ question.item_count }} Questions</div>
-      {% endif %}
-    </div>
-
-    {% else %}
-    <!-- Camera preview during questions -->
-    <div style="width:100%;height:100%;background:#000;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;">
-      <video id="cameraPreviewLeft" autoplay muted playsinline style="width:100%;max-height:70%;border-radius:8px;object-fit:cover;"></video>
-      <canvas id="cameraCanvas" width="320" height="240" style="display:none;"></canvas>
-      <div style="margin-top:12px;">
-        <span id="cameraBadgeLeft" class="camera-badge disconnected" style="font-size:13px;padding:5px 14px;">Camera disconnected</span>
-      </div>
-    </div>
-    {% endif %}
-  </div>
-
-  <!-- RIGHT PANEL -->
-  <div class="right-panel">
-
-    {% if is_final %}
-    <!-- Final screen right side -->
-    <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;text-align:center;">
-      <h2 style="font-family:var(--font-display);font-size:1.8em;color:var(--primary-dark);margin-bottom:12px;">Almost done...</h2>
-      <p style="color:#64748b;font-size:1.05em;">Your responses are being analysed. Please keep this window open.</p>
-    </div>
-
-    {% elif is_title_screen %}
-    <!-- Title screen right side -->
-    <div class="title-right">
-      <div class="scale-badge" style="background:rgba(45,95,141,0.08);border:2px solid var(--primary);color:var(--primary);display:inline-block;padding:6px 18px;border-radius:999px;font-size:0.8em;font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:20px;">
-        {{ question.scale|capfirst }} Scale
-      </div>
-      <h2>{{ question.title }}</h2>
-      <p>{{ question.description }}</p>
-      <a href="{% url 'questionnaire:question_page' next_qid %}">
-        <button class="begin-btn">Begin Assessment →</button>
-      </a>
-    </div>
-
-    {% else %}
-    <!-- Regular question right side -->
-    <div class="progress-header">
-      <div class="progress-label">
-        <span>
-          {% if question.scale == 'depression' %}Depression (BDI)
-          {% elif question.scale == 'stress' %}Stress (PSS-10)
-          {% elif question.scale == 'anxiety' %}Anxiety (BAI)
-          {% endif %}
-          — Question {{ scale_position }} of {{ scale_total }}
-        </span>
-        <span>{{ progress_percent }}% complete</span>
-      </div>
-      <div class="progress-track">
-        <div class="progress-indicator" style="width:{{ progress_percent }}%;"></div>
-      </div>
-    </div>
-
-    <div class="scale-pill {{ question.scale }}">
-      {% if question.scale == 'depression' %}Depression
-      {% elif question.scale == 'stress' %}Stress
-      {% elif question.scale == 'anxiety' %}Anxiety
-      {% endif %}
-    </div>
-
-    <div class="question-label">Question {{ scale_position }} of {{ scale_total }}</div>
-    <div class="question-text">{{ question.question_text }}</div>
-
-    <div class="options-grid" id="optionsGrid">
-      {% for option in question.options %}
-      <button class="option-card {% if previous_score == forloop.counter0 %}selected{% endif %}"
-              onclick="selectOption({{ forloop.counter0 }}, this)"
-              data-score="{{ forloop.counter0 }}">
-        <div class="option-score">{{ forloop.counter0 }}</div>
-        <div class="option-text">{{ option }}</div>
-      </button>
-      {% endfor %}
-    </div>
-
-    <div class="camera-box" id="cameraBox">
-      <span id="cameraBadge" class="camera-badge disconnected">Camera disconnected</span>
-      <video id="cameraPreview" autoplay muted playsinline style="width:100px;height:70px;background:#000;border-radius:5px;object-fit:cover;"></video>
-      <canvas id="cameraCanvas" width="320" height="240" style="display:none;"></canvas>
-      <span class="camera-note">Camera required throughout assessment.</span>
-    </div>
-
-    <div class="button-group">
-      {% if prev_qid %}
-      <button class="btn btn-secondary" onclick="goToPrevious()">← Back</button>
-      {% endif %}
-      {% if next_qid %}
-      <button id="nextBtn" class="btn btn-primary" onclick="saveAndNext()" disabled>Next →</button>
-      {% else %}
-      <button id="nextBtn" class="btn btn-primary" onclick="saveAndNext()" disabled>Submit Assessment →</button>
-      {% endif %}
-    </div>
-    {% endif %}
-
-  </div>
-</div>
+<div class="container"><div class="left-panel" id="leftPanel"></div><div class="right-panel" id="rightPanel"></div></div>
+<video id="sharedPreview" autoplay muted playsinline class="sr-only"></video>
+<canvas id="cameraCanvas" width="320" height="240" class="sr-only"></canvas>
+{{ question_state|json_script:"question-state" }}
 <script>
-const qid = {{ qid }};
-const isFinal = {{ is_final|yesno:"true,false" }};
-const isTitleScreen = {{ is_title_screen|yesno:"true,false" }};
-const assessmentId = {{ assessment_id }};
-const nextQid = {{ next_qid|default:"null" }};
-const prevQid = {{ prev_qid|default:"null" }};
-const previousScore = {{ previous_score|default:"null" }};
-const defaultMaxReconnect = {{ emotion_max_reconnect_attempts|default:5 }};
+const state0=JSON.parse(document.getElementById('question-state').textContent);
+const assessmentId=state0.assessment_id;
+const esc=s=>String(s??'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'","&#39;");
+const label=s=>s==='depression'?'Depression':s==='stress'?'Stress':s==='anxiety'?'Anxiety':'Assessment';
+const subtitle=s=>s==='depression'?'Depression (BDI)':s==='stress'?'Stress (PSS-10)':s==='anxiety'?'Anxiety (BAI)':'Assessment';
+const cookie=n=>{let v=null;document.cookie.split(';').forEach(c=>{c=c.trim();if(c.startsWith(n+'='))v=decodeURIComponent(c.slice(n.length+1));});return v;};
 
-let selectedScore = previousScore;
-
-// Enable next btn if already answered
-if (previousScore !== null && !isTitleScreen && !isFinal) {
-  const btn = document.getElementById('nextBtn');
-  if (btn) btn.disabled = false;
+class EmotionManager{
+  constructor(app){this.app=app;this.frameIntervalMs=1000;this.jpegQuality=state0.emotion.frame_jpeg_quality||.88;this.maxReconnect=state0.emotion.max_reconnect_attempts||5;this.heartbeatIntervalMs=state0.emotion.heartbeat_interval_seconds*1000;this.heartbeatGraceMs=state0.emotion.heartbeat_grace_seconds*1000;this.maxFrameWidth=state0.emotion.client_max_frame_width;this.maxEncodedBytes=state0.emotion.client_max_encoded_bytes;this.running=false;this.connectionReady=false;this.stream=null;this.socket=null;this.currentScale='';this.reconnectAttempt=0;this.captureTimer=null;this.reconnectTimer=null;this.pingTimer=null;this.heartbeatTimer=null;this.cameraRecoveryTimer=null;this.getUserMediaPromise=null;this.inflightFrame=false;this.inflightTimer=null;this.intentionalClose=false;this.connecting=false;this.lastPongAt=0;this.lastServerAt=0;this.lockKey=`emotion_stream_lock_${assessmentId}`;this.tabId=crypto.randomUUID?crypto.randomUUID():String(Math.random()).slice(2);this.lockTimer=null;}
+  badges(){return document.querySelectorAll('[data-camera-badge]')}
+  setBadge(cls,text){this.badges().forEach(b=>{b.classList.remove('connected','disconnected','warning');b.classList.add(cls);b.textContent=text;});}
+  syncPreview(){document.querySelectorAll('[data-shared-preview]').forEach(v=>{v.srcObject=this.stream;});}
+  acquireLock(){const now=Date.now(),raw=localStorage.getItem(this.lockKey);if(raw){try{const p=JSON.parse(raw);if(p.tabId!==this.tabId&&now-p.ts<15000){this.setBadge('warning','Close other tab');return false;}}catch(e){}}localStorage.setItem(this.lockKey,JSON.stringify({tabId:this.tabId,ts:now}));this.lockTimer=setInterval(()=>localStorage.setItem(this.lockKey,JSON.stringify({tabId:this.tabId,ts:Date.now()})),5000);return true;}
+  releaseLock(){if(this.lockTimer)clearInterval(this.lockTimer);this.lockTimer=null;const raw=localStorage.getItem(this.lockKey);if(!raw)return;try{const p=JSON.parse(raw);if(p.tabId===this.tabId)localStorage.removeItem(this.lockKey);}catch(e){}}
+  async start(scale){if(!scale)return;if(this.running&&this.currentScale===scale&&this.socket?.readyState===WebSocket.OPEN)return;if(this.running&&this.currentScale!==scale)this.stop();if(!this.acquireLock())return;this.running=true;this.currentScale=scale;this.reconnectAttempt=0;const ready=await this.ensureCamera();if(!ready){this.setBadge('warning','Waiting for camera...');this.scheduleCameraRecovery(1200);}this.connectSocket();this.startCaptureLoop();this.startHeartbeat();}
+  stop(){this.running=false;this.currentScale='';[this.captureTimer,this.reconnectTimer,this.pingTimer,this.heartbeatTimer,this.cameraRecoveryTimer,this.inflightTimer].forEach(t=>{if(t)clearInterval(t)||clearTimeout(t)});this.captureTimer=this.reconnectTimer=this.pingTimer=this.heartbeatTimer=this.cameraRecoveryTimer=this.inflightTimer=null;this.inflightFrame=false;if(this.socket){try{this.intentionalClose=true;this.socket.close(1000,'client_stop');}catch(e){}this.socket=null;}if(this.stream){this.stream.getTracks().forEach(t=>t.stop());this.stream=null;}document.getElementById('sharedPreview').srcObject=null;this.connectionReady=false;this.connecting=false;this.setBadge('disconnected','Camera disconnected');this.releaseLock();}
+  async ensureCamera(){if(!this.running)return false;if(this.stream&&this.stream.getVideoTracks().some(t=>t.readyState==='live'))return true;if(this.getUserMediaPromise)return this.getUserMediaPromise;this.getUserMediaPromise=this._startCamera();try{return await this.getUserMediaPromise;}finally{this.getUserMediaPromise=null;}}
+  async _startCamera(){if(!navigator.mediaDevices?.getUserMedia){this.setBadge('warning','Camera unavailable');return false;}try{if(this.stream)this.stream.getTracks().forEach(t=>t.stop());this.stream=await navigator.mediaDevices.getUserMedia({video:{width:{ideal:640},height:{ideal:480},frameRate:{ideal:2,max:4}},audio:false});document.getElementById('sharedPreview').srcObject=this.stream;this.syncPreview();(this.stream.getVideoTracks?.()||[]).forEach(t=>{t.onended=()=>this.scheduleCameraRecovery(1200);t.onmute=()=>this.setBadge('warning','Camera paused');t.onunmute=()=>this.setBadge('connected','Camera connected');});this.setBadge('connected','Camera connected');return true;}catch(e){this.setBadge('warning','Camera error');return false;}}
+  scheduleCameraRecovery(ms){if(!this.running)return;if(this.cameraRecoveryTimer)clearTimeout(this.cameraRecoveryTimer);this.cameraRecoveryTimer=setTimeout(async()=>{const ok=await this.ensureCamera();if(ok&&(!this.socket||this.socket.readyState===WebSocket.CLOSED))this.scheduleReconnect();},ms);}
+  connectSocket(){if(!this.running||!this.currentScale||this.connecting)return;if(this.socket&&(this.socket.readyState===WebSocket.OPEN||this.socket.readyState===WebSocket.CONNECTING))return;const scheme=location.protocol==='https:'?'wss':'ws';const url=`${scheme}://${location.host}/ws/emotion/${assessmentId}/${this.currentScale}/`;this.connecting=true;this.intentionalClose=false;const socket=new WebSocket(url);this.socket=socket;socket.onopen=()=>{this.reconnectAttempt=0;this.connecting=false;this.connectionReady=true;this.lastPongAt=this.lastServerAt=Date.now();this.setBadge('connected',`${label(this.currentScale)} stream active`);};socket.onmessage=e=>{try{const d=JSON.parse(e.data);this.lastServerAt=Date.now();if(d.type==='pong')this.lastPongAt=Date.now();if(d.type==='frame_result'){this.inflightFrame=false;if(this.inflightTimer)clearTimeout(this.inflightTimer);this.inflightTimer=null;}}catch(err){}};socket.onclose=()=>{this.connecting=false;if(this.socket===socket)this.socket=null;if(!this.running)return;this.connectionReady=false;if(this.intentionalClose){this.intentionalClose=false;return;}this.setBadge('warning','Reconnecting...');this.inflightFrame=false;this.scheduleReconnect();};socket.onerror=()=>{this.connecting=false;this.connectionReady=false;this.setBadge('warning','Socket error');};}
+  scheduleReconnect(){if(!this.running||this.reconnectTimer)return;if(this.reconnectAttempt>=this.maxReconnect){this.setBadge('warning','Connection failed');return;}const wait=Math.min(1000*(2**this.reconnectAttempt),8000)+Math.floor(Math.random()*250);this.reconnectAttempt+=1;this.reconnectTimer=setTimeout(async()=>{this.reconnectTimer=null;await this.ensureCamera();this.connectSocket();},wait);}
+  startHeartbeat(){if(this.pingTimer)clearInterval(this.pingTimer);if(this.heartbeatTimer)clearInterval(this.heartbeatTimer);this.pingTimer=setInterval(()=>{if(!this.running||!this.socket||this.socket.readyState!==WebSocket.OPEN)return;try{this.socket.send(JSON.stringify({type:'ping',ts:Date.now(),assessment_id:assessmentId}));}catch(e){this.scheduleReconnect();}},this.heartbeatIntervalMs);this.heartbeatTimer=setInterval(()=>{if(!this.running||!this.socket||this.socket.readyState!==WebSocket.OPEN)return;const last=Math.max(this.lastServerAt||0,this.lastPongAt||0);if(last&&Date.now()-last>this.heartbeatGraceMs){this.setBadge('warning','Reconnecting...');try{this.socket.close(4000,'missed_heartbeat');}catch(e){}}},5000);}
+  startCaptureLoop(){const canvas=document.getElementById('cameraCanvas'),ctx=canvas.getContext('2d');if(this.captureTimer)clearInterval(this.captureTimer);this.captureTimer=setInterval(()=>{if(!this.running||!this.currentScale||!this.socket||this.socket.readyState!==WebSocket.OPEN||this.inflightFrame)return;if(typeof this.socket.bufferedAmount==='number'&&this.socket.bufferedAmount>512000)return;const preview=document.getElementById('sharedPreview');if(!this.stream||!preview?.videoWidth||!preview?.videoHeight){this.scheduleCameraRecovery(1200);return;}const sw=preview.videoWidth,sh=preview.videoHeight,tw=Math.min(sw,this.maxFrameWidth),th=Math.max(1,Math.round(sh*tw/sw));canvas.width=tw;canvas.height=th;ctx.drawImage(preview,0,0,tw,th);let q=this.jpegQuality,img=canvas.toDataURL('image/jpeg',q);while(img.length*.75>this.maxEncodedBytes&&q>.45){q-=.1;img=canvas.toDataURL('image/jpeg',q);}this.inflightFrame=true;if(this.inflightTimer)clearTimeout(this.inflightTimer);this.inflightTimer=setTimeout(()=>{this.inflightFrame=false;this.inflightTimer=null;},10000);try{this.socket.send(JSON.stringify({type:'frame',frame_id:crypto.randomUUID?crypto.randomUUID():String(Date.now()),assessment_id:assessmentId,scale:this.currentScale,question_id:this.app.state.qid,image_base64:img,client_ts:new Date().toISOString()}));}catch(e){this.inflightFrame=false;if(this.inflightTimer)clearTimeout(this.inflightTimer);this.inflightTimer=null;this.scheduleReconnect();}},this.frameIntervalMs);}
 }
 
-function selectOption(score, el) {
-  document.querySelectorAll('.option-card').forEach(c => c.classList.remove('selected'));
-  el.classList.add('selected');
-  selectedScore = score;
-  const btn = document.getElementById('nextBtn');
-  if (btn) btn.disabled = false;
+class App{
+  constructor(state){this.state=state;this.left=document.getElementById('leftPanel');this.right=document.getElementById('rightPanel');this.emotion=new EmotionManager(this);this.loadingTimeout=null;}
+  render(){const s=this.state;this.left.innerHTML=s.is_final?this.finalLeft():s.is_title_screen?this.titleLeft():this.questionLeft();this.right.innerHTML=s.is_final?this.finalRight():s.is_title_screen?this.titleRight():this.questionRight();this.emotion.syncPreview();this.emotion.setBadge(this.emotion.connectionReady?'connected':'disconnected',this.emotion.connectionReady?`${label(this.emotion.currentScale)} stream active`:'Camera disconnected');this.bind();if(s.is_final)this.runLoading();}
+  titleLeft(){const q=this.state.question;return `<div class="title"><div class="badge scale-badge">${esc(label(this.state.stream_scale))} Assessment</div><h1>${esc(q.title)}</h1><p>${esc(q.subtitle)}</p>${q.item_count?`<div class="count">${q.item_count} Questions</div>`:''}<div class="status">Facial emotion capture starts now and continues through the full ${esc(label(this.state.stream_scale).toLowerCase())} scale.</div></div>`;}
+  questionLeft(){return `<div class="camera"><video data-shared-preview autoplay muted playsinline></video><div style="margin-top:12px"><span data-camera-badge class="cam-badge disconnected">Camera disconnected</span></div></div>`;}
+  finalLeft(){return `<div class="loading"><h1>Analysing Your Responses</h1><p>Please wait while we process your assessment</p><div class="track" style="width:100%;max-width:400px;height:8px;background:rgba(255,255,255,.2);margin:18px 0 12px"><div class="fill" id="progressFill" style="width:0%"></div></div><div id="progressText" style="font-weight:700;color:#E8925C;margin-bottom:20px">0%</div><div class="loading-steps"><div class="step active" id="step1"><div class="icon"><div class="spinner"></div></div><span>Processing depression responses...</span></div><div class="step" id="step2"><div class="icon"></div><span>Processing stress responses...</span></div><div class="step" id="step3"><div class="icon"></div><span>Processing anxiety responses...</span></div><div class="step" id="step4"><div class="icon"></div><span>Running clinical analysis...</span></div><div class="step" id="step5"><div class="icon"></div><span>Generating report...</span></div></div></div>`;}
+  titleRight(){const q=this.state.question;return `<div style="display:flex;flex-direction:column;justify-content:center;height:100%"><div class="badge" style="background:rgba(45,95,141,.08);border:2px solid var(--primary);color:var(--primary);margin-bottom:20px">${esc(label(this.state.stream_scale))} Scale</div><h2 style="font-family:var(--display);font-size:2em;color:var(--primary-dark);margin-bottom:12px">${esc(q.title)}</h2><p style="color:#475569;line-height:1.7;margin-bottom:28px">${esc(q.description)}</p><button class="begin" id="beginBtn">Begin Assessment →</button><div class="title-strip"><span data-camera-badge class="cam-badge disconnected">Camera disconnected</span><span class="note">Continuous capture stays active until this scale is finished.</span></div></div>`;}
+  questionRight(){const s=this.state,q=s.question,opts=(q.options||[]).map((o,i)=>`<button class="opt ${s.previous_score===i?'selected':''}" data-score="${i}"><div class="score">${i}</div><div>${esc(o)}</div></button>`).join('');return `<div class="progress-header"><div class="progress-label"><span>${esc(subtitle(q.scale))} — Question ${s.scale_position} of ${s.scale_total}</span><span>${s.progress_percent}% complete</span></div><div class="track"><div class="fill" style="width:${s.progress_percent}%"></div></div></div><div class="pill ${esc(q.scale)}">${esc(label(q.scale))}</div><div class="qlabel">Question ${s.scale_position} of ${s.scale_total}</div><div class="qtext">${esc(q.question_text)}</div><div class="options">${opts}</div><div class="camera-box"><span data-camera-badge class="cam-badge disconnected">Camera disconnected</span><span class="note">Continuous capture remains active until this scale is finished.</span></div><div class="buttons">${s.prev_qid?'<button class="btn btn-secondary" id="prevBtn">← Back</button>':''}<button class="btn btn-primary" id="nextBtn" ${s.previous_score===null?'disabled':''}>${s.next_qid?'Next →':'Submit Assessment →'}</button></div>`;}
+  finalRight(){return `<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;text-align:center"><h2 style="font-family:var(--display);font-size:1.8em;color:var(--primary-dark);margin-bottom:12px">Almost done...</h2><p style="color:#64748b;font-size:1.05em">Your responses are being analysed. Please keep this window open.</p></div>`;}
+  bind(){if(this.state.is_title_screen){document.getElementById('beginBtn')?.addEventListener('click',()=>this.navigate(this.state.next_qid));return;}if(this.state.is_final)return;document.querySelectorAll('[data-score]').forEach(btn=>btn.addEventListener('click',()=>{document.querySelectorAll('[data-score]').forEach(n=>n.classList.remove('selected'));btn.classList.add('selected');this.state.previous_score=Number(btn.dataset.score);document.getElementById('nextBtn').disabled=false;}));document.getElementById('nextBtn')?.addEventListener('click',()=>this.saveAndNext());document.getElementById('prevBtn')?.addEventListener('click',()=>this.navigate(this.state.prev_qid));}
+  async fetchState(qid){const r=await fetch(`/assessment/question/${qid}/`,{headers:{'X-Question-Partial':'1'},credentials:'same-origin'});if(!r.ok)throw new Error('Unable to load question');return r.json();}
+  async navigate(qid,opt={}){if(!qid)return;const next=await this.fetchState(qid),prevScale=this.state.stream_scale||'',nextScale=next.stream_scale||'';if(prevScale&&prevScale!==nextScale)this.emotion.stop();this.state=next;if(opt.replace)history.replaceState({qid},'',`/assessment/question/${qid}/`);else history.pushState({qid},'',`/assessment/question/${qid}/`);this.render();if(next.is_final){this.emotion.stop();return;}if(nextScale){await this.emotion.start(nextScale);this.emotion.syncPreview();}}
+  async saveAndNext(){if(this.state.previous_score===null)return;const r=await fetch('/assessment/save-answer/',{method:'POST',headers:{'Content-Type':'application/json','X-CSRFToken':cookie('csrftoken')},credentials:'same-origin',body:JSON.stringify({qid:this.state.qid,score:this.state.previous_score,assessment_id:this.state.assessment_id})}),d=await r.json();if(d.status!=='success'){alert(`Failed to save: ${d.message||'Unknown error'}`);return;}if(this.state.next_qid)await this.navigate(this.state.next_qid);}
+  runLoading(){if(this.loadingTimeout)clearTimeout(this.loadingTimeout);const steps=[['step1',2200,20],['step2',2200,40],['step3',2200,60],['step4',2000,80],['step5',1800,100]];let i=0,p=0;const tick=()=>{if(i>0){const prev=document.getElementById(steps[i-1][0]);prev?.classList.remove('active');prev?.classList.add('done');prev?.querySelector('.spinner')?.remove();}if(i<steps.length){const [id,dur,target]=steps[i];document.getElementById(id)?.classList.add('active');const fill=document.getElementById('progressFill'),txt=document.getElementById('progressText'),inc=(target-p)/50;let cur=p;const iv=setInterval(()=>{cur+=inc;if(cur>=target){cur=target;clearInterval(iv);}if(fill)fill.style.width=`${cur}%`;if(txt)txt.textContent=`${Math.round(cur)}%`;},dur/50);p=target;i+=1;this.loadingTimeout=setTimeout(tick,dur);}else{this.loadingTimeout=setTimeout(()=>window.location.href='/assessment/complete/',600);}};this.loadingTimeout=setTimeout(tick,500);}
+  async start(){this.render();if(!this.state.is_final&&this.state.stream_scale){await this.emotion.start(this.state.stream_scale);this.emotion.syncPreview();}window.addEventListener('popstate',async e=>{const qid=e.state?.qid||Number(location.pathname.split('/').filter(Boolean).pop());if(qid)await this.navigate(qid,{replace:true});});window.addEventListener('beforeunload',()=>this.emotion.stop());window.addEventListener('pagehide',()=>this.emotion.stop());}
 }
-
-function getCookie(name) {
-  let v = null;
-  document.cookie.split(';').forEach(c => {
-    c = c.trim();
-    if (c.startsWith(name + '=')) v = decodeURIComponent(c.slice(name.length + 1));
-  });
-  return v;
-}
-
-function saveAndNext() {
-  if (selectedScore === null) return;
-  const csrftoken = getCookie('csrftoken');
-  fetch('/assessment/save-answer/', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrftoken },
-    credentials: 'same-origin',
-    body: JSON.stringify({ qid, score: selectedScore, assessment_id: assessmentId })
-  })
-  .then(r => r.json())
-  .then(data => {
-    if (data.status === 'success') {
-      if (emotionManager.running) emotionManager.stop();
-      window.location.href = '/assessment/question/' + nextQid + '/';
-    } else {
-      alert('Failed to save: ' + (data.message || 'Unknown error'));
-    }
-  })
-  .catch(() => alert('Network error. Please try again.'));
-}
-
-function goToPrevious() {
-  if (emotionManager.running) emotionManager.stop();
-  window.location.href = '/assessment/question/' + prevQid + '/';
-}
-
-// Loading animation for final screen
-if (isFinal) {
-  const steps = [
-    {id:'step1', duration:2200, progress:20},
-    {id:'step2', duration:2200, progress:40},
-    {id:'step3', duration:2200, progress:60},
-    {id:'step4', duration:2000, progress:80},
-    {id:'step5', duration:1800, progress:100},
-  ];
-  let step = 0, prog = 0;
-  function nextStep() {
-    if (step > 0) {
-      const prev = document.getElementById(steps[step-1].id);
-      prev.classList.remove('active'); prev.classList.add('completed');
-      const sp = prev.querySelector('.spinner'); if (sp) sp.remove();
-    }
-    if (step < steps.length) {
-      const s = steps[step];
-      document.getElementById(s.id).classList.add('active');
-      const fill = document.getElementById('progressFill');
-      const txt = document.getElementById('progressText');
-      const inc = (s.progress - prog) / 50;
-      let cur = prog;
-      const iv = setInterval(() => {
-        cur += inc;
-        if (cur >= s.progress) { cur = s.progress; clearInterval(iv); }
-        fill.style.width = cur + '%';
-        txt.textContent = Math.round(cur) + '%';
-      }, s.duration / 50);
-      prog = s.progress; step++;
-      setTimeout(nextStep, s.duration);
-    } else {
-      setTimeout(() => { window.location.href = '/assessment/complete/'; }, 600);
-    }
-  }
-  setTimeout(nextStep, 500);
-}
-
-// EmotionStreamManager (unchanged from original)
-class EmotionStreamManager {
-  constructor() {
-    this.frameIntervalMs = 1000; this.jpegQuality = 0.7;
-    this.maxReconnect = defaultMaxReconnect || 5;
-    this.heartbeatIntervalMs = {{ emotion_heartbeat_interval_seconds|default:15 }} * 1000;
-    this.heartbeatGraceMs = {{ emotion_heartbeat_grace_seconds|default:120 }} * 1000;
-    this.maxFrameWidth = {{ emotion_client_max_frame_width|default:640 }};
-    this.maxEncodedBytes = {{ emotion_client_max_encoded_bytes|default:900000 }};
-    this.reconnectAttempt = 0; this.running = false; this.connectionReady = false;
-    this.stream = null; this.socket = null; this.captureTimer = null;
-    this.reconnectTimer = null; this.lockHeartbeatTimer = null;
-    this.pingTimer = null; this.heartbeatMonitorTimer = null;
-    this.cameraRecoveryTimer = null; this.getUserMediaPromise = null;
-    this.restartingCamera = false; this.lastPongAt = 0;
-    this.lastServerActivityAt = 0; this.missedHeartbeats = 0;
-    this.visibilityBound = false; this.inflightFrame = false;
-    this.inflightTimer = null; this.intentionalSocketClose = false;
-    this.socketCloseReason = null; this.connecting = false;
-    this.lockKey = `emotion_stream_lock_${assessmentId}`;
-    this.tabId = crypto.randomUUID ? crypto.randomUUID() : String(Math.random()).slice(2);
-  }
-  setBadge(status, text) {
-    ['cameraBadge','cameraBadgeLeft'].forEach(id => {
-      const b = document.getElementById(id);
-      if (!b) return;
-      b.classList.remove('connected','disconnected','warning');
-      b.classList.add(status); b.textContent = text;
-    });
-  }
-  acquireTabLock() {
-    const now = Date.now(), raw = localStorage.getItem(this.lockKey);
-    if (raw) { try { const p = JSON.parse(raw); if (p.tabId !== this.tabId && now - p.ts < 15000) { this.setBadge('warning','Close other tab'); return false; } } catch(e){} }
-    localStorage.setItem(this.lockKey, JSON.stringify({tabId:this.tabId, ts:now}));
-    this.lockHeartbeatTimer = setInterval(() => localStorage.setItem(this.lockKey, JSON.stringify({tabId:this.tabId, ts:Date.now()})), 5000);
-    return true;
-  }
-  releaseTabLock() {
-    if (this.lockHeartbeatTimer) clearInterval(this.lockHeartbeatTimer);
-    const raw = localStorage.getItem(this.lockKey);
-    if (!raw) return;
-    try { const p = JSON.parse(raw); if (p.tabId === this.tabId) localStorage.removeItem(this.lockKey); } catch(e){}
-  }
-  async start() {
-    if (this.running || isFinal || isTitleScreen || !assessmentId) return;
-    if (!this.acquireTabLock()) return;
-    this.running = true; this.reconnectAttempt = 0;
-    const ready = await this.ensureCamera();
-    if (!ready) { this.setBadge('warning','Waiting for camera...'); this.scheduleCameraRecovery(1200); }
-    this.connectSocket(); this.startCaptureLoop(); this.startHeartbeat(); this.bindVisibilityHandlers();
-  }
-  stop() {
-    this.running = false;
-    [this.captureTimer,this.reconnectTimer,this.pingTimer,this.heartbeatMonitorTimer,this.cameraRecoveryTimer,this.inflightTimer].forEach(t => { if(t) clearInterval(t)||clearTimeout(t); });
-    this.captureTimer=this.reconnectTimer=this.pingTimer=this.heartbeatMonitorTimer=this.cameraRecoveryTimer=this.inflightTimer=null;
-    this.inflightFrame = false;
-    if (this.socket) { try { this.intentionalSocketClose=true; this.socketCloseReason='stop'; this.socket.close(1000,'client_stop'); } catch(e){} this.socket=null; }
-    if (this.stream) { this.stream.getTracks().forEach(t=>t.stop()); this.stream=null; }
-    ['cameraPreview','cameraPreviewLeft'].forEach(id => { const v=document.getElementById(id); if(v) v.srcObject=null; });
-    this.connectionReady=false; this.connecting=false; this.socketCloseReason=null;
-    this.setBadge('disconnected','Camera disconnected'); this.releaseTabLock();
-  }
-  bindVisibilityHandlers() {
-    if (this.visibilityBound) return; this.visibilityBound = true;
-    document.addEventListener('visibilitychange', async () => {
-      if (!this.running) return;
-      if (document.hidden) { this.setBadge('warning','Tab in background'); return; }
-      await this.ensureCamera();
-      if (!this.socket || this.socket.readyState === WebSocket.CLOSED) this.scheduleReconnect('visible');
-    });
-  }
-  async ensureCamera() {
-    if (!this.running) return false;
-    if (this.stream && this.stream.getVideoTracks().some(t=>t.readyState==='live')) return true;
-    if (this.getUserMediaPromise) return this.getUserMediaPromise;
-    this.getUserMediaPromise = this._startCamera();
-    try { return await this.getUserMediaPromise; } finally { this.getUserMediaPromise=null; }
-  }
-  async _startCamera() {
-    if (!navigator.mediaDevices?.getUserMedia) { this.setBadge('warning','Camera unavailable'); return false; }
-    try {
-      if (this.stream) { this.stream.getTracks().forEach(t=>t.stop()); this.stream=null; }
-      const stream = await navigator.mediaDevices.getUserMedia({video:{width:{ideal:640},height:{ideal:480},frameRate:{ideal:8,max:12}},audio:false});
-      this.stream = stream;
-      ['cameraPreview','cameraPreviewLeft'].forEach(id => { const v=document.getElementById(id); if(v) v.srcObject=stream; });
-      this.attachTrackHandlers(stream); this.setBadge('connected','Camera connected'); return true;
-    } catch(err) {
-      const n = err?.name || '';
-      if (n==='NotReadableError'||n==='TrackStartError') { this.setBadge('warning','Camera busy...'); this.scheduleCameraRecovery(1500); }
-      else { this.setBadge('warning','Camera error'); }
-      return false;
-    }
-  }
-  attachTrackHandlers(stream) {
-    (stream.getVideoTracks?.() || []).forEach(t => {
-      t.onended = () => this.scheduleCameraRecovery(1200);
-      t.onmute = () => this.setBadge('warning','Camera paused');
-      t.onunmute = () => this.setBadge('connected','Camera connected');
-    });
-  }
-  scheduleCameraRecovery(ms) {
-    if (!this.running||this.restartingCamera) return;
-    if (this.cameraRecoveryTimer) clearTimeout(this.cameraRecoveryTimer);
-    this.cameraRecoveryTimer = setTimeout(async () => {
-      this.restartingCamera=true;
-      try { const r=await this.ensureCamera(); if(r&&(!this.socket||this.socket.readyState===WebSocket.CLOSED)) this.scheduleReconnect('camera_recovered'); }
-      finally { this.restartingCamera=false; }
-    }, ms);
-  }
-  connectSocket() {
-    if (!this.running||this.connecting) return;
-    if (this.socket&&(this.socket.readyState===WebSocket.OPEN||this.socket.readyState===WebSocket.CONNECTING)) return;
-    const scheme = location.protocol==='https:'?'wss':'ws';
-    const url = `${scheme}://${location.host}/ws/emotion/${assessmentId}/`;
-    this.connecting=true; this.intentionalSocketClose=false;
-    const socket = new WebSocket(url); this.socket=socket;
-    socket.onopen = () => { this.reconnectAttempt=0; this.connecting=false; this.connectionReady=true; this.lastPongAt=this.lastServerActivityAt=Date.now(); this.missedHeartbeats=0; this.setBadge('connected','Camera connected'); };
-    socket.onmessage = (e) => {
-      try {
-        const d=JSON.parse(e.data); this.lastServerActivityAt=Date.now();
-        if(d.type==='pong'){this.lastPongAt=Date.now();this.missedHeartbeats=0;}
-        if(d.type==='frame_result'){this.inflightFrame=false;if(this.inflightTimer){clearTimeout(this.inflightTimer);this.inflightTimer=null;}}
-      } catch(ex){}
-    };
-    socket.onclose = () => {
-      this.connecting=false; if(this.socket===socket) this.socket=null;
-      if(!this.running) return; this.connectionReady=false;
-      if(this.intentionalSocketClose){this.intentionalSocketClose=false;return;}
-      this.setBadge('warning','Reconnecting...'); this.inflightFrame=false;
-      this.scheduleReconnect('close');
-    };
-    socket.onerror = () => { this.connecting=false; this.connectionReady=false; this.setBadge('warning','Socket error'); };
-  }
-  scheduleReconnect(reason) {
-    if(!this.running||this.reconnectTimer) return;
-    if(this.reconnectAttempt>=this.maxReconnect){this.setBadge('warning','Connection failed');return;}
-    const wait=Math.min(1000*(2**this.reconnectAttempt),8000)+Math.floor(Math.random()*250);
-    this.reconnectAttempt++;
-    this.reconnectTimer=setTimeout(async()=>{this.reconnectTimer=null;await this.ensureCamera();this.connectSocket();},wait);
-  }
-  startHeartbeat() {
-    if(this.pingTimer) clearInterval(this.pingTimer);
-    if(this.heartbeatMonitorTimer) clearInterval(this.heartbeatMonitorTimer);
-    this.pingTimer=setInterval(()=>{
-      if(!this.running||!this.socket||this.socket.readyState!==WebSocket.OPEN) return;
-      try{this.socket.send(JSON.stringify({type:'ping',ts:Date.now(),assessment_id:assessmentId}));}catch(e){this.scheduleReconnect('ping_fail');}
-    },this.heartbeatIntervalMs);
-    this.heartbeatMonitorTimer=setInterval(()=>{
-      if(!this.running||!this.socket||this.socket.readyState!==WebSocket.OPEN) return;
-      const last=Math.max(this.lastServerActivityAt||0,this.lastPongAt||0);
-      if(last&&Date.now()-last>this.heartbeatGraceMs){this.missedHeartbeats++;if(this.missedHeartbeats>=2){this.setBadge('warning','Reconnecting...');try{this.socket.close(4000,'missed_heartbeat');}catch(e){}}}
-    },5000);
-  }
-  startCaptureLoop() {
-    const canvas=document.getElementById('cameraCanvas'); if(!canvas) return;
-    const ctx=canvas.getContext('2d');
-    if(this.captureTimer) clearInterval(this.captureTimer);
-    this.captureTimer=setInterval(()=>{
-      if(!this.running||!this.socket||this.socket.readyState!==WebSocket.OPEN||this.inflightFrame) return;
-      if(typeof this.socket.bufferedAmount==='number'&&this.socket.bufferedAmount>512000) return;
-      const preview=document.getElementById('cameraPreviewLeft')||document.getElementById('cameraPreview');
-      if(!this.stream||!preview?.videoWidth||!preview?.videoHeight){this.scheduleCameraRecovery(1200);return;}
-      const sw=preview.videoWidth,sh=preview.videoHeight,tw=Math.min(sw,this.maxFrameWidth),th=Math.max(1,Math.round(sh*tw/sw));
-      canvas.width=tw; canvas.height=th; ctx.drawImage(preview,0,0,tw,th);
-      let q=this.jpegQuality,img=canvas.toDataURL('image/jpeg',q);
-      while(img.length*0.75>this.maxEncodedBytes&&q>0.45){q-=0.1;img=canvas.toDataURL('image/jpeg',q);}
-      this.inflightFrame=true;
-      if(this.inflightTimer) clearTimeout(this.inflightTimer);
-      this.inflightTimer=setTimeout(()=>{this.inflightFrame=false;this.inflightTimer=null;},10000);
-      try{this.socket.send(JSON.stringify({type:'frame',frame_id:crypto.randomUUID?.()??String(Date.now()),assessment_id:assessmentId,question_id:qid,image_base64:img,client_ts:new Date().toISOString()}));}
-      catch(e){this.inflightFrame=false;if(this.inflightTimer){clearTimeout(this.inflightTimer);this.inflightTimer=null;}this.scheduleReconnect('send_fail');}
-    },this.frameIntervalMs);
-  }
-  isReady() { return this.running&&this.connectionReady&&!!this.stream&&this.socket?.readyState===WebSocket.OPEN; }
-}
-
-const emotionManager = new EmotionStreamManager();
-if (!isFinal && !isTitleScreen) emotionManager.start();
-window.addEventListener('beforeunload', () => { if(emotionManager.running) emotionManager.stop(); });
-window.addEventListener('pagehide', () => { if(emotionManager.running) emotionManager.stop(); });
+new App(state0).start();
 </script>
 </body>
 </html>

@@ -75,15 +75,7 @@ def try_acquire_connection(
         except (TypeError, ValueError):
             stale = True
 
-        same_ip = False
-        if existing_meta_raw:
-            try:
-                existing_meta = json.loads(existing_meta_raw)
-                same_ip = str(existing_meta.get("client_ip", "") or "") == str(client_ip or "")
-            except (TypeError, ValueError):
-                same_ip = False
-
-        if stale or same_ip:
+        if stale:
             release_connection(str(existing_lease), ttl_seconds=ttl_seconds)
         else:
             return False
