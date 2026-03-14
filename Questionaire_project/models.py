@@ -9,6 +9,7 @@ class Question(models.Model):
     SCALE_ANXIETY = 'anxiety'
     SCALE_TITLE = 'title'      # title screen between scales
     SCALE_FINAL = 'final'
+    SCALE_OPEN_ENDED = 'open_ended'
 
     SCALE_CHOICES = [
         (SCALE_DEPRESSION, 'Depression (BDI)'),
@@ -16,6 +17,7 @@ class Question(models.Model):
         (SCALE_ANXIETY, 'Anxiety (BAI)'),
         (SCALE_TITLE, 'Title Screen'),
         (SCALE_FINAL, 'Final Screen'),
+        ('open_ended', 'Open Ended Reflection'), 
     ]
 
     id = models.PositiveIntegerField(primary_key=True)
@@ -73,6 +75,11 @@ class Assessment(models.Model):
     anxiety_score = models.PositiveSmallIntegerField(null=True, blank=True)
     anxiety_risk_level = models.CharField(max_length=20, blank=True)
     anxiety_result_json = models.JSONField(default=dict, blank=True)
+
+    questionnaire_project_final_answer = models.TextField(blank=True, default="")
+    questionnaire_project_final_score  = models.JSONField(default=dict, blank=True)
+    questionnaire_project_summary      = models.TextField(blank=True, default="")
+
 
     def __str__(self):
         return f"Assessment {self.pk}"

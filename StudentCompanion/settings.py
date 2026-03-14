@@ -31,6 +31,7 @@ DEBUG = True
 ALLOWED_HOSTS = ["crunodal-libbie-preconsciously.ngrok-free.dev","127.0.0.1",
     "localhost"]
 
+GEMINI_API_KEY = "################"#place api key here
 
 # Application definition
 INSTALLED_APPS = [

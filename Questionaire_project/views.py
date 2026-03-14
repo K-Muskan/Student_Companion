@@ -15,6 +15,7 @@ from .models import Assessment, Answer, Question
 from .depression_analyzer import analyze_depression
 from .stress_analyzer import analyze_stress
 from .anxiety_analyzer import analyze_anxiety
+from .feeling_analyzer import analyze_open_ended_text
 
 logger = logging.getLogger(__name__)
 
@@ -174,9 +175,23 @@ QUESTIONS = [
     {"id": 54, "scale": "anxiety", "scale_item_number": 20, "max_score": 3, "is_reverse_scored": False, "is_title_screen": False, "is_final": False, "question_text": "Face flushed",              "options": BAI_OPTIONS},
     {"id": 55, "scale": "anxiety", "scale_item_number": 21, "max_score": 3, "is_reverse_scored": False, "is_title_screen": False, "is_final": False, "question_text": "Hot or cold sweats",        "options": BAI_OPTIONS},
 
-    # ── Final / Loading Screen ───────────────────────────────────────────────
+    # ── Open-Ended Reflection Question ──────────────────────────────────────
     {
         "id": 56,
+        "scale": "open_ended",
+        "is_title_screen": False,
+        "is_final": False,
+        "is_open_ended": True,
+        "question_text": "Is there something you want to discuss with us? Any story or experience you want to share with us?",
+        "scale_item_number": None,
+        "max_score": 0,
+        "is_reverse_scored": False,
+        "options": [],
+    },
+
+    # ── Final / Loading Screen ───────────────────────────────────────────────
+    {
+        "id": 57,
         "scale": "final",
         "is_title_screen": False,
         "is_final": True,
@@ -191,7 +206,7 @@ QUESTIONS = [
 QUESTIONS_BY_ID = {q["id"]: q for q in QUESTIONS}
 TOTAL_QUESTIONS = len(QUESTIONS)
 FIRST_QID = QUESTIONS[0]["id"]   # 1
-LAST_QID  = QUESTIONS[-1]["id"]  # 56
+LAST_QID  = QUESTIONS[-1]["id"]  # 57
 EMOTION_STREAMABLE_SCALES = {
     Question.SCALE_DEPRESSION,
     Question.SCALE_STRESS,
@@ -442,7 +457,8 @@ def _extract_scale_scores(answers_dict):
             continue
 
         q = QUESTIONS_BY_ID.get(qid)
-        if not q or q.get("is_title_screen") or q.get("is_final "):
+        #if not q or q.get("is_title_screen") or q.get("is_final "):
+        if not q or q.get("is_title_screen") or q.get("is_final"):
             continue
 
         item_num = q.get("scale_item_number")
@@ -686,6 +702,74 @@ def save_answer(request):
         logger.exception("save_answer_failed", extra={"correlation_id": cid})
         return _safe_error_response('Unable to save answer', status=500)
 
+@require_http_methods(["POST"])
+def save_text_answer(request):
+    """Save the open-ended reflection answer (Q56) to the Assessment model."""
+    cid = _correlation_id(request)
+    try:
+        data = json.loads(request.body)
+        text_answer = data.get("text_answer", "").strip()
+        payload_assessment_id = data.get("assessment_id")
+
+        with transaction.atomic():
+            assessment = _get_or_create_assessment(request)
+
+            if payload_assessment_id is not None:
+                try:
+                    payload_assessment_id = int(payload_assessment_id)
+                except (TypeError, ValueError):
+                    return _safe_error_response("Invalid assessment ID", status=400)
+                if payload_assessment_id != assessment.id:
+                    logger.warning(
+                        "save_text_answer_assessment_mismatch",
+                        extra={"correlation_id": cid, "session_id": assessment.id,
+                               "payload_id": payload_assessment_id},
+                    )
+
+            if assessment.is_completed:
+                return _safe_error_response("Assessment already finalized", status=409)
+
+            assessment.questionnaire_project_final_answer = text_answer
+            assessment.save(update_fields=["questionnaire_project_final_answer"])
+
+        logger.info("text_answer_saved", extra={"correlation_id": cid, "assessment_id": assessment.id})
+        return JsonResponse({"status": "success", "assessment_id": assessment.id})
+
+    except json.JSONDecodeError:
+        return _safe_error_response("Invalid JSON", status=400)
+    except Exception:
+        logger.exception("save_text_answer_failed", extra={"correlation_id": cid})
+        return _safe_error_response("Unable to save answer", status=500)
+
+@require_http_methods(["POST"])
+def finalize_assessment(request):
+    """
+    Handles the final open-ended question submission, calls Gemini, 
+    and saves results to the database.
+    """
+    try:
+        data = json.loads(request.body)
+        user_text = data.get("text", "")
+        assessment = _get_or_create_assessment(request)
+
+        # 1. Save the student's raw answer
+        assessment.questionnaire_project_final_answer = user_text
+        
+        # 2. Analyze with Gemini
+        # analyze_open_ended_text is your feeling_analyzer function
+        analysis = analyze_open_ended_text(user_text)
+        
+        # 3. Store results in the new fields
+        assessment.questionnaire_project_final_score = analysis.get("concern_feeling_label", {})
+        assessment.questionnaire_project_summary = analysis.get("summary", "")
+        
+        assessment.is_completed = True
+        assessment.save()
+        
+        return JsonResponse({"status": "success"})
+    except Exception as e:
+        logger.exception("finalize_assessment_failed")
+        return _safe_error_response("Processing failed.")
 
 @ensure_csrf_cookie
 def complete(request):
@@ -726,10 +810,24 @@ def complete(request):
 
             if assessment.is_completed and assessment.report_json:
                 report_json = assessment.report_json
+
+                # Re-run feeling analysis if missing from stored report
+                if not report_json.get("feeling_analysis"):
+                    final_answer = assessment.questionnaire_project_final_answer or ""
+                    feeling_result = analyze_open_ended_text(final_answer)
+                    report_json["feeling_analysis"] = feeling_result
+                    if not assessment.questionnaire_project_final_score:
+                        assessment.questionnaire_project_final_score = feeling_result.get("concern_feeling_label", {})
+                    if not assessment.questionnaire_project_summary:
+                        assessment.questionnaire_project_summary = feeling_result.get("summary", "")
+                    assessment.save(update_fields=[
+                        "report_json",
+                        "questionnaire_project_final_score",
+                        "questionnaire_project_summary",
+                    ])
+
                 report_json, scale_emotion_summaries = _inject_scale_emotion_summaries(report_json, assessment)
-                emotion_summary = report_json.get("emotion_summary", empty_emotion_summary())
-                assessment.report_json = report_json
-                assessment.save(update_fields=["report_json"])
+
             else:
                 depression_scores, stress_scores, anxiety_scores = _extract_scale_scores(answers)
 
@@ -737,11 +835,18 @@ def complete(request):
                 stress_result     = analyze_stress(stress_scores)
                 anxiety_result    = analyze_anxiety(anxiety_scores)
 
+                # ── Open-ended feeling analysis ──────────────────────────────
+                final_answer = assessment.questionnaire_project_final_answer or ""
+                feeling_result = analyze_open_ended_text(final_answer)
+                feeling_score  = feeling_result.get("concern_feeling_label", {})
+                feeling_summary = feeling_result.get("summary", "")
+
                 report_json = {
                     'timestamp': timezone.now().isoformat(),
                     'depression': depression_result,
                     'stress':     stress_result,
                     'anxiety':    anxiety_result,
+                    'feeling_analysis': feeling_result,
                 }
                 report_json, scale_emotion_summaries = _inject_scale_emotion_summaries(report_json, assessment)
                 emotion_summary = report_json.get("emotion_summary", empty_emotion_summary())
@@ -780,6 +885,9 @@ def complete(request):
                 assessment.anxiety_score          = anxiety_result.get('total_score')
                 assessment.anxiety_risk_level     = anxiety_result.get('risk_level', '')
                 assessment.anxiety_result_json    = anxiety_result
+                
+                assessment.questionnaire_project_final_score  = feeling_score
+                assessment.questionnaire_project_summary      = feeling_summary
 
                 assessment.save(update_fields=[
                     "is_completed", "finalized_at", "report_generated_at",
@@ -787,6 +895,7 @@ def complete(request):
                     "depression_score", "depression_risk_level", "depression_result_json",
                     "stress_score", "stress_risk_level", "stress_result_json",
                     "anxiety_score", "anxiety_risk_level", "anxiety_result_json",
+                    "questionnaire_project_final_score", "questionnaire_project_summary",
                 ])
 
         request.session["last_completed_assessment_id"] = assessment.id
@@ -821,6 +930,7 @@ def complete(request):
             'overall_risk': overall_risk,
             'immediate_intervention': immediate,
             'timestamp': report_json['timestamp'],
+            'feeling_analysis': report_json.get('feeling_analysis', {}),  # ADD THIS
         }
         return render(request, 'Questionaire_project/complete.html', context)
 
@@ -857,6 +967,19 @@ def download_report_text(request):
         s = assessment.stress_result_json or {}
         a = assessment.anxiety_result_json or {}
 
+        report_json = assessment.report_json or {}
+        feeling = report_json.get('feeling_analysis', {})
+        feeling_summary = (
+            feeling.get('summary')
+            or assessment.questionnaire_project_summary
+            or ''
+        )
+        feeling_scores = (
+            feeling.get('concern_feeling_label')
+            or assessment.questionnaire_project_final_score
+            or {}
+        )
+
         lines = [
             "STUDENT COMPANION — MENTAL HEALTH ASSESSMENT REPORT",
             f"Generated: {assessment.finalized_at}",
@@ -884,6 +1007,22 @@ def download_report_text(request):
         for rec in a.get('recommendations', []):
             lines.append(f"[Anxiety]    {rec}")
 
+        if feeling_summary or feeling_scores:
+            lines += [
+                "",
+                "=" * 60,
+                "EMOTIONAL REFLECTION ANALYSIS",
+                "-" * 40,
+            ]
+            if feeling_summary:
+                lines += [feeling_summary, ""]
+            if feeling_scores:
+                lines.append("Feeling Scores (0.00 – 1.00):")
+                for label, score in feeling_scores.items():
+                    try:
+                        lines.append(f"  {label:<28} {float(score):.2f}")
+                    except (TypeError, ValueError):
+                        lines.append(f"  {label:<28} {score}")
         response = HttpResponse(''.join(lines), content_type='text/plain')
         response['Content-Disposition'] = 'attachment; filename=\"assessment_report.txt\"'
         return response

@@ -7,7 +7,9 @@
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Crimson+Pro:wght@600;700&display=swap" rel="stylesheet">
 <style>
 :root{--primary:#2D5F8D;--primary-dark:#1E4266;--accent:#E8925C;--accent-dark:#D67B47;--body:'DM Sans',sans-serif;--display:'Crimson Pro',serif}
-*{box-sizing:border-box;margin:0;padding:0}body{font-family:var(--body);background:#f7fafc;min-height:100vh;overflow:hidden}.container{display:flex;min-height:100vh}.left-panel{flex:0 0 40%;background:#1E4266;height:100vh;overflow:hidden}.right-panel{flex:0 0 60%;background:#fff;padding:36px 40px;height:100vh;overflow-y:auto;display:flex;flex-direction:column}.title,.loading,.camera{height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px}.title,.loading{background:linear-gradient(135deg,#1E4266,#2D5F8D);color:#fff;text-align:center}.camera{background:#000}.camera video{width:100%;max-height:70%;object-fit:cover;border-radius:8px}.badge{padding:6px 16px;border-radius:999px;font-size:.82em;font-weight:700;letter-spacing:1px;text-transform:uppercase}.scale-badge{background:rgba(232,146,92,.2);border:2px solid #E8925C;color:#E8925C;margin-bottom:20px}.title h1,.loading h1{font-family:var(--display);font-size:2.2em;margin-bottom:10px}.title p,.loading p{opacity:.88;line-height:1.6;max-width:360px}.count{margin-top:20px;background:rgba(255,255,255,.12);padding:14px 24px;border-radius:12px;font-weight:700}.status{margin-top:18px;font-size:.92em;color:#cbd5e1}.progress-header{margin-bottom:20px}.progress-label{display:flex;justify-content:space-between;gap:16px;font-size:.78em;color:#64748b;font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px}.track{height:6px;background:#e2e8f0;border-radius:999px;overflow:hidden}.fill{height:100%;background:linear-gradient(90deg,var(--accent),#F59E0B)}.pill{display:inline-block;padding:4px 14px;border-radius:999px;font-size:.75em;font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:14px}.pill.depression{background:#fce7f3;color:#9d174d}.pill.stress{background:#dbeafe;color:#1e40af}.pill.anxiety{background:#d1fae5;color:#065f46}.qlabel{font-size:.75em;color:var(--accent);font-weight:700;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:10px}.qtext{font-family:var(--display);font-size:1.45em;color:var(--primary-dark);line-height:1.5;font-weight:600;margin-bottom:24px}.options{display:grid;gap:10px;flex:1}.opt{display:flex;align-items:center;gap:14px;padding:14px 18px;border:2px solid #e2e8f0;border-radius:10px;background:#fff;text-align:left;cursor:pointer}.opt:hover,.opt.selected{border-color:var(--accent);background:#fff7f3}.score{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:#f1f5f9;font-weight:700;color:#64748b}.opt.selected .score{background:var(--accent);color:#fff}.camera-box,.title-strip{margin-top:16px;border:1px solid #e2e8f0;border-radius:8px;padding:10px 14px;background:#f8fafc;display:flex;gap:12px;align-items:center;flex-wrap:wrap}.cam-badge{font-size:11px;padding:3px 10px;border-radius:999px;font-weight:700}.connected{background:#dcfce7;color:#166534}.disconnected{background:#fee2e2;color:#991b1b}.warning{background:#fef3c7;color:#92400e}.note{font-size:11px;color:#64748b;flex:1}.buttons{display:flex;gap:12px;padding-top:16px;margin-top:auto}.btn{padding:12px 24px;font-size:.9em;font-weight:700;border:none;border-radius:8px;cursor:pointer;font-family:var(--body)}.btn-primary{background:var(--accent);color:#fff;flex:1}.btn-primary:disabled{opacity:.45;cursor:not-allowed}.btn-secondary{background:#fff;color:var(--primary);border:2px solid var(--primary)}.begin{padding:14px 36px;background:var(--accent);color:#fff;border:none;border-radius:10px;font-size:1em;font-weight:700;cursor:pointer}.loading-steps{margin-top:20px;max-width:360px;width:100%;text-align:left}.step{display:flex;align-items:center;padding:8px 0;opacity:.5}.step.active{opacity:1}.step.done{opacity:.7}.icon{width:22px;height:22px;border-radius:50%;background:rgba(255,255,255,.2);margin-right:12px;display:flex;align-items:center;justify-content:center}.step.active .icon{background:#E8925C}.step.done .icon{background:#28A745}.step.done .icon::after{content:"✓";color:#fff;font-weight:700}.spinner{width:14px;height:14px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .8s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}.sr-only{position:absolute;width:1px;height:1px;margin:-1px;overflow:hidden}
+*{box-sizing:border-box;margin:0;padding:0}body{font-family:var(--body);background:#f7fafc;min-height:100vh;overflow:hidden}.container{display:flex;min-height:100vh}.left-panel{flex:0 0 40%;background:#1E4266;height:100vh;overflow:hidden}.right-panel{flex:0 0 60%;background:#fff;padding:36px 40px;height:100vh;overflow-y:auto;display:flex;flex-direction:column}.title,.loading,.camera{height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px}.title,.loading{background:linear-gradient(135deg,#1E4266,#2D5F8D);color:#fff;text-align:center}.camera{background:#000}.camera video{width:100%;max-height:70%;object-fit:cover;border-radius:8px}.badge{padding:6px 16px;border-radius:999px;font-size:.82em;font-weight:700;letter-spacing:1px;text-transform:uppercase}.scale-badge{background:rgba(232,146,92,.2);border:2px solid #E8925C;color:#E8925C;margin-bottom:20px}.title h1,.loading h1{font-family:var(--display);font-size:2.2em;margin-bottom:10px}.title p,.loading p{opacity:.88;line-height:1.6;max-width:360px}.count{margin-top:20px;background:rgba(255,255,255,.12);padding:14px 24px;border-radius:12px;font-weight:700}.status{margin-top:18px;font-size:.92em;color:#cbd5e1}.progress-header{margin-bottom:20px}.progress-label{display:flex;justify-content:space-between;gap:16px;font-size:.78em;color:#64748b;font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px}.track{height:6px;background:#e2e8f0;border-radius:999px;overflow:hidden}.fill{height:100%;background:linear-gradient(90deg,var(--accent),#F59E0B)}.pill{display:inline-block;padding:4px 14px;border-radius:999px;font-size:.75em;font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:14px}.pill.depression{background:#fce7f3;color:#9d174d}.pill.stress{background:#dbeafe;color:#1e40af}.pill.anxiety{background:#d1fae5;color:#065f46}.pill.open_ended{background:#ede9fe;color:#5b21b6}.qlabel{font-size:.75em;color:var(--accent);font-weight:700;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:10px}.qtext{font-family:var(--display);font-size:1.45em;color:var(--primary-dark);line-height:1.5;font-weight:600;margin-bottom:24px}.options{display:grid;gap:10px;flex:1}.opt{display:flex;align-items:center;gap:14px;padding:14px 18px;border:2px solid #e2e8f0;border-radius:10px;background:#fff;text-align:left;cursor:pointer}.opt:hover,.opt.selected{border-color:var(--accent);background:#fff7f3}.score{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:#f1f5f9;font-weight:700;color:#64748b}.opt.selected .score{background:var(--accent);color:#fff}.camera-box,.title-strip{margin-top:16px;border:1px solid #e2e8f0;border-radius:8px;padding:10px 14px;background:#f8fafc;display:flex;gap:12px;align-items:center;flex-wrap:wrap}.cam-badge{font-size:11px;padding:3px 10px;border-radius:999px;font-weight:700}.connected{background:#dcfce7;color:#166534}.disconnected{background:#fee2e2;color:#991b1b}.warning{background:#fef3c7;color:#92400e}.note{font-size:11px;color:#64748b;flex:1}.buttons{display:flex;gap:12px;padding-top:16px;margin-top:auto}.btn{padding:12px 24px;font-size:.9em;font-weight:700;border:none;border-radius:8px;cursor:pointer;font-family:var(--body)}.btn-primary{background:var(--accent);color:#fff;flex:1}.btn-primary:disabled{opacity:.45;cursor:not-allowed}.btn-secondary{background:#fff;color:var(--primary);border:2px solid var(--primary)}.begin{padding:14px 36px;background:var(--accent);color:#fff;border:none;border-radius:10px;font-size:1em;font-weight:700;cursor:pointer}.loading-steps{margin-top:20px;max-width:360px;width:100%;text-align:left}.step{display:flex;align-items:center;padding:8px 0;opacity:.5}.step.active{opacity:1}.step.done{opacity:.7}.icon{width:22px;height:22px;border-radius:50%;background:rgba(255,255,255,.2);margin-right:12px;display:flex;align-items:center;justify-content:center}.step.active .icon{background:#E8925C}.step.done .icon{background:#28A745}.step.done .icon::after{content:"✓";color:#fff;font-weight:700}.spinner{width:14px;height:14px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .8s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}.sr-only{position:absolute;width:1px;height:1px;margin:-1px;overflow:hidden}
+/* ── Open-ended question styles ── */
+.open-panel{height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px;background:linear-gradient(135deg,#1E4266,#2D5F8D);color:#fff;text-align:center}.open-panel h2{font-family:var(--display);font-size:1.9em;margin-bottom:14px;line-height:1.3}.open-panel p{opacity:.85;line-height:1.7;max-width:300px;font-size:.95em}.open-panel .open-icon{font-size:3em;margin-bottom:16px;opacity:.9}.textarea-wrap{flex:1;display:flex;flex-direction:column;min-height:0}.open-textarea{width:100%;flex:1;min-height:200px;padding:16px 18px;border:2px solid #e2e8f0;border-radius:10px;font-family:var(--body);font-size:1em;color:#1e293b;resize:none;line-height:1.7;outline:none;transition:border-color .2s}.open-textarea:focus{border-color:var(--accent)}.char-count{font-size:.73em;color:#94a3b8;text-align:right;margin-top:5px}.open-skip{font-size:.8em;color:#94a3b8;text-align:center;margin-top:8px;cursor:pointer;text-decoration:underline;background:none;border:none;font-family:var(--body)}.open-skip:hover{color:#64748b}
 @media(max-width:900px){.container{flex-direction:column}.left-panel,.right-panel{flex:none;max-width:100%;height:50vh}}
 </style>
 </head>
@@ -44,20 +46,211 @@ class EmotionManager{
 
 class App{
   constructor(state){this.state=state;this.left=document.getElementById('leftPanel');this.right=document.getElementById('rightPanel');this.emotion=new EmotionManager(this);this.loadingTimeout=null;}
-  render(){const s=this.state;this.left.innerHTML=s.is_final?this.finalLeft():s.is_title_screen?this.titleLeft():this.questionLeft();this.right.innerHTML=s.is_final?this.finalRight():s.is_title_screen?this.titleRight():this.questionRight();this.emotion.syncPreview();this.emotion.setBadge(this.emotion.connectionReady?'connected':'disconnected',this.emotion.connectionReady?`${label(this.emotion.currentScale)} stream active`:'Camera disconnected');this.bind();if(s.is_final)this.runLoading();}
-  titleLeft(){const q=this.state.question;return `<div class="title"><div class="badge scale-badge">${esc(label(this.state.stream_scale))} Assessment</div><h1>${esc(q.title)}</h1><p>${esc(q.subtitle)}</p>${q.item_count?`<div class="count">${q.item_count} Questions</div>`:''}<div class="status">Facial emotion capture starts now and continues through the full ${esc(label(this.state.stream_scale).toLowerCase())} scale.</div></div>`;}
-  questionLeft(){return `<div class="camera"><video data-shared-preview autoplay muted playsinline></video><div style="margin-top:12px"><span data-camera-badge class="cam-badge disconnected">Camera disconnected</span></div></div>`;}
-  finalLeft(){return `<div class="loading"><h1>Analysing Your Responses</h1><p>Please wait while we process your assessment</p><div class="track" style="width:100%;max-width:400px;height:8px;background:rgba(255,255,255,.2);margin:18px 0 12px"><div class="fill" id="progressFill" style="width:0%"></div></div><div id="progressText" style="font-weight:700;color:#E8925C;margin-bottom:20px">0%</div><div class="loading-steps"><div class="step active" id="step1"><div class="icon"><div class="spinner"></div></div><span>Processing depression responses...</span></div><div class="step" id="step2"><div class="icon"></div><span>Processing stress responses...</span></div><div class="step" id="step3"><div class="icon"></div><span>Processing anxiety responses...</span></div><div class="step" id="step4"><div class="icon"></div><span>Running clinical analysis...</span></div><div class="step" id="step5"><div class="icon"></div><span>Generating report...</span></div></div></div>`;}
-  titleRight(){const q=this.state.question;return `<div style="display:flex;flex-direction:column;justify-content:center;height:100%"><div class="badge" style="background:rgba(45,95,141,.08);border:2px solid var(--primary);color:var(--primary);margin-bottom:20px">${esc(label(this.state.stream_scale))} Scale</div><h2 style="font-family:var(--display);font-size:2em;color:var(--primary-dark);margin-bottom:12px">${esc(q.title)}</h2><p style="color:#475569;line-height:1.7;margin-bottom:28px">${esc(q.description)}</p><button class="begin" id="beginBtn">Begin Assessment →</button><div class="title-strip"><span data-camera-badge class="cam-badge disconnected">Camera disconnected</span><span class="note">Continuous capture stays active until this scale is finished.</span></div></div>`;}
-  questionRight(){const s=this.state,q=s.question,opts=(q.options||[]).map((o,i)=>`<button class="opt ${s.previous_score===i?'selected':''}" data-score="${i}"><div class="score">${i}</div><div>${esc(o)}</div></button>`).join('');return `<div class="progress-header"><div class="progress-label"><span>${esc(subtitle(q.scale))} — Question ${s.scale_position} of ${s.scale_total}</span><span>${s.progress_percent}% complete</span></div><div class="track"><div class="fill" style="width:${s.progress_percent}%"></div></div></div><div class="pill ${esc(q.scale)}">${esc(label(q.scale))}</div><div class="qlabel">Question ${s.scale_position} of ${s.scale_total}</div><div class="qtext">${esc(q.question_text)}</div><div class="options">${opts}</div><div class="camera-box"><span data-camera-badge class="cam-badge disconnected">Camera disconnected</span><span class="note">Continuous capture remains active until this scale is finished.</span></div><div class="buttons">${s.prev_qid?'<button class="btn btn-secondary" id="prevBtn">← Back</button>':''}<button class="btn btn-primary" id="nextBtn" ${s.previous_score===null?'disabled':''}>${s.next_qid?'Next →':'Submit Assessment →'}</button></div>`;}
-  finalRight(){return `<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;text-align:center"><h2 style="font-family:var(--display);font-size:1.8em;color:var(--primary-dark);margin-bottom:12px">Almost done...</h2><p style="color:#64748b;font-size:1.05em">Your responses are being analysed. Please keep this window open.</p></div>`;}
-  bind(){if(this.state.is_title_screen){document.getElementById('beginBtn')?.addEventListener('click',()=>this.navigate(this.state.next_qid));return;}if(this.state.is_final)return;document.querySelectorAll('[data-score]').forEach(btn=>btn.addEventListener('click',()=>{document.querySelectorAll('[data-score]').forEach(n=>n.classList.remove('selected'));btn.classList.add('selected');this.state.previous_score=Number(btn.dataset.score);document.getElementById('nextBtn').disabled=false;}));document.getElementById('nextBtn')?.addEventListener('click',()=>this.saveAndNext());document.getElementById('prevBtn')?.addEventListener('click',()=>this.navigate(this.state.prev_qid));}
-  async fetchState(qid){const r=await fetch(`/assessment/question/${qid}/`,{headers:{'X-Question-Partial':'1'},credentials:'same-origin'});if(!r.ok)throw new Error('Unable to load question');return r.json();}
-  async navigate(qid,opt={}){if(!qid)return;const next=await this.fetchState(qid),prevScale=this.state.stream_scale||'',nextScale=next.stream_scale||'';if(prevScale&&prevScale!==nextScale)this.emotion.stop();this.state=next;if(opt.replace)history.replaceState({qid},'',`/assessment/question/${qid}/`);else history.pushState({qid},'',`/assessment/question/${qid}/`);this.render();if(next.is_final){this.emotion.stop();return;}if(nextScale){await this.emotion.start(nextScale);this.emotion.syncPreview();}}
-  async saveAndNext(){if(this.state.previous_score===null)return;const r=await fetch('/assessment/save-answer/',{method:'POST',headers:{'Content-Type':'application/json','X-CSRFToken':cookie('csrftoken')},credentials:'same-origin',body:JSON.stringify({qid:this.state.qid,score:this.state.previous_score,assessment_id:this.state.assessment_id})}),d=await r.json();if(d.status!=='success'){alert(`Failed to save: ${d.message||'Unknown error'}`);return;}if(this.state.next_qid)await this.navigate(this.state.next_qid);}
-  runLoading(){if(this.loadingTimeout)clearTimeout(this.loadingTimeout);const steps=[['step1',2200,20],['step2',2200,40],['step3',2200,60],['step4',2000,80],['step5',1800,100]];let i=0,p=0;const tick=()=>{if(i>0){const prev=document.getElementById(steps[i-1][0]);prev?.classList.remove('active');prev?.classList.add('done');prev?.querySelector('.spinner')?.remove();}if(i<steps.length){const [id,dur,target]=steps[i];document.getElementById(id)?.classList.add('active');const fill=document.getElementById('progressFill'),txt=document.getElementById('progressText'),inc=(target-p)/50;let cur=p;const iv=setInterval(()=>{cur+=inc;if(cur>=target){cur=target;clearInterval(iv);}if(fill)fill.style.width=`${cur}%`;if(txt)txt.textContent=`${Math.round(cur)}%`;},dur/50);p=target;i+=1;this.loadingTimeout=setTimeout(tick,dur);}else{this.loadingTimeout=setTimeout(()=>window.location.href='/assessment/complete/',600);}};this.loadingTimeout=setTimeout(tick,500);}
-  async start(){this.render();if(!this.state.is_final&&this.state.stream_scale){await this.emotion.start(this.state.stream_scale);this.emotion.syncPreview();}window.addEventListener('popstate',async e=>{const qid=e.state?.qid||Number(location.pathname.split('/').filter(Boolean).pop());if(qid)await this.navigate(qid,{replace:true});});window.addEventListener('beforeunload',()=>this.emotion.stop());window.addEventListener('pagehide',()=>this.emotion.stop());}
+
+  // ── Determine question type ──────────────────────────────────────────────
+  isOpenEnded(){return this.state.question?.is_open_ended===true||this.state.question?.scale==='open_ended';}
+
+  // ── Render dispatcher ────────────────────────────────────────────────────
+  render(){
+    const s=this.state;
+    const open=this.isOpenEnded();
+    this.left.innerHTML  = s.is_final ? this.finalLeft()    : s.is_title_screen ? this.titleLeft()    : open ? this.openLeft()    : this.questionLeft();
+    this.right.innerHTML = s.is_final ? this.finalRight()   : s.is_title_screen ? this.titleRight()   : open ? this.openRight()   : this.questionRight();
+    this.emotion.syncPreview();
+    this.emotion.setBadge(
+      this.emotion.connectionReady?'connected':'disconnected',
+      this.emotion.connectionReady?`${label(this.emotion.currentScale)} stream active`:'Camera disconnected'
+    );
+    this.bind();
+    if(s.is_final) this.runLoading();
+  }
+
+  // ── Left panel renderers ─────────────────────────────────────────────────
+  titleLeft(){
+    const q=this.state.question;
+    return `<div class="title"><div class="badge scale-badge">${esc(label(this.state.stream_scale))} Assessment</div><h1>${esc(q.title)}</h1><p>${esc(q.subtitle)}</p>${q.item_count?`<div class="count">${q.item_count} Questions</div>`:''}<div class="status">Facial emotion capture starts now and continues through the full ${esc(label(this.state.stream_scale).toLowerCase())} scale.</div></div>`;
+  }
+  questionLeft(){
+    return `<div class="camera"><video data-shared-preview autoplay muted playsinline></video><div style="margin-top:12px"><span data-camera-badge class="cam-badge disconnected">Camera disconnected</span></div></div>`;
+  }
+  openLeft(){
+    return `<div class="open-panel"><div class="open-icon">💬</div><h2>Your Voice Matters</h2><p>This is a safe space. Feel free to share anything — a recent experience, how you have been feeling, or something on your mind. Your response is confidential.</p></div>`;
+  }
+  finalLeft(){
+    return `<div class="loading"><h1>Analysing Your Responses</h1><p>Please wait while we process your assessment</p><div class="track" style="width:100%;max-width:400px;height:8px;background:rgba(255,255,255,.2);margin:18px 0 12px"><div class="fill" id="progressFill" style="width:0%"></div></div><div id="progressText" style="font-weight:700;color:#E8925C;margin-bottom:20px">0%</div><div class="loading-steps"><div class="step active" id="step1"><div class="icon"><div class="spinner"></div></div><span>Processing depression responses...</span></div><div class="step" id="step2"><div class="icon"></div><span>Processing stress responses...</span></div><div class="step" id="step3"><div class="icon"></div><span>Processing anxiety responses...</span></div><div class="step" id="step4"><div class="icon"></div><span>Running clinical analysis...</span></div><div class="step" id="step5"><div class="icon"></div><span>Generating report...</span></div></div></div>`;
+  }
+
+  // ── Right panel renderers ────────────────────────────────────────────────
+  titleRight(){
+    const q=this.state.question;
+    return `<div style="display:flex;flex-direction:column;justify-content:center;height:100%"><div class="badge" style="background:rgba(45,95,141,.08);border:2px solid var(--primary);color:var(--primary);margin-bottom:20px">${esc(label(this.state.stream_scale))} Scale</div><h2 style="font-family:var(--display);font-size:2em;color:var(--primary-dark);margin-bottom:12px">${esc(q.title)}</h2><p style="color:#475569;line-height:1.7;margin-bottom:28px">${esc(q.description)}</p><button class="begin" id="beginBtn">Begin Assessment →</button><div class="title-strip"><span data-camera-badge class="cam-badge disconnected">Camera disconnected</span><span class="note">Continuous capture stays active until this scale is finished.</span></div></div>`;
+  }
+  questionRight(){
+    const s=this.state,q=s.question;
+    const opts=(q.options||[]).map((o,i)=>`<button class="opt ${s.previous_score===i?'selected':''}" data-score="${i}"><div class="score">${i}</div><div>${esc(o)}</div></button>`).join('');
+    return `<div class="progress-header"><div class="progress-label"><span>${esc(subtitle(q.scale))} — Question ${s.scale_position} of ${s.scale_total}</span><span>${s.progress_percent}% complete</span></div><div class="track"><div class="fill" style="width:${s.progress_percent}%"></div></div></div><div class="pill ${esc(q.scale)}">${esc(label(q.scale))}</div><div class="qlabel">Question ${s.scale_position} of ${s.scale_total}</div><div class="qtext">${esc(q.question_text)}</div><div class="options">${opts}</div><div class="camera-box"><span data-camera-badge class="cam-badge disconnected">Camera disconnected</span><span class="note">Continuous capture remains active until this scale is finished.</span></div><div class="buttons">${s.prev_qid?'<button class="btn btn-secondary" id="prevBtn">← Back</button>':''}<button class="btn btn-primary" id="nextBtn" ${s.previous_score===null?'disabled':''}>${s.next_qid?'Next →':'Next →'}</button></div>`;
+  }
+  openRight(){
+    const s=this.state,q=s.question;
+    const saved=s.previous_text||'';
+    return `
+      <div class="progress-header">
+        <div class="progress-label">
+          <span>Final Question — Optional Reflection</span>
+          <span>${s.progress_percent}% complete</span>
+        </div>
+        <div class="track"><div class="fill" style="width:${s.progress_percent}%"></div></div>
+      </div>
+      <div class="pill open_ended">Reflection</div>
+      <div class="qlabel">Share with us (optional)</div>
+      <div class="qtext">${esc(q.question_text)}</div>
+      <div class="textarea-wrap">
+        <textarea
+          class="open-textarea"
+          id="openTextarea"
+          maxlength="3000"
+          placeholder="Feel free to share anything — a recent experience, something on your mind, or how you have been feeling lately. This is completely optional."
+        >${esc(saved)}</textarea>
+        <div class="char-count"><span id="charCount">${saved.length}</span> / 3000</div>
+      </div>
+      <div class="buttons">
+        ${s.prev_qid?'<button class="btn btn-secondary" id="prevBtn">← Back</button>':''}
+        <button class="btn btn-primary" id="nextBtn">Submit Assessment →</button>
+      </div>
+      <button class="open-skip" id="skipBtn">Skip this question</button>
+    `;
+  }
+  finalRight(){
+    return `<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;text-align:center"><h2 style="font-family:var(--display);font-size:1.8em;color:var(--primary-dark);margin-bottom:12px">Almost done...</h2><p style="color:#64748b;font-size:1.05em">Your responses are being analysed. Please keep this window open.</p></div>`;
+  }
+
+  // ── Event binding ────────────────────────────────────────────────────────
+  bind(){
+    if(this.state.is_title_screen){
+      document.getElementById('beginBtn')?.addEventListener('click',()=>this.navigate(this.state.next_qid));
+      return;
+    }
+    if(this.state.is_final) return;
+
+    // Open-ended question bindings
+    if(this.isOpenEnded()){
+      const ta=document.getElementById('openTextarea');
+      const cc=document.getElementById('charCount');
+      ta?.addEventListener('input',()=>{if(cc)cc.textContent=ta.value.length;});
+      document.getElementById('nextBtn')?.addEventListener('click',()=>this.saveTextAndNext());
+      document.getElementById('skipBtn')?.addEventListener('click',()=>this.saveTextAndNext(true));
+      document.getElementById('prevBtn')?.addEventListener('click',()=>this.navigate(this.state.prev_qid));
+      return;
+    }
+
+    // Scored question bindings
+    document.querySelectorAll('[data-score]').forEach(btn=>btn.addEventListener('click',()=>{
+      document.querySelectorAll('[data-score]').forEach(n=>n.classList.remove('selected'));
+      btn.classList.add('selected');
+      this.state.previous_score=Number(btn.dataset.score);
+      document.getElementById('nextBtn').disabled=false;
+    }));
+    document.getElementById('nextBtn')?.addEventListener('click',()=>this.saveAndNext());
+    document.getElementById('prevBtn')?.addEventListener('click',()=>this.navigate(this.state.prev_qid));
+  }
+
+  // ── Data fetching ────────────────────────────────────────────────────────
+  async fetchState(qid){
+    const r=await fetch(`/assessment/question/${qid}/`,{headers:{'X-Question-Partial':'1'},credentials:'same-origin'});
+    if(!r.ok) throw new Error('Unable to load question');
+    return r.json();
+  }
+
+  // ── Navigation ───────────────────────────────────────────────────────────
+  async navigate(qid,opt={}){
+    if(!qid) return;
+    const next=await this.fetchState(qid);
+    const prevScale=this.state.stream_scale||'';
+    const nextScale=next.stream_scale||'';
+    // Stop camera when leaving a streamed scale (open_ended has no stream_scale so camera stops naturally)
+    if(prevScale&&prevScale!==nextScale) this.emotion.stop();
+    this.state=next;
+    if(opt.replace) history.replaceState({qid},'',`/assessment/question/${qid}/`);
+    else history.pushState({qid},'',`/assessment/question/${qid}/`);
+    this.render();
+    if(next.is_final){this.emotion.stop();return;}
+    if(nextScale){await this.emotion.start(nextScale);this.emotion.syncPreview();}
+  }
+
+  // ── Save scored answer and advance ───────────────────────────────────────
+  async saveAndNext(){
+    if(this.state.previous_score===null) return;
+    const r=await fetch('/assessment/save-answer/',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','X-CSRFToken':cookie('csrftoken')},
+      credentials:'same-origin',
+      body:JSON.stringify({qid:this.state.qid,score:this.state.previous_score,assessment_id:this.state.assessment_id})
+    });
+    const d=await r.json();
+    if(d.status!=='success'){alert(`Failed to save: ${d.message||'Unknown error'}`);return;}
+    if(this.state.next_qid) await this.navigate(this.state.next_qid);
+  }
+
+  // ── Save open-ended text answer and advance ───────────────────────────────
+  async saveTextAndNext(skip=false){
+    const ta=document.getElementById('openTextarea');
+    const text=skip?'':(ta?ta.value.trim():'');
+    try{
+      const r=await fetch('/assessment/save-text-answer/',{
+        method:'POST',
+        headers:{'Content-Type':'application/json','X-CSRFToken':cookie('csrftoken')},
+        credentials:'same-origin',
+        body:JSON.stringify({text_answer:text,assessment_id:this.state.assessment_id})
+      });
+      const d=await r.json();
+      if(d.status!=='success'){alert(`Failed to save: ${d.message||'Unknown error'}`);return;}
+    }catch(e){
+      // Network error — still navigate so the user isn't stuck
+      console.warn('save-text-answer failed, continuing anyway',e);
+    }
+    if(this.state.next_qid) await this.navigate(this.state.next_qid);
+  }
+
+  // ── Loading screen animation ─────────────────────────────────────────────
+  runLoading(){
+    if(this.loadingTimeout) clearTimeout(this.loadingTimeout);
+    const steps=[['step1',2200,20],['step2',2200,40],['step3',2200,60],['step4',2000,80],['step5',1800,100]];
+    let i=0,p=0;
+    const tick=()=>{
+      if(i>0){
+        const prev=document.getElementById(steps[i-1][0]);
+        prev?.classList.remove('active');prev?.classList.add('done');prev?.querySelector('.spinner')?.remove();
+      }
+      if(i<steps.length){
+        const[id,dur,target]=steps[i];
+        document.getElementById(id)?.classList.add('active');
+        const fill=document.getElementById('progressFill'),txt=document.getElementById('progressText'),inc=(target-p)/50;
+        let cur=p;
+        const iv=setInterval(()=>{cur+=inc;if(cur>=target){cur=target;clearInterval(iv);}if(fill)fill.style.width=`${cur}%`;if(txt)txt.textContent=`${Math.round(cur)}%`;},dur/50);
+        p=target;i+=1;this.loadingTimeout=setTimeout(tick,dur);
+      }else{
+        this.loadingTimeout=setTimeout(()=>window.location.href='/assessment/complete/',600);
+      }
+    };
+    this.loadingTimeout=setTimeout(tick,500);
+  }
+
+  // ── Startup ──────────────────────────────────────────────────────────────
+  async start(){
+    this.render();
+    if(!this.state.is_final&&this.state.stream_scale){
+      await this.emotion.start(this.state.stream_scale);
+      this.emotion.syncPreview();
+    }
+    window.addEventListener('popstate',async e=>{
+      const qid=e.state?.qid||Number(location.pathname.split('/').filter(Boolean).pop());
+      if(qid) await this.navigate(qid,{replace:true});
+    });
+    window.addEventListener('beforeunload',()=>this.emotion.stop());
+    window.addEventListener('pagehide',()=>this.emotion.stop());
+  }
 }
+
 new App(state0).start();
 </script>
 </body>

@@ -92,6 +92,45 @@ body { font-family:var(--font); background:linear-gradient(135deg,#2D5F8D,#1E426
 .section-title { font-family:var(--font-display); font-size:1.4em; font-weight:700; color:var(--primary); margin-bottom:16px; display:flex; align-items:center; gap:10px; }
 .section-title::before { content:''; width:4px; height:24px; background:var(--accent); border-radius:2px; flex-shrink:0; }
 
+/* FEELING ANALYSIS */
+.feeling-summary-box {
+  background:#fffbeb;
+  border-left:4px solid #d97706;
+  border-radius:8px;
+  padding:16px 20px;
+  margin-bottom:24px;
+  font-size:0.93em;
+  color:#374151;
+  line-height:1.75;
+  font-style:italic;
+}
+.feeling-layout {
+  display:flex;
+  gap:32px;
+  flex-wrap:wrap;
+  align-items:flex-start;
+}
+.feeling-chart-wrap {
+  flex:0 0 300px;
+  max-width:100%;
+}
+.feeling-bars {
+  flex:1;
+  min-width:220px;
+}
+.feeling-bar-label-row {
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  font-size:0.84em;
+  margin-bottom:4px;
+}
+.feeling-bar-label { color:var(--text); font-weight:500; }
+.feeling-bar-score { color:var(--text-muted); font-size:0.9em; min-width:38px; text-align:right; }
+.feeling-bar-track { height:6px; background:#f1f5f9; border-radius:999px; overflow:hidden; margin-bottom:10px; }
+.feeling-bar-fill { height:100%; border-radius:999px; background:linear-gradient(90deg,#2D5F8D,#E8925C); }
+.feeling-bars-heading { font-size:0.72em; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; color:var(--text-muted); margin-bottom:14px; }
+
 /* DISCLAIMER */
 .disclaimer { margin:0 40px 32px; padding:20px 24px; background:#fffbeb; border:1.5px solid var(--warning); border-radius:10px; }
 .disclaimer strong { color:#92400e; display:block; margin-bottom:6px; }
@@ -102,6 +141,7 @@ body { font-family:var(--font); background:linear-gradient(135deg,#2D5F8D,#1E426
   .scales-grid { padding:20px; }
   .disclaimer { margin:0 20px 24px; }
   .header h1 { font-size:1.8em; }
+  .feeling-chart-wrap { flex:none; width:100%; }
 }
 </style>
 </head>
@@ -127,12 +167,12 @@ body { font-family:var(--font); background:linear-gradient(135deg,#2D5F8D,#1E426
       <span class="alert-icon">🚨</span>
       <div><strong>IMMEDIATE INTERVENTION REQUIRED</strong> — High-risk indicators detected across one or more scales. Immediate clinical review and safety measures are needed.</div>
     </div>
-    {% elif overall_risk in 'severe,extreme,high' %}
+    {% elif overall_risk == 'severe' or overall_risk == 'extreme' or overall_risk == 'high' %}
     <div class="alert alert-danger">
       <span class="alert-icon">⚠️</span>
       <div><strong>HIGH RISK DETECTED</strong> — Significant distress indicators found. Urgent professional attention is recommended.</div>
     </div>
-    {% elif overall_risk in 'moderate,borderline' %}
+    {% elif overall_risk == 'moderate' or overall_risk == 'borderline' %}
     <div class="alert alert-warning">
       <span class="alert-icon">⚠️</span>
       <div><strong>MODERATE RISK</strong> — Clinical attention recommended within 24–48 hours.</div>
@@ -293,6 +333,133 @@ body { font-family:var(--font); background:linear-gradient(135deg,#2D5F8D,#1E426
     </div>
   </div>
   {% endif %}
+
+  <!-- ═══════════════════════════════════════════════════════════════════════
+       FEELING / REFLECTION ANALYSIS
+       Shown only when Gemini returned valid concern_feeling_label data.
+       ═══════════════════════════════════════════════════════════════════════ -->
+  {% if feeling_analysis and feeling_analysis.concern_feeling_label %}
+  <div class="section">
+    <div class="section-title">Emotional Reflection Analysis</div>
+    <p style="font-size:0.9em;color:#475569;margin-bottom:20px;">
+      Based on what you shared, here is an emotional profile generated from your personal statement.
+    </p>
+
+    {% if feeling_analysis.summary %}
+    <div class="feeling-summary-box">
+      {{ feeling_analysis.summary }}
+    </div>
+    {% endif %}
+
+    <div class="feeling-layout">
+
+      <!-- Radar chart -->
+      <div class="feeling-chart-wrap">
+        <canvas id="feelingRadarChart" width="300" height="300"></canvas>
+      </div>
+
+      <!-- Score bars -->
+      <div class="feeling-bars">
+        <div class="feeling-bars-heading">Feeling Scores (0 – 1)</div>
+        {% for feeling_label, score in feeling_analysis.concern_feeling_label.items %}
+        <div>
+          <div class="feeling-bar-label-row">
+            <span class="feeling-bar-label">{{ feeling_label }}</span>
+            <span class="feeling-bar-score">{{ score|floatformat:2 }}</span>
+          </div>
+          <div class="feeling-bar-track">
+            {# score is 0.0–1.0; multiply by 100 for percentage width #}
+            <div class="feeling-bar-fill" style="width:{% widthratio score 1 100 %}%;"></div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ── Chart.js radar ─────────────────────────────────────────────────── -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+
+  {# CRITICAL FIX: use json_script to emit valid JSON, not Python dict repr #}
+  {{ feeling_analysis.concern_feeling_label|json_script:"feeling-scores-data" }}
+
+  <script>
+  (function () {
+    // json_script emits a <script type="application/json"> tag — always valid JSON.
+    var rawScores = JSON.parse(document.getElementById('feeling-scores-data').textContent);
+    var chartLabels = Object.keys(rawScores);
+    var chartData   = Object.values(rawScores).map(function(v){ return parseFloat(v) || 0; });
+
+    var ctx = document.getElementById('feelingRadarChart');
+    if (!ctx || chartLabels.length === 0) return;
+
+    new Chart(ctx.getContext('2d'), {
+      type: 'radar',
+      data: {
+        labels: chartLabels,
+        datasets: [{
+          label: 'Emotional Profile',
+          data: chartData,
+          backgroundColor: 'rgba(129, 230, 217, 0.25)',   // Soft Teal, semi-transparent fill
+          borderColor: 'rgba(94, 186, 172, 1)',             // Solid Teal border for the data shape
+          borderWidth: 2.5,
+          pointBackgroundColor: 'rgba(167, 139, 250, 1)',  // Lavender dots
+          pointBorderColor: '#ffffff',
+          pointBorderWidth: 2,
+          pointRadius: 6,
+          pointHoverRadius: 8,
+          pointHoverBackgroundColor: 'rgba(139, 92, 246, 1)',
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        scales: {
+          r: {
+            beginAtZero: true,
+            min: 0,
+            max: 1,
+            ticks: {
+              stepSize: 0.2,                                // More rings = denser web
+              font: { size: 10, family: "'DM Sans', sans-serif" },
+              backdropColor: 'transparent',
+              color: '#94a3b8',
+              display: false,                               // Hide tick numbers, keep grid rings
+            },
+            pointLabels: {
+              font: { size: 11, family: "'DM Sans', sans-serif", weight: '600' },
+              color: '#1e293b',
+            },
+            grid: {
+              color: 'rgba(100, 116, 139, 0.35)',           // Darker, more visible web rings
+              lineWidth: 1.5,
+            },
+            angleLines: {
+              color: 'rgba(100, 116, 139, 0.45)',           // Darker spokes radiating from center
+              lineWidth: 1.5,
+            },
+          }
+        },
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            backgroundColor: '#1e293b',
+            titleFont: { size: 12, family: "'DM Sans', sans-serif" },
+            bodyFont:  { size: 12, family: "'DM Sans', sans-serif" },
+            callbacks: {
+              label: function(ctx) {
+                return ' ' + ctx.label + ': ' + parseFloat(ctx.raw).toFixed(2);
+              }
+            }
+          }
+        }
+      }
+    });
+  })();
+  </script>
+  {% endif %}
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
 
   <!-- DISCLAIMER -->
   <div class="disclaimer">
