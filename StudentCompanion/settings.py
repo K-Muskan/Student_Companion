@@ -31,8 +31,9 @@ DEBUG = True
 ALLOWED_HOSTS = ["crunodal-libbie-preconsciously.ngrok-free.dev","127.0.0.1",
     "localhost"]
 
-GEMINI_API_KEY = "################"#place api key here
-
+##GEMINI_API_KEY = "################"#place api key here
+HUGGING_FACE_TOKEN = "###"#hugging face token
+OPENROUTER_API_KEY = "##" #openrouter api
 # Application definition
 INSTALLED_APPS = [
     'django.contrib.admin',
