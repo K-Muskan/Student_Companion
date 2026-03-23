@@ -23,8 +23,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-)x_iiq9%b(zpq(6%0y0h*vhu^)6ym(y21!tie87_e*#*kmcg*&'
-
+SECRET_KEY = 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
@@ -32,8 +31,8 @@ ALLOWED_HOSTS = ["crunodal-libbie-preconsciously.ngrok-free.dev","127.0.0.1",
     "localhost"]
 
 ##GEMINI_API_KEY = "################"#place api key here
-HUGGING_FACE_TOKEN = "###"#hugging face token
-OPENROUTER_API_KEY = "##" #openrouter api
+HUGGING_FACE_TOKEN = ""#hugging face token
+OPENROUTER_API_KEY = "s" #openrouter api
 # Application definition
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -74,8 +73,8 @@ SOCIALACCOUNT_PROVIDERS = {
             'include_granted_scopes': 'true',
         },
         'APP': {
-            'client_id': "799103574658-8kdno7qkq5j2pgd03t3jf4ooa5l6s576.apps.googleusercontent.com",
-            'secret': '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',
+            'client_id': "",
+            'secret': '',
             'key': ''
         }
     }
@@ -127,9 +126,9 @@ ASGI_APPLICATION = 'StudentCompanion.asgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'student-companion',
+        'NAME': 'Student_Companion',
         'USER': 'postgres',
-        'PASSWORD': 'admin',
+        'PASSWORD': 'muskan',
         'HOST': 'localhost',
         'PORT': '5432',
     }
@@ -202,7 +201,7 @@ EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 
 EMAIL_HOST_USER = "mallahkhadija97@gmail.com"
-EMAIL_HOST_PASSWORD = "grah kehi eslf nuch"
+EMAIL_HOST_PASSWORD = ""
 
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 

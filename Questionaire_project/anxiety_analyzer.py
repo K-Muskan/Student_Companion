@@ -1,14 +1,22 @@
 """
 Beck Anxiety Inventory (BAI) Analyzer
-21 items scored 0-3, total range 0-63
-Scoring:
-  0–21  → Low Anxiety
-  22–35 → Moderate Anxiety
-  36–63 → Potentially Concerning Anxiety
+Scale: 21 items, scored 0-3
+Total range: 0-63
 
-Reference:
-Beck, A. T., Epstein, N., Brown, G., & Steer, R. A. (1988).
-Journal of Consulting and Clinical Psychology, 56(6), 893-897.
+Risk thresholds:
+    0–21  → Low
+   22–35  → Moderate
+   36–63  → High (Potentially Concerning)
+
+Symptom categories:
+    Physical  : items 1,2,3,6,7,8,11,12,13,15,18,19,20,21  (14 items, max 42)
+    Cognitive : items 4,5,14,16                              ( 4 items, max 12)
+    Emotional : items 9,10,17                                ( 3 items, max  9)
+
+Reference: Beck et al. (1988), Journal of Consulting and Clinical Psychology, 56(6), 893-897.
+
+NOTE: Question text and response labels live in views.py QUESTIONS list.
+      This module handles scoring logic only.
 """
 
 from typing import Dict, List, Any
@@ -17,42 +25,12 @@ from datetime import datetime
 
 class AnxietyAnalyzer:
 
-    BAI_ITEMS = {
-        1:  {'description': 'Numbness or tingling',      'category': 'physical'},
-        2:  {'description': 'Feeling hot',               'category': 'physical'},
-        3:  {'description': 'Wobbliness in legs',        'category': 'physical'},
-        4:  {'description': 'Unable to relax',           'category': 'cognitive'},
-        5:  {'description': 'Fear of worst happening',   'category': 'cognitive'},
-        6:  {'description': 'Dizzy or lightheaded',      'category': 'physical'},
-        7:  {'description': 'Heart pounding or racing',  'category': 'physical'},
-        8:  {'description': 'Unsteady',                  'category': 'physical'},
-        9:  {'description': 'Terrified or afraid',       'category': 'emotional'},
-        10: {'description': 'Nervous',                   'category': 'emotional'},
-        11: {'description': 'Feeling of choking',        'category': 'physical'},
-        12: {'description': 'Hands trembling',           'category': 'physical'},
-        13: {'description': 'Shaky or unsteady',         'category': 'physical'},
-        14: {'description': 'Fear of losing control',    'category': 'cognitive'},
-        15: {'description': 'Difficulty in breathing',   'category': 'physical'},
-        16: {'description': 'Fear of dying',             'category': 'cognitive'},
-        17: {'description': 'Scared',                    'category': 'emotional'},
-        18: {'description': 'Indigestion',               'category': 'physical'},
-        19: {'description': 'Faint or lightheaded',      'category': 'physical'},
-        20: {'description': 'Face flushed',              'category': 'physical'},
-        21: {'description': 'Hot or cold sweats',        'category': 'physical'},
-    }
+    VALID_ITEMS = set(range(1, 22))  # items 1–21
 
-    SCORE_LABELS = {
-        0: 'Not at all',
-        1: "Mildly — it didn't bother me much",
-        2: "Moderately — it wasn't pleasant at times",
-        3: 'Severely — it bothered me a lot',
-    }
-
-    # Category max scores for reference
     CATEGORY_ITEMS = {
-        'physical':  [1, 2, 3, 6, 7, 8, 11, 12, 13, 15, 18, 19, 20, 21],  # 14 items → max 42
-        'cognitive': [4, 5, 14, 16],                                         # 4 items  → max 12
-        'emotional': [9, 10, 17],                                            # 3 items  → max 9
+        'physical':  [1, 2, 3, 6, 7, 8, 11, 12, 13, 15, 18, 19, 20, 21],
+        'cognitive': [4, 5, 14, 16],
+        'emotional': [9, 10, 17],
     }
 
     RISK_THRESHOLDS = [
@@ -70,56 +48,47 @@ class AnxietyAnalyzer:
 
     def analyze_responses(self, scores: Dict[str, int]) -> Dict[str, Any]:
         """
-        Main entry point.
-
         Args:
-            scores: {str(item_id): score (0-3)}
-                    e.g. {'1': 2, '2': 0, ...}
-
+            scores: {str(item_id): score (0-3)}  e.g. {'1': 2, '2': 0, ...}
         Returns:
             Complete BAI anxiety assessment report.
         """
-        validated = self._validate_scores(scores)
-        total = sum(v['score'] for v in validated.values())
+        validated          = self._validate_scores(scores)
+        total              = sum(validated.values())
         risk_level, risk_label = self._get_risk_level(total)
         category_breakdown = self._category_breakdown(validated)
-        top_symptoms = self._get_highest_symptoms(validated)
+        top_items          = self._get_highest_items(validated)
 
-        report = {
-            'timestamp': self.timestamp,
-            # --- consistent keys across all four analyzers ---
-            'condition': 'Anxiety',
-            'scale': 'Beck Anxiety Inventory (BAI)',
-            'total_items': 21,
-            'items_completed': len(validated),
-            'total_score': total,
-            'max_possible_score': 63,
-            'score_percentage': round((total / 63) * 100, 1),
-            'risk_level': risk_level,           # 'low' | 'moderate' | 'high'
-            'risk_label': risk_label,           # human-readable label
-            'interpretation': self._interpretation_text(risk_level, total),
-            'clinical_significance': risk_level in ('moderate', 'high'),
+        return {
+            'timestamp':                    self.timestamp,
+            'condition':                    'Anxiety',
+            'scale':                        'Beck Anxiety Inventory (BAI)',
+            'total_items':                  21,
+            'items_completed':              len(validated),
+            'total_score':                  total,
+            'max_possible_score':           63,
+            'score_percentage':             round((total / 63) * 100, 1),
+            'risk_level':                   risk_level,
+            'risk_label':                   risk_label,
+            'interpretation':               self._interpretation_text(risk_level, total),
+            'clinical_significance':        risk_level in ('moderate', 'high'),
             'immediate_intervention_needed': risk_level == 'high',
-            'confidence': self._confidence(validated),
-            # --- detail ---
-            'item_scores': validated,
+            'confidence':                   self._confidence(validated),
             'evidence': {
-                'highest_symptoms': top_symptoms,
-                'category_breakdown': category_breakdown,
+                'highest_items':        top_items,
+                'category_breakdown':   category_breakdown,
             },
-            'critical_items': self._identify_critical_items(validated),
-            'clinical_summary': self._clinical_summary(total, risk_level, category_breakdown),
-            'recommendations': self._generate_recommendations(total, top_symptoms),
+            'critical_items':               self._identify_critical_items(validated),
+            'clinical_summary':             self._clinical_summary(total, risk_level, category_breakdown),
+            'recommendations':              self._recommendations(total, top_items),
         }
-
-        return report
 
     # ------------------------------------------------------------------
     # INTERNAL HELPERS
     # ------------------------------------------------------------------
 
-    def _validate_scores(self, scores: Dict) -> Dict[int, Dict]:
-        """Validate and structure item scores."""
+    def _validate_scores(self, scores: Dict) -> Dict[int, int]:
+        """Returns {item_id: clamped_score} for all 21 items (defaults to 0)."""
         validated = {}
         for item_id in range(1, 22):
             raw = scores.get(str(item_id), scores.get(item_id, 0))
@@ -127,16 +96,7 @@ class AnxietyAnalyzer:
                 score = int(raw)
             except (TypeError, ValueError):
                 score = 0
-            score = max(0, min(3, score))   # clamp to 0-3
-
-            info = self.BAI_ITEMS[item_id]
-            validated[item_id] = {
-                'description': info['description'],
-                'category': info['category'],
-                'score': score,
-                'label': self.SCORE_LABELS[score],
-                'item_severity': ['None', 'Mild', 'Moderate', 'Severe'][score],
-            }
+            validated[item_id] = max(0, min(3, score))
         return validated
 
     def _get_risk_level(self, total: int):
@@ -164,55 +124,50 @@ class AnxietyAnalyzer:
         }
         return texts.get(level, f'Score {total}/63.')
 
-    def _category_breakdown(self, validated: Dict[int, Dict]) -> Dict[str, Any]:
+    def _category_breakdown(self, validated: Dict[int, int]) -> Dict[str, Any]:
         breakdown = {}
         for cat, items in self.CATEGORY_ITEMS.items():
-            cat_score = sum(validated[i]['score'] for i in items if i in validated)
-            cat_max = len(items) * 3
+            cat_score = sum(validated.get(i, 0) for i in items)
+            cat_max   = len(items) * 3
             breakdown[f'{cat}_symptoms'] = {
-                'score': cat_score,
-                'max': cat_max,
+                'score':      cat_score,
+                'max':        cat_max,
                 'percentage': round((cat_score / cat_max) * 100, 1) if cat_max else 0,
             }
         return breakdown
 
-    def _get_highest_symptoms(self, validated: Dict[int, Dict]) -> List[Dict]:
-        sorted_items = sorted(validated.items(), key=lambda x: x[1]['score'], reverse=True)
+    def _get_highest_items(self, validated: Dict[int, int]) -> List[Dict]:
+        """Top 5 highest-scoring items (score > 0 only)."""
+        sorted_items = sorted(validated.items(), key=lambda x: x[1], reverse=True)
         return [
-            {
-                'item_id': item_id,
-                'description': data['description'],
-                'score': data['score'],
-                'label': data['label'],
-                'category': data['category'],
-            }
-            for item_id, data in sorted_items[:5]
-            if data['score'] > 0
+            {'item_id': item_id, 'score': score}
+            for item_id, score in sorted_items[:5]
+            if score > 0
         ]
 
-    def _identify_critical_items(self, validated: Dict[int, Dict]) -> Dict[str, List]:
+    def _identify_critical_items(self, validated: Dict[int, int]) -> Dict[str, List]:
         return {
             'severe_items':   [
-                {'item': i, 'description': d['description'], 'score': d['score']}
-                for i, d in validated.items() if d['score'] == 3
+                {'item': i, 'score': s}
+                for i, s in validated.items() if s == 3
             ],
             'moderate_items': [
-                {'item': i, 'description': d['description'], 'score': d['score']}
-                for i, d in validated.items() if d['score'] == 2
+                {'item': i, 'score': s}
+                for i, s in validated.items() if s == 2
             ],
         }
 
-    def _confidence(self, validated: Dict[int, Dict]) -> float:
-        answered = sum(1 for d in validated.values() if d['score'] > 0)
+    def _confidence(self, validated: Dict[int, int]) -> float:
+        answered = sum(1 for s in validated.values() if s > 0)
         if len(validated) == 21: return 0.97
         if answered >= 19:       return 0.90
         if answered >= 15:       return 0.80
         return 0.65
 
     def _clinical_summary(self, total: int, level: str, breakdown: Dict) -> str:
-        ph = breakdown.get('physical_symptoms', {})
+        ph  = breakdown.get('physical_symptoms',  {})
         cog = breakdown.get('cognitive_symptoms', {})
-        em = breakdown.get('emotional_symptoms', {})
+        em  = breakdown.get('emotional_symptoms', {})
         return (
             f"BAI Total: {total}/63 ({level.upper()}). "
             f"Physical: {ph.get('score', 0)}/{ph.get('max', 42)} | "
@@ -220,7 +175,7 @@ class AnxietyAnalyzer:
             f"Emotional: {em.get('score', 0)}/{em.get('max', 9)}."
         )
 
-    def _generate_recommendations(self, total: int, top_symptoms: List[Dict]) -> List[str]:
+    def _recommendations(self, total: int, top_items: List[Dict]) -> List[str]:
         if total <= 21:
             recs = [
                 'Maintain current healthy lifestyle and coping strategies.',
@@ -242,41 +197,34 @@ class AnxietyAnalyzer:
                 'Use crisis resources if you feel overwhelmed.',
             ]
 
-        # Symptom-specific additions
-        for symptom in top_symptoms:
-            desc = symptom['description'].lower()
-            if symptom['score'] >= 2:
-                if any(w in desc for w in ['breathing', 'choking']):
-                    recs.append('Practice diaphragmatic (belly) breathing exercises daily.')
-                elif any(w in desc for w in ['heart', 'pounding', 'racing']):
-                    recs.append('Rule out cardiac causes with your doctor if not done recently.')
-                elif any(w in desc for w in ['trembling', 'shaky']):
-                    recs.append('Limit caffeine intake and try grounding techniques (5-4-3-2-1 method).')
-                elif any(w in desc for w in ['dizzy', 'faint']):
-                    recs.append('Ensure adequate hydration, nutrition, and sleep.')
-                elif 'relax' in desc:
-                    recs.append('Try progressive muscle relaxation or guided yoga.')
+        # Item-specific additions based on highest scoring items
+        # Maps item IDs to symptom keywords and their recommendation
+        ITEM_RECS = {
+            frozenset([15, 11]): 'Practice diaphragmatic (belly) breathing exercises daily.',
+            frozenset([7, 41]):  'Rule out cardiac causes with your doctor if not done recently.',
+            frozenset([12, 13]): 'Limit caffeine intake and try grounding techniques (5-4-3-2-1 method).',
+            frozenset([6, 19]):  'Ensure adequate hydration, nutrition, and sleep.',
+            frozenset([4]):      'Try progressive muscle relaxation or guided yoga.',
+        }
 
-        # Deduplicate
-        seen, unique = set(), []
-        for r in recs:
-            if r not in seen:
-                seen.add(r)
-                unique.append(r)
-        return unique
+        high_items = {item['item_id'] for item in top_items if item['score'] >= 2}
+        seen = set(recs)
+        for item_set, rec in ITEM_RECS.items():
+            if high_items & item_set and rec not in seen:
+                recs.append(rec)
+                seen.add(rec)
+
+        return recs
 
 
 # ------------------------------------------------------------------
-# Convenience function — consistent with other analyzer modules
+# Convenience wrapper
 # ------------------------------------------------------------------
 
 def analyze_anxiety(scores: Dict[str, int]) -> Dict[str, Any]:
     """
-    Convenience wrapper.
-
     Args:
         scores: {str(item_id): score (0-3)}
-
     Returns:
         Full BAI anxiety assessment report.
     """
