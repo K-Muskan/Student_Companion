@@ -1,8 +1,10 @@
 import asyncio
 import base64
 import json
+import sys
 import threading
 import time
+from collections import deque
 from unittest import mock
 
 import cv2
@@ -14,8 +16,8 @@ from django.contrib.sessions.middleware import SessionMiddleware
 from django.test import Client, RequestFactory, TestCase, TransactionTestCase, override_settings
 
 from Questionaire_project.consumers import EmotionStreamConsumer
-from Questionaire_project.emotion_services import build_scale_emotion_summary
-from Questionaire_project.emotion_worker import EmotionInferenceWorker
+from Questionaire_project.emotion_services import build_emotion_timeline_summary, build_scale_emotion_summary
+from Questionaire_project.emotion_worker import EmotionInferenceWorker, preprocess_frame_for_inference
 from Questionaire_project.models import Assessment, EmotionRecord, Question
 from Questionaire_project.mse_analyzer import MSEAnalyzer
 from Questionaire_project.views import _get_or_create_assessment
@@ -237,6 +239,30 @@ class EmotionSummaryTests(TestCase):
         self.assertEqual(summary["raw_record_count"], 1)
         self.assertEqual(summary["status_counts"], {EmotionRecord.STATUS_QUALITY_LOW: 1})
 
+    def test_build_emotion_timeline_summary_returns_percentages(self):
+        assessment = Assessment.objects.create(
+            session_key="timeline-session",
+            assessment_token="timeline-session:1",
+        )
+        for idx, emotion in enumerate(["happy", "sad", "happy", "angry"], start=1):
+            EmotionRecord.objects.create(
+                assessment=assessment,
+                scale="anxiety",
+                frame_id=f"timeline-{idx}",
+                frame_number=idx,
+                timestamp_sec=float(idx),
+                dominant_emotion=emotion,
+                emotion_scores={emotion: 0.9},
+                confidence=0.9,
+                status=EmotionRecord.STATUS_OK,
+            )
+
+        summary = build_emotion_timeline_summary(assessment, scale="anxiety")
+
+        self.assertEqual(summary["total_frames"], 4)
+        self.assertEqual(summary["most_frequent_emotion"], "happy")
+        self.assertEqual(summary["emotion_percentages"]["happy"], 50.0)
+
 
 class ConsumerUnitValidationTests(TestCase):
     def _build_consumer(self):
@@ -250,6 +276,12 @@ class ConsumerUnitValidationTests(TestCase):
         c.max_brightness = 235
         c.min_blur_variance = 35.0
         c.min_face_confidence = 0.55
+        c.uncertain_threshold = 45.0
+        c.angry_suppression_threshold = 60.0
+        c.identical_result_window = 5
+        c.debug_noise_test = False
+        c.recent_frame_hashes = deque(maxlen=c.identical_result_window)
+        c.recent_result_signatures = deque(maxlen=c.identical_result_window)
         c.face_track_iou_threshold = 0.25
         c.inference_timeout = 0.2
         c.correlation_id = "test"
@@ -277,6 +309,90 @@ class ConsumerUnitValidationTests(TestCase):
         result = c._error_result("timeout")
         self.assertEqual(result["status"], "error")
         self.assertEqual(result["message"], "timeout")
+        self.assertEqual(result["dominant_emotion"], "neutral")
+        self.assertTrue(result["emotion_scores"])
+
+    def test_normalize_result_payload_fixes_empty_values(self):
+        c = self._build_consumer()
+        result = c._normalize_result_payload(
+            {"status": "weird", "dominant_emotion": "", "emotion_scores": {}, "confidence": None}
+        )
+        self.assertEqual(result["status"], "fallback")
+        self.assertEqual(result["dominant_emotion"], "neutral")
+        self.assertEqual(result["emotion_scores"], {"neutral": 0.1})
+
+    def test_preprocess_frame_for_inference_returns_rgb_224(self):
+        frame = np.full((80, 120, 3), 90, dtype=np.uint8)
+        processed = preprocess_frame_for_inference(frame)
+        self.assertEqual(processed.shape, (224, 224, 3))
+        self.assertTrue(isinstance(processed, np.ndarray))
+
+    def test_uncertain_status_when_top_emotion_below_threshold(self):
+        c = self._build_consumer()
+        c.uncertain_threshold = 40.0
+        c.angry_suppression_threshold = 60.0
+        c.min_face_area_ratio = 0.0
+        c.subject_box = None
+        result_face = {
+            "dominant_emotion": "happy",
+            "emotion": {"happy": 32.0, "sad": 28.0, "angry": 20.0},
+            "face_confidence": 0.9,
+            "region": {"x": 0, "y": 0, "w": 80, "h": 80},
+        }
+        c._log_event = lambda *args, **kwargs: None
+        c._normalize_result_payload = EmotionStreamConsumer._normalize_result_payload.__get__(c, EmotionStreamConsumer)
+        c._face_conf = EmotionStreamConsumer._face_conf.__get__(c, EmotionStreamConsumer)
+        c._face_box = EmotionStreamConsumer._face_box.__get__(c, EmotionStreamConsumer)
+        confidence = c._face_conf(result_face)
+        emotion_scores = {k: float(v) for k, v in result_face["emotion"].items()}
+        top_emotion_score = max(emotion_scores.values())
+        payload = c._normalize_result_payload(
+            {
+                "status": "uncertain" if top_emotion_score < 40.0 else "ok",
+                "dominant_emotion": result_face["dominant_emotion"],
+                "emotion_scores": emotion_scores,
+                "confidence": confidence,
+            }
+        )
+        self.assertEqual(payload["status"], "uncertain")
+        self.assertEqual(payload["dominant_emotion"], "happy")
+
+    def test_angry_bias_guard_suppresses_low_confidence_angry_top_score(self):
+        c = self._build_consumer()
+        c.angry_suppression_threshold = 60.0
+        guarded, suppressed = c._apply_angry_bias_guard({"angry": 55.0, "neutral": 30.0, "sad": 15.0})
+        self.assertTrue(suppressed)
+        self.assertEqual(guarded["angry"], 0.0)
+
+    def test_emotion_decision_uses_temporal_smoothing(self):
+        c = self._build_consumer()
+        c.uncertain_threshold = 45.0
+        c.angry_suppression_threshold = 60.0
+        c._log_event = lambda *args, **kwargs: None
+        result_one = c._build_emotion_decision(
+            raw_scores={"neutral": 70.0, "angry": 20.0, "sad": 10.0},
+            confidence=0.9,
+            quality_warning=None,
+            frame_id="frame-1",
+            frame_hash="hash-1",
+        )
+        result_two = c._build_emotion_decision(
+            raw_scores={"neutral": 68.0, "angry": 22.0, "sad": 10.0},
+            confidence=0.9,
+            quality_warning=None,
+            frame_id="frame-2",
+            frame_hash="hash-2",
+        )
+        result_three = c._build_emotion_decision(
+            raw_scores={"neutral": 65.0, "angry": 25.0, "sad": 10.0},
+            confidence=0.9,
+            quality_warning=None,
+            frame_id="frame-3",
+            frame_hash="hash-3",
+        )
+        self.assertEqual(result_one["dominant_emotion"], "neutral")
+        self.assertEqual(result_two["dominant_emotion"], "neutral")
+        self.assertEqual(result_three["dominant_emotion"], "neutral")
 
 
 class WorkerLifecycleTests(TestCase):
@@ -294,6 +410,17 @@ class WorkerLifecycleTests(TestCase):
             worker.register_crash(restart_threshold=2)
             worker.register_crash(restart_threshold=2)
             self.assertEqual(restart_mock.call_count, 1)
+
+    def test_worker_uses_local_mode_on_windows(self):
+        fake_deepface_module = mock.Mock()
+        fake_deepface_module.DeepFace = mock.Mock()
+        with mock.patch("Questionaire_project.emotion_worker.platform.system", return_value="Windows"), \
+             mock.patch("Questionaire_project.emotion_worker.check_deepface_import", return_value=None), \
+             mock.patch.dict(sys.modules, {"deepface": fake_deepface_module}):
+            worker = EmotionInferenceWorker(max_memory_mb=128)
+            worker.restart()
+            self.assertTrue(worker._local_mode)
+            self.assertIsNone(worker.process)
 
 
 @override_settings(
@@ -414,26 +541,13 @@ class ConsumerWebsocketTests(TransactionTestCase):
         async_to_sync(runner)()
 
     def test_inference_timeout_does_not_close_socket(self):
-        class FakeWorker:
-            def submit(self, payload):
-                return True
-
-            def wait_for(self, request_id, timeout):
-                return None
-
-            def register_timeout(self, restart_threshold):
-                return None
-
-            def register_crash(self, restart_threshold):
-                return None
-
         async def runner():
             comm, ok = await self._connect(self.assessment.id)
             self.assertTrue(ok)
             _ = await comm.receive_json_from()
             with mock.patch(
-                "Questionaire_project.consumers.get_inference_worker",
-                return_value=FakeWorker(),
+                "Questionaire_project.consumers.analyze_frame_sync",
+                side_effect=RuntimeError("simulated_direct_failure"),
             ):
                 await comm.send_json_to(
                     {
@@ -445,14 +559,41 @@ class ConsumerWebsocketTests(TransactionTestCase):
                 )
                 frame = await comm.receive_json_from()
                 self.assertEqual(frame["type"], "frame_result")
-                self.assertEqual(frame["status"], "error")
-                self.assertEqual(frame.get("message"), "timeout")
+                self.assertEqual(frame["status"], "fallback")
+                self.assertEqual(frame.get("message"), "emotion_fallback_applied")
             await comm.send_json_to({"type": "ping", "assessment_id": self.assessment.id, "ts": 1})
             pong = await comm.receive_json_from()
             self.assertEqual(pong["type"], "pong")
             await comm.disconnect()
 
         async_to_sync(runner)()
+
+    def test_saved_record_is_normalized_when_analysis_returns_empty_emotion(self):
+        async def runner():
+            comm, ok = await self._connect(self.assessment.id)
+            self.assertTrue(ok)
+            _ = await comm.receive_json_from()
+            with mock.patch(
+                "Questionaire_project.consumers.EmotionStreamConsumer._analyze_frame",
+                return_value={"status": "error", "dominant_emotion": "", "emotion_scores": {}, "confidence": None},
+            ):
+                await comm.send_json_to(
+                    {
+                        "type": "frame",
+                        "assessment_id": self.assessment.id,
+                        "image_base64": _jpeg_data_url(noisy=True),
+                        "question_id": 1,
+                        "frame_id": "normalize-empty-emotion",
+                    }
+                )
+                frame = await comm.receive_json_from()
+                self.assertEqual(frame["dominant_emotion"], "neutral")
+            await comm.disconnect()
+
+        async_to_sync(runner)()
+        record = EmotionRecord.objects.get(frame_id="normalize-empty-emotion")
+        self.assertEqual(record.dominant_emotion, "neutral")
+        self.assertTrue(record.emotion_scores)
 
     def test_rate_limit_path(self):
         async def runner():
@@ -481,3 +622,183 @@ class ConsumerWebsocketTests(TransactionTestCase):
                 self.assertIn(second["status"], {"rate_limited", "dropped"})
             await comm.disconnect()
         async_to_sync(runner)()
+
+    @override_settings(
+        EMOTION_ANALYZE_INTERVAL_SECONDS=0,
+        EMOTION_MAX_FRAMES_PER_ASSESSMENT_WINDOW=100,
+        EMOTION_FRAME_QUOTA_WINDOW_SECONDS=60,
+    )
+    def test_multiple_frames_create_multiple_emotion_records(self):
+        emotions = [
+            {"dominant_emotion": "happy", "emotion_scores": {"happy": 90.0}, "confidence": 0.9, "status": "ok"},
+            {"dominant_emotion": "sad", "emotion_scores": {"sad": 88.0}, "confidence": 0.88, "status": "ok"},
+            {"dominant_emotion": "angry", "emotion_scores": {"angry": 86.0}, "confidence": 0.86, "status": "ok"},
+            {"dominant_emotion": "happy", "emotion_scores": {"happy": 91.0}, "confidence": 0.91, "status": "ok"},
+            {"dominant_emotion": "sad", "emotion_scores": {"sad": 87.0}, "confidence": 0.87, "status": "ok"},
+            {"dominant_emotion": "angry", "emotion_scores": {"angry": 85.0}, "confidence": 0.85, "status": "ok"},
+            {"dominant_emotion": "happy", "emotion_scores": {"happy": 89.0}, "confidence": 0.89, "status": "ok"},
+            {"dominant_emotion": "sad", "emotion_scores": {"sad": 84.0}, "confidence": 0.84, "status": "ok"},
+            {"dominant_emotion": "angry", "emotion_scores": {"angry": 83.0}, "confidence": 0.83, "status": "ok"},
+            {"dominant_emotion": "happy", "emotion_scores": {"happy": 92.0}, "confidence": 0.92, "status": "ok"},
+        ]
+
+        async def runner():
+            comm, ok = await self._connect(self.assessment.id)
+            self.assertTrue(ok)
+            _ = await comm.receive_json_from()
+            with mock.patch(
+                "Questionaire_project.consumers.EmotionStreamConsumer._analyze_frame",
+                side_effect=emotions,
+            ):
+                for idx in range(10):
+                    await comm.send_json_to(
+                        {
+                            "type": "frame",
+                            "assessment_id": self.assessment.id,
+                            "image_base64": _jpeg_data_url(noisy=True),
+                            "question_id": 1,
+                            "frame_id": f"timeline-frame-{idx}",
+                            "frame_number": idx + 1,
+                            "timestamp_sec": float(idx) * 0.5,
+                        }
+                    )
+                    response = await comm.receive_json_from()
+                    self.assertEqual(response["frame_number"], idx + 1)
+            await comm.disconnect()
+
+        async_to_sync(runner)()
+
+        records = list(
+            EmotionRecord.objects.filter(assessment=self.assessment)
+            .exclude(frame_id="")
+            .order_by("frame_number")
+        )
+        self.assertEqual(len(records), 10)
+        self.assertEqual(records[0].dominant_emotion, "happy")
+        self.assertEqual(records[1].dominant_emotion, "sad")
+        self.assertEqual(records[2].dominant_emotion, "angry")
+        self.assertEqual(len({record.dominant_emotion for record in records}), 3)
+
+    @override_settings(
+        EMOTION_ANALYZE_INTERVAL_SECONDS=0,
+        EMOTION_MAX_FRAMES_PER_ASSESSMENT_WINDOW=100,
+        EMOTION_FRAME_QUOTA_WINDOW_SECONDS=60,
+        EMOTION_MIN_FACE_AREA_RATIO=0.0,
+    )
+    def test_direct_deepface_path_detects_multiple_emotions(self):
+        direct_results = [
+            {"status": "ok", "faces": [{"dominant_emotion": "happy", "emotion": {"happy": 95.0, "sad": 2.0}, "face_confidence": 0.9, "region": {"x": 10, "y": 10, "w": 120, "h": 120}}]},
+            {"status": "ok", "faces": [{"dominant_emotion": "sad", "emotion": {"happy": 5.0, "sad": 91.0}, "face_confidence": 0.9, "region": {"x": 10, "y": 10, "w": 120, "h": 120}}]},
+            {"status": "ok", "faces": [{"dominant_emotion": "angry", "emotion": {"angry": 88.0, "neutral": 7.0}, "face_confidence": 0.9, "region": {"x": 10, "y": 10, "w": 120, "h": 120}}]},
+            {"status": "ok", "faces": [{"dominant_emotion": "happy", "emotion": {"happy": 90.0, "surprise": 4.0}, "face_confidence": 0.9, "region": {"x": 10, "y": 10, "w": 120, "h": 120}}]},
+            {"status": "ok", "faces": [{"dominant_emotion": "sad", "emotion": {"sad": 89.0, "neutral": 5.0}, "face_confidence": 0.9, "region": {"x": 10, "y": 10, "w": 120, "h": 120}}]},
+        ]
+
+        async def runner():
+            comm, ok = await self._connect(self.assessment.id)
+            self.assertTrue(ok)
+            _ = await comm.receive_json_from()
+            with mock.patch("Questionaire_project.consumers.analyze_frame_sync", side_effect=direct_results):
+                for idx in range(5):
+                    await comm.send_json_to(
+                        {
+                            "type": "frame",
+                            "assessment_id": self.assessment.id,
+                            "image_base64": _jpeg_data_url(noisy=True),
+                            "question_id": 1,
+                            "frame_id": f"direct-frame-{idx}",
+                            "frame_number": idx + 1,
+                            "timestamp_sec": float(idx),
+                        }
+                    )
+                    response = await comm.receive_json_from()
+                    self.assertIn(response["dominant_emotion"], {"happy", "sad", "angry"})
+            await comm.disconnect()
+
+        async_to_sync(runner)()
+
+        saved = list(
+            EmotionRecord.objects.filter(assessment=self.assessment, frame_id__startswith="direct-frame-")
+            .order_by("frame_number")
+            .values_list("dominant_emotion", flat=True)
+        )
+        self.assertEqual(len(saved), 5)
+        self.assertGreaterEqual(len(set(saved)), 2)
+
+
+class EmotionDebugViewTests(TestCase):
+    def test_debug_emotions_returns_recent_frames_and_status_distribution(self):
+        assessment = Assessment.objects.create(
+            session_key="debug-session",
+            assessment_token="debug-session:1",
+        )
+        EmotionRecord.objects.create(
+            assessment=assessment,
+            scale="anxiety",
+            frame_id="debug-1",
+            dominant_emotion="neutral",
+            emotion_scores={"neutral": 0.1},
+            confidence=0.1,
+            status=EmotionRecord.STATUS_FALLBACK,
+        )
+        EmotionRecord.objects.create(
+            assessment=assessment,
+            scale="anxiety",
+            frame_id="debug-2",
+            dominant_emotion="happy",
+            emotion_scores={"happy": 0.8},
+            confidence=0.8,
+            status=EmotionRecord.STATUS_OK,
+        )
+
+        response = self.client.get(f"/assessment/debug/emotions/{assessment.id}/")
+
+        self.assertEqual(response.status_code, 200)
+        body = response.json()
+        self.assertEqual(body["status"], "ok")
+        self.assertEqual(len(body["recent_frames"]), 2)
+        self.assertEqual(body["status_distribution"][EmotionRecord.STATUS_FALLBACK], 1)
+        self.assertEqual(body["status_distribution"][EmotionRecord.STATUS_OK], 1)
+        self.assertIn("emotion_summary", body)
+        self.assertIn("most_frequent_emotion", body["emotion_summary"])
+        self.assertIn("emotion_percentages", body["emotion_summary"])
+        self.assertIn("total_frames", body["emotion_summary"])
+        self.assertIn("frame_number", body["recent_frames"][0])
+        self.assertIn("timestamp_sec", body["recent_frames"][0])
+
+    def test_download_report_json_contains_timeline_summary_fields(self):
+        assessment = Assessment.objects.create(
+            session_key="report-session",
+            assessment_token="report-session:1",
+            is_completed=True,
+            report_json={
+                "timestamp": "2026-04-07T00:00:00Z",
+                "depression": {
+                    "emotion_summary": {
+                        "available": True,
+                        "most_frequent_emotion": "happy",
+                        "emotion_percentages": {"happy": 50.0, "sad": 30.0, "angry": 20.0},
+                        "total_frames": 10,
+                    }
+                },
+                "stress": {"emotion_summary": {}},
+                "anxiety": {"emotion_summary": {}},
+                "emotion_summary": {
+                    "available": True,
+                    "most_frequent_emotion": "happy",
+                    "emotion_percentages": {"happy": 50.0, "sad": 30.0, "angry": 20.0},
+                    "total_frames": 10,
+                },
+            },
+        )
+        session = self.client.session
+        session["last_completed_assessment_id"] = assessment.id
+        session.save()
+
+        response = self.client.get("/assessment/download-report-json/")
+
+        self.assertEqual(response.status_code, 200)
+        body = json.loads(response.content.decode("utf-8"))
+        self.assertEqual(body["emotion_summary"]["most_frequent_emotion"], "happy")
+        self.assertEqual(body["emotion_summary"]["emotion_percentages"]["sad"], 30.0)
+        self.assertEqual(body["emotion_summary"]["total_frames"], 10)

@@ -4,13 +4,19 @@ import uuid
 
 from django.conf import settings
 from django.db import transaction
+from django.db.models import Count
 from django.utils import timezone
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import redirect, render
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.views.decorators.http import require_http_methods
 
-from .emotion_services import build_emotion_summary, build_scale_emotion_summary, empty_emotion_summary
+from .emotion_services import (
+    build_emotion_summary,
+    build_emotion_timeline_summary,
+    build_scale_emotion_summary,
+    empty_emotion_summary,
+)
 from .models import Assessment, Answer, Question
 from .depression_analyzer import analyze_depression
 from .stress_analyzer import analyze_stress
@@ -526,9 +532,18 @@ def _inject_scale_emotion_summaries(report_json, assessment):
         "anxiety": build_scale_emotion_summary(assessment, "anxiety"),
     }
     for scale, summary in scale_emotion_summaries.items():
+        timeline_summary = build_emotion_timeline_summary(assessment, scale)
+        summary["most_frequent_emotion"] = timeline_summary.get("most_frequent_emotion")
+        summary["emotion_percentages"] = timeline_summary.get("emotion_percentages", {})
+        summary["total_frames"] = timeline_summary.get("total_frames", summary.get("frames_analyzed", 0))
         report_json.setdefault(scale, {})
         report_json[scale]["emotion_summary"] = summary
-    report_json["emotion_summary"] = build_emotion_summary(assessment)
+    overall_summary = build_emotion_summary(assessment)
+    overall_timeline = build_emotion_timeline_summary(assessment)
+    overall_summary["most_frequent_emotion"] = overall_timeline.get("most_frequent_emotion")
+    overall_summary["emotion_percentages"] = overall_timeline.get("emotion_percentages", {})
+    overall_summary["total_frames"] = overall_timeline.get("total_frames", overall_summary.get("frames_analyzed", 0))
+    report_json["emotion_summary"] = overall_summary
     return report_json, scale_emotion_summaries
 
 
@@ -556,6 +571,8 @@ def _question_state_payload(context):
             "heartbeat_grace_seconds": context["emotion_heartbeat_grace_seconds"],
             "client_max_frame_width": context["emotion_client_max_frame_width"],
             "client_max_encoded_bytes": context["emotion_client_max_encoded_bytes"],
+            "client_frame_interval_ms": int(getattr(settings, "EMOTION_CLIENT_FRAME_INTERVAL_MS", 250)),
+            "client_max_frames_per_question": int(getattr(settings, "EMOTION_CLIENT_MAX_FRAMES_PER_QUESTION", 12)),
             "frame_jpeg_quality": float(getattr(settings, "EMOTION_FRAME_JPEG_QUALITY", 0.85)),
         },
     }
@@ -1029,6 +1046,57 @@ def download_report_text(request):
     except Exception:
         logger.exception("download_report_text_failed")
         return HttpResponse('Error generating report', status=500)
+
+
+@require_http_methods(["GET"])
+def debug_emotions(request, assessment_id: int):
+    cid = _correlation_id(request)
+    try:
+        assessment = Assessment.objects.filter(id=assessment_id).first()
+        if not assessment:
+            return JsonResponse({"status": "fail", "reason": "assessment_not_found"}, status=404)
+
+        recent_records = list(
+            assessment.emotion_records.order_by("-created_at")[:20].values(
+                "id",
+                "frame_id",
+                "frame_number",
+                "timestamp_sec",
+                "scale",
+                "dominant_emotion",
+                "status",
+                "confidence",
+                "created_at",
+                "emotion_scores",
+            )
+        )
+        status_distribution = {
+            row["status"]: row["total"]
+            for row in assessment.emotion_records.values("status").annotate(total=Count("id")).order_by("status")
+        }
+        payload = {
+            "status": "ok",
+            "assessment_id": assessment.id,
+            "debug_enabled": bool(getattr(settings, "EMOTION_DEBUG", False)),
+            "recent_frames": recent_records,
+            "status_distribution": status_distribution,
+            "emotion_summary": build_emotion_timeline_summary(assessment),
+        }
+        logger.info(
+            "emotion_debug_view_accessed",
+            extra={
+                "correlation_id": cid,
+                "assessment_id": assessment.id,
+                "frame_id": None,
+            },
+        )
+        return JsonResponse(payload)
+    except Exception:
+        logger.exception(
+            "emotion_debug_view_failed",
+            extra={"correlation_id": cid, "assessment_id": assessment_id, "frame_id": None},
+        )
+        return JsonResponse({"status": "fail", "reason": "debug_view_failed"}, status=500)
 
 
 # ============================================================================

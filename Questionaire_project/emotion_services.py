@@ -125,7 +125,9 @@ def build_emotion_summary(assessment: Assessment, scale: Optional[str] = None) -
     }
     raw_record_count = sum(status_counts.values())
 
-    ok_queryset = raw_queryset.filter(status=EmotionRecord.STATUS_OK).order_by("created_at")
+    ok_queryset = raw_queryset.filter(
+        status__in=[EmotionRecord.STATUS_OK, EmotionRecord.STATUS_FALLBACK]
+    ).order_by("created_at")
     if not scale:
         ok_queryset = ok_queryset.select_related("question")
 
@@ -169,6 +171,36 @@ def build_emotion_summary(assessment: Assessment, scale: Optional[str] = None) -
 
 def build_scale_emotion_summary(assessment: Assessment, scale: str) -> Dict[str, Any]:
     return build_emotion_summary(assessment, scale=scale)
+
+
+def build_emotion_timeline_summary(assessment: Assessment, scale: Optional[str] = None) -> Dict[str, Any]:
+    queryset = EmotionRecord.objects.filter(assessment=assessment)
+    if scale:
+        queryset = queryset.filter(scale=scale)
+
+    records = list(
+        queryset.exclude(dominant_emotion="")
+        .order_by("created_at")
+    )
+    total = len(records)
+    if total == 0:
+        return {
+            "total_frames": 0,
+            "most_frequent_emotion": None,
+            "emotion_percentages": {},
+        }
+
+    counter = Counter(record.dominant_emotion for record in records if record.dominant_emotion)
+    percentages = {
+        emotion: round((count / total) * 100, 2)
+        for emotion, count in counter.items()
+    }
+    most_frequent = counter.most_common(1)[0][0] if counter else None
+    return {
+        "total_frames": total,
+        "most_frequent_emotion": most_frequent,
+        "emotion_percentages": percentages,
+    }
 
 
 def finalize_scale_emotion_session(assessment: Assessment, scale: str) -> Optional[ScaleEmotionSession]:

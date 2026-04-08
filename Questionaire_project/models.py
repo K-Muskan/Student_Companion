@@ -119,6 +119,9 @@ class EmotionRecord(models.Model):
     STATUS_ERROR = "error"
     STATUS_QUALITY_LOW = "quality_low"
     STATUS_RATE_LIMITED = "rate_limited"
+    STATUS_FALLBACK = "fallback"
+    STATUS_REPAIRED = "repaired"
+    STATUS_UNCERTAIN = "uncertain"
 
     STATUS_CHOICES = [
         (STATUS_OK, "OK"),
@@ -126,6 +129,9 @@ class EmotionRecord(models.Model):
         (STATUS_ERROR, "Error"),
         (STATUS_QUALITY_LOW, "Quality Low"),
         (STATUS_RATE_LIMITED, "Rate Limited"),
+        (STATUS_FALLBACK, "Fallback"),
+        (STATUS_REPAIRED, "Repaired"),
+        (STATUS_UNCERTAIN, "Uncertain"),
     ]
 
     assessment = models.ForeignKey(
@@ -139,6 +145,8 @@ class EmotionRecord(models.Model):
         on_delete=models.SET_NULL, related_name="emotion_records",
     )
     frame_id = models.CharField(max_length=64, blank=True, db_index=True)
+    frame_number = models.PositiveIntegerField(null=True, blank=True, db_index=True)
+    timestamp_sec = models.FloatField(null=True, blank=True)
     dominant_emotion = models.CharField(max_length=32, blank=True)
     emotion_scores = models.JSONField(default=dict, blank=True)
     confidence = models.FloatField(null=True, blank=True)
@@ -149,18 +157,12 @@ class EmotionRecord(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        constraints = [
-            models.UniqueConstraint(
-                fields=["assessment", "scale", "frame_id"],
-                condition=~Q(frame_id=""),
-                name="uq_emotionrecord_assessment_scale_frame",
-            )
-        ]
         indexes = [
             models.Index(fields=["assessment", "created_at"]),
             models.Index(fields=["assessment", "scale", "created_at"]),
             models.Index(fields=["question", "created_at"]),
             models.Index(fields=["status"]),
+            models.Index(fields=["assessment", "scale", "frame_number"]),
         ]
 
     def __str__(self):

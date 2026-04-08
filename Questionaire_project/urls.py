@@ -13,6 +13,7 @@ urlpatterns = [
     # Save answer API endpoint
     path('save-answer/', views.save_answer, name='save_answer'),
     path('save-text-answer/', views.save_text_answer, name='save_text_answer'),
+    path('debug/emotions/<int:assessment_id>/', views.debug_emotions, name='debug_emotions'),
 
     # Completion page with MSE analysis
     path('complete/', views.complete, name='complete'),

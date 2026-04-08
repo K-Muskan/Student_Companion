@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -7,8 +7,9 @@
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Crimson+Pro:wght@600;700&display=swap" rel="stylesheet">
 <style>
 :root{--primary:#2D5F8D;--primary-dark:#1E4266;--accent:#E8925C;--accent-dark:#D67B47;--body:'DM Sans',sans-serif;--display:'Crimson Pro',serif}
-*{box-sizing:border-box;margin:0;padding:0}body{font-family:var(--body);background:#f7fafc;min-height:100vh;overflow:hidden}.container{display:flex;min-height:100vh}.left-panel{flex:0 0 40%;background:#1E4266;height:100vh;overflow:hidden}.right-panel{flex:0 0 60%;background:#fff;padding:36px 40px;height:100vh;overflow-y:auto;display:flex;flex-direction:column}.title,.loading,.camera{height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px}.title,.loading{background:linear-gradient(135deg,#1E4266,#2D5F8D);color:#fff;text-align:center}.camera{background:#000}.camera video{width:100%;max-height:70%;object-fit:cover;border-radius:8px}.badge{padding:6px 16px;border-radius:999px;font-size:.82em;font-weight:700;letter-spacing:1px;text-transform:uppercase}.scale-badge{background:rgba(232,146,92,.2);border:2px solid #E8925C;color:#E8925C;margin-bottom:20px}.title h1,.loading h1{font-family:var(--display);font-size:2.2em;margin-bottom:10px}.title p,.loading p{opacity:.88;line-height:1.6;max-width:360px}.count{margin-top:20px;background:rgba(255,255,255,.12);padding:14px 24px;border-radius:12px;font-weight:700}.status{margin-top:18px;font-size:.92em;color:#cbd5e1}.progress-header{margin-bottom:20px}.progress-label{display:flex;justify-content:space-between;gap:16px;font-size:.78em;color:#64748b;font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px}.track{height:6px;background:#e2e8f0;border-radius:999px;overflow:hidden}.fill{height:100%;background:linear-gradient(90deg,var(--accent),#F59E0B)}.pill{display:inline-block;padding:4px 14px;border-radius:999px;font-size:.75em;font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:14px}.pill.depression{background:#fce7f3;color:#9d174d}.pill.stress{background:#dbeafe;color:#1e40af}.pill.anxiety{background:#d1fae5;color:#065f46}.pill.open_ended{background:#ede9fe;color:#5b21b6}.qlabel{font-size:.75em;color:var(--accent);font-weight:700;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:10px}.qtext{font-family:var(--display);font-size:1.45em;color:var(--primary-dark);line-height:1.5;font-weight:600;margin-bottom:24px}.options{display:grid;gap:10px;flex:1}.opt{display:flex;align-items:center;gap:14px;padding:14px 18px;border:2px solid #e2e8f0;border-radius:10px;background:#fff;text-align:left;cursor:pointer}.opt:hover,.opt.selected{border-color:var(--accent);background:#fff7f3}.score{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:#f1f5f9;font-weight:700;color:#64748b}.opt.selected .score{background:var(--accent);color:#fff}.camera-box,.title-strip{margin-top:16px;border:1px solid #e2e8f0;border-radius:8px;padding:10px 14px;background:#f8fafc;display:flex;gap:12px;align-items:center;flex-wrap:wrap}.cam-badge{font-size:11px;padding:3px 10px;border-radius:999px;font-weight:700}.connected{background:#dcfce7;color:#166534}.disconnected{background:#fee2e2;color:#991b1b}.warning{background:#fef3c7;color:#92400e}.note{font-size:11px;color:#64748b;flex:1}.buttons{display:flex;gap:12px;padding-top:16px;margin-top:auto}.btn{padding:12px 24px;font-size:.9em;font-weight:700;border:none;border-radius:8px;cursor:pointer;font-family:var(--body)}.btn-primary{background:var(--accent);color:#fff;flex:1}.btn-primary:disabled{opacity:.45;cursor:not-allowed}.btn-secondary{background:#fff;color:var(--primary);border:2px solid var(--primary)}.begin{padding:14px 36px;background:var(--accent);color:#fff;border:none;border-radius:10px;font-size:1em;font-weight:700;cursor:pointer}.loading-steps{margin-top:20px;max-width:360px;width:100%;text-align:left}.step{display:flex;align-items:center;padding:8px 0;opacity:.5}.step.active{opacity:1}.step.done{opacity:.7}.icon{width:22px;height:22px;border-radius:50%;background:rgba(255,255,255,.2);margin-right:12px;display:flex;align-items:center;justify-content:center}.step.active .icon{background:#E8925C}.step.done .icon{background:#28A745}.step.done .icon::after{content:"✓";color:#fff;font-weight:700}.spinner{width:14px;height:14px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .8s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}.sr-only{position:absolute;width:1px;height:1px;margin:-1px;overflow:hidden}
-/* ── Open-ended question styles ── */
+*{box-sizing:border-box;margin:0;padding:0}body{font-family:var(--body);background:#f7fafc;min-height:100vh;overflow:hidden}.container{display:flex;min-height:100vh}.left-panel{flex:0 0 40%;background:#1E4266;height:100vh;overflow:hidden}.right-panel{flex:0 0 60%;background:#fff;padding:36px 40px;height:100vh;overflow-y:auto;display:flex;flex-direction:column}.title,.loading,.camera{height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px}.title,.loading{background:linear-gradient(135deg,#1E4266,#2D5F8D);color:#fff;text-align:center}.camera{background:#000}.camera video{width:100%;max-height:70%;object-fit:cover;border-radius:8px}.badge{padding:6px 16px;border-radius:999px;font-size:.82em;font-weight:700;letter-spacing:1px;text-transform:uppercase}.scale-badge{background:rgba(232,146,92,.2);border:2px solid #E8925C;color:#E8925C;margin-bottom:20px}.title h1,.loading h1{font-family:var(--display);font-size:2.2em;margin-bottom:10px}.title p,.loading p{opacity:.88;line-height:1.6;max-width:360px}.count{margin-top:20px;background:rgba(255,255,255,.12);padding:14px 24px;border-radius:12px;font-weight:700}.status{margin-top:18px;font-size:.92em;color:#cbd5e1}.progress-header{margin-bottom:20px}.progress-label{display:flex;justify-content:space-between;gap:16px;font-size:.78em;color:#64748b;font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px}.track{height:6px;background:#e2e8f0;border-radius:999px;overflow:hidden}.fill{height:100%;background:linear-gradient(90deg,var(--accent),#F59E0B)}.pill{display:inline-block;padding:4px 14px;border-radius:999px;font-size:.75em;font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:14px}.pill.depression{background:#fce7f3;color:#9d174d}.pill.stress{background:#dbeafe;color:#1e40af}.pill.anxiety{background:#d1fae5;color:#065f46}.pill.open_ended{background:#ede9fe;color:#5b21b6}.qlabel{font-size:.75em;color:var(--accent);font-weight:700;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:10px}.qtext{font-family:var(--display);font-size:1.45em;color:var(--primary-dark);line-height:1.5;font-weight:600;margin-bottom:24px}.options{display:grid;gap:10px;flex:1}.opt{display:flex;align-items:center;gap:14px;padding:14px 18px;border:2px solid #e2e8f0;border-radius:10px;background:#fff;text-align:left;cursor:pointer}.opt:hover,.opt.selected{border-color:var(--accent);background:#fff7f3}.score{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:#f1f5f9;font-weight:700;color:#64748b}.opt.selected .score{background:var(--accent);color:#fff}.camera-box,.title-strip{margin-top:16px;border:1px solid #e2e8f0;border-radius:8px;padding:10px 14px;background:#f8fafc;display:flex;gap:12px;align-items:center;flex-wrap:wrap}.cam-badge{font-size:11px;padding:3px 10px;border-radius:999px;font-weight:700}.connected{background:#dcfce7;color:#166534}.disconnected{background:#fee2e2;color:#991b1b}.warning{background:#fef3c7;color:#92400e}.note{font-size:11px;color:#64748b;flex:1}.buttons{display:flex;gap:12px;padding-top:16px;margin-top:auto}.btn{padding:12px 24px;font-size:.9em;font-weight:700;border:none;border-radius:8px;cursor:pointer;font-family:var(--body)}.btn-primary{background:var(--accent);color:#fff;flex:1}.btn-primary:disabled{opacity:.45;cursor:not-allowed}.btn-secondary{background:#fff;color:var(--primary);border:2px solid var(--primary)}.begin{padding:14px 36px;background:var(--accent);color:#fff;border:none;border-radius:10px;font-size:1em;font-weight:700;cursor:pointer}.loading-steps{margin-top:20px;max-width:360px;width:100%;text-align:left}.step{display:flex;align-items:center;padding:8px 0;opacity:.5}.step.active{opacity:1}.step.done{opacity:.7}.icon{width:22px;height:22px;border-radius:50%;background:rgba(255,255,255,.2);margin-right:12px;display:flex;align-items:center;justify-content:center}.step.active .icon{background:#E8925C}.step.done .icon{background:#28A745}.step.done .icon::after{content:"âœ“";color:#fff;font-weight:700}.spinner{width:14px;height:14px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .8s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}.sr-only{position:absolute;width:1px;height:1px;margin:-1px;overflow:hidden}
+/* â”€â”€ Open-ended question styles â”€â”€ */
+.emotion-live{margin-top:14px;width:100%;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);border-radius:10px;padding:12px}.emotion-live.light{background:#f8fafc;border-color:#e2e8f0}.emotion-live-label{font-size:.78em;font-weight:700;letter-spacing:.8px;text-transform:uppercase}.emotion-live-value{font-size:1.1em;font-weight:700;margin-top:4px}.emotion-live-meta{font-size:.78em;opacity:.78;margin-top:4px;line-height:1.5}.emotion-live-bars{display:grid;gap:6px;margin-top:10px}.emotion-live-bar-row{display:grid;grid-template-columns:56px 1fr 42px;gap:8px;align-items:center;font-size:.78em}.emotion-live-track{height:6px;background:rgba(148,163,184,.25);border-radius:999px;overflow:hidden}.emotion-live-fill{height:100%;background:linear-gradient(90deg,#E8925C,#2D5F8D);border-radius:999px}
 .open-panel{height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px;background:linear-gradient(135deg,#1E4266,#2D5F8D);color:#fff;text-align:center}.open-panel h2{font-family:var(--display);font-size:1.9em;margin-bottom:14px;line-height:1.3}.open-panel p{opacity:.85;line-height:1.7;max-width:300px;font-size:.95em}.open-panel .open-icon{font-size:3em;margin-bottom:16px;opacity:.9}.textarea-wrap{flex:1;display:flex;flex-direction:column;min-height:0}.open-textarea{width:100%;flex:1;min-height:200px;padding:16px 18px;border:2px solid #e2e8f0;border-radius:10px;font-family:var(--body);font-size:1em;color:#1e293b;resize:none;line-height:1.7;outline:none;transition:border-color .2s}.open-textarea:focus{border-color:var(--accent)}.char-count{font-size:.73em;color:#94a3b8;text-align:right;margin-top:5px}.open-skip{font-size:.8em;color:#94a3b8;text-align:center;margin-top:8px;cursor:pointer;text-decoration:underline;background:none;border:none;font-family:var(--body)}.open-skip:hover{color:#64748b}
 @media(max-width:900px){.container{flex-direction:column}.left-panel,.right-panel{flex:none;max-width:100%;height:50vh}}
 </style>
@@ -27,30 +28,145 @@ const subtitle=s=>s==='depression'?'Depression (BDI)':s==='stress'?'Stress (PSS-
 const cookie=n=>{let v=null;document.cookie.split(';').forEach(c=>{c=c.trim();if(c.startsWith(n+'='))v=decodeURIComponent(c.slice(n.length+1));});return v;};
 
 class EmotionManager{
-  constructor(app){this.app=app;this.frameIntervalMs=1000;this.jpegQuality=state0.emotion.frame_jpeg_quality||.88;this.maxReconnect=state0.emotion.max_reconnect_attempts||5;this.heartbeatIntervalMs=state0.emotion.heartbeat_interval_seconds*1000;this.heartbeatGraceMs=state0.emotion.heartbeat_grace_seconds*1000;this.maxFrameWidth=state0.emotion.client_max_frame_width;this.maxEncodedBytes=state0.emotion.client_max_encoded_bytes;this.running=false;this.connectionReady=false;this.stream=null;this.socket=null;this.currentScale='';this.reconnectAttempt=0;this.captureTimer=null;this.reconnectTimer=null;this.pingTimer=null;this.heartbeatTimer=null;this.cameraRecoveryTimer=null;this.getUserMediaPromise=null;this.inflightFrame=false;this.inflightTimer=null;this.intentionalClose=false;this.connecting=false;this.lastPongAt=0;this.lastServerAt=0;this.lockKey=`emotion_stream_lock_${assessmentId}`;this.tabId=crypto.randomUUID?crypto.randomUUID():String(Math.random()).slice(2);this.lockTimer=null;}
+  constructor(app){
+    this.app=app;
+    this.frameIntervalMs=state0.emotion.client_frame_interval_ms||300;
+    this.maxFramesPerQuestion=state0.emotion.client_max_frames_per_question||12;
+    this.jpegQuality=state0.emotion.frame_jpeg_quality||.88;
+    this.maxReconnect=state0.emotion.max_reconnect_attempts||5;
+    this.heartbeatIntervalMs=state0.emotion.heartbeat_interval_seconds*1000;
+    this.heartbeatGraceMs=state0.emotion.heartbeat_grace_seconds*1000;
+    this.maxFrameWidth=state0.emotion.client_max_frame_width;
+    this.maxEncodedBytes=state0.emotion.client_max_encoded_bytes;
+    this.running=false;
+    this.connectionReady=false;
+    this.stream=null;
+    this.socket=null;
+    this.currentScale='';
+    this.reconnectAttempt=0;
+    this.captureTimer=null;
+    this.reconnectTimer=null;
+    this.pingTimer=null;
+    this.heartbeatTimer=null;
+    this.cameraRecoveryTimer=null;
+    this.getUserMediaPromise=null;
+    this.inflightFrame=false;
+    this.inflightTimer=null;
+    this.intentionalClose=false;
+    this.connecting=false;
+    this.lastPongAt=0;
+    this.lastServerAt=0;
+    this.frameSequence=0;
+    this.framesSentForQuestion=0;
+    this.currentQuestionId=state0.qid;
+    this.captureBusy=false;
+    this.startedAt=performance.now();
+    this.lastFrameHash='';
+    this.repeatedFrameCount=0;
+    this.recentEmotions=[];
+    this.lockKey=`emotion_stream_lock_${assessmentId}`;
+    this.tabId=crypto.randomUUID?crypto.randomUUID():String(Math.random()).slice(2);
+    this.lockTimer=null;
+  }
   badges(){return document.querySelectorAll('[data-camera-badge]')}
+  emotionLabels(){return document.querySelectorAll('[data-emotion-label]')}
+  emotionMeta(){return document.querySelectorAll('[data-emotion-meta]')}
+  emotionBars(){return document.querySelectorAll('[data-emotion-bars]')}
   setBadge(cls,text){this.badges().forEach(b=>{b.classList.remove('connected','disconnected','warning');b.classList.add(cls);b.textContent=text;});}
+  setEmotionState(label,meta,scores){
+    this.emotionLabels().forEach(node=>{node.textContent=label;});
+    this.emotionMeta().forEach(node=>{node.textContent=meta;});
+    const rows=(Object.entries(scores||{}).sort((a,b)=>b[1]-a[1]).slice(0,3)).map(([emotion,score])=>`<div class="emotion-live-bar-row"><span>${esc(emotion)}</span><div class="emotion-live-track"><div class="emotion-live-fill" style="width:${Math.max(0,Math.min(100,Number(score)||0))}%"></div></div><span>${Math.round(Number(score)||0)}%</span></div>`).join('');
+    this.emotionBars().forEach(node=>{node.innerHTML=rows||'<div class="emotion-live-meta">Waiting for frame results...</div>';});
+  }
+  updateEmotionDisplay(payload){
+    const rawEmotion=payload.emotion||payload.dominant_emotion||'uncertain';
+    if(rawEmotion&&rawEmotion!=='uncertain'&&rawEmotion!=='neutral'){
+      this.recentEmotions.push(rawEmotion);
+      if(this.recentEmotions.length>3)this.recentEmotions.shift();
+    }
+    const counts=this.recentEmotions.reduce((acc,item)=>(acc[item]=(acc[item]||0)+1,acc),{});
+    const smoothed=Object.keys(counts).sort((a,b)=>counts[b]-counts[a])[0]||rawEmotion||'uncertain';
+    const latency=payload.latency_ms!=null?`${payload.latency_ms}ms`:'n/a';
+    const status=payload.status||'ok';
+    const meta=`Frame ${payload.frame_number??'-'} â€¢ ${status} â€¢ ${latency}`;
+    this.setEmotionState(smoothed,meta,payload.scores||payload.emotion_scores||{});
+  }
   syncPreview(){document.querySelectorAll('[data-shared-preview]').forEach(v=>{v.srcObject=this.stream;});}
   acquireLock(){const now=Date.now(),raw=localStorage.getItem(this.lockKey);if(raw){try{const p=JSON.parse(raw);if(p.tabId!==this.tabId&&now-p.ts<15000){this.setBadge('warning','Close other tab');return false;}}catch(e){}}localStorage.setItem(this.lockKey,JSON.stringify({tabId:this.tabId,ts:now}));this.lockTimer=setInterval(()=>localStorage.setItem(this.lockKey,JSON.stringify({tabId:this.tabId,ts:Date.now()})),5000);return true;}
   releaseLock(){if(this.lockTimer)clearInterval(this.lockTimer);this.lockTimer=null;const raw=localStorage.getItem(this.lockKey);if(!raw)return;try{const p=JSON.parse(raw);if(p.tabId===this.tabId)localStorage.removeItem(this.lockKey);}catch(e){}}
-  async start(scale){if(!scale)return;if(this.running&&this.currentScale===scale&&this.socket?.readyState===WebSocket.OPEN)return;if(this.running&&this.currentScale!==scale)this.stop();if(!this.acquireLock())return;this.running=true;this.currentScale=scale;this.reconnectAttempt=0;const ready=await this.ensureCamera();if(!ready){this.setBadge('warning','Waiting for camera...');this.scheduleCameraRecovery(1200);}this.connectSocket();this.startCaptureLoop();this.startHeartbeat();}
-  stop(){this.running=false;this.currentScale='';[this.captureTimer,this.reconnectTimer,this.pingTimer,this.heartbeatTimer,this.cameraRecoveryTimer,this.inflightTimer].forEach(t=>{if(t)clearInterval(t)||clearTimeout(t)});this.captureTimer=this.reconnectTimer=this.pingTimer=this.heartbeatTimer=this.cameraRecoveryTimer=this.inflightTimer=null;this.inflightFrame=false;if(this.socket){try{this.intentionalClose=true;this.socket.close(1000,'client_stop');}catch(e){}this.socket=null;}if(this.stream){this.stream.getTracks().forEach(t=>t.stop());this.stream=null;}document.getElementById('sharedPreview').srcObject=null;this.connectionReady=false;this.connecting=false;this.setBadge('disconnected','Camera disconnected');this.releaseLock();}
+  setQuestion(qid){if(qid==null)return;if(this.currentQuestionId!==qid){this.currentQuestionId=qid;this.framesSentForQuestion=0;this.lastFrameHash='';this.repeatedFrameCount=0;this.setEmotionState('Waiting for stream...',`Question ${qid} ready`,{});}}
+  async start(scale){if(!scale)return;if(this.running&&this.currentScale===scale&&this.socket?.readyState===WebSocket.OPEN)return;if(this.running&&this.currentScale!==scale)this.stop();if(!this.acquireLock())return;this.running=true;this.currentScale=scale;this.reconnectAttempt=0;this.frameSequence=0;this.framesSentForQuestion=0;this.startedAt=performance.now();this.setQuestion(this.app.state.qid);const ready=await this.ensureCamera();if(!ready){this.setBadge('warning','Waiting for camera...');this.scheduleCameraRecovery(1200);}this.connectSocket();this.startCaptureLoop();this.startHeartbeat();this.setEmotionState('Waiting for stream...','Preparing live frames...',{});}
+  stop(){this.running=false;this.currentScale='';[this.captureTimer,this.reconnectTimer,this.pingTimer,this.heartbeatTimer,this.cameraRecoveryTimer,this.inflightTimer].forEach(t=>{if(t)clearInterval(t)||clearTimeout(t)});this.captureTimer=this.reconnectTimer=this.pingTimer=this.heartbeatTimer=this.cameraRecoveryTimer=this.inflightTimer=null;this.inflightFrame=false;this.captureBusy=false;this.lastFrameHash='';this.repeatedFrameCount=0;this.framesSentForQuestion=0;this.recentEmotions=[];window.captureRunning=false;if(this.socket){try{this.intentionalClose=true;this.socket.close(1000,'client_stop');}catch(e){}this.socket=null;}if(this.stream){this.stream.getTracks().forEach(t=>t.stop());this.stream=null;}document.getElementById('sharedPreview').srcObject=null;this.connectionReady=false;this.connecting=false;this.setBadge('disconnected','Camera disconnected');this.setEmotionState('Camera inactive','No live stream',{});this.releaseLock();}
   async ensureCamera(){if(!this.running)return false;if(this.stream&&this.stream.getVideoTracks().some(t=>t.readyState==='live'))return true;if(this.getUserMediaPromise)return this.getUserMediaPromise;this.getUserMediaPromise=this._startCamera();try{return await this.getUserMediaPromise;}finally{this.getUserMediaPromise=null;}}
-  async _startCamera(){if(!navigator.mediaDevices?.getUserMedia){this.setBadge('warning','Camera unavailable');return false;}try{if(this.stream)this.stream.getTracks().forEach(t=>t.stop());this.stream=await navigator.mediaDevices.getUserMedia({video:{width:{ideal:640},height:{ideal:480},frameRate:{ideal:2,max:4}},audio:false});document.getElementById('sharedPreview').srcObject=this.stream;this.syncPreview();(this.stream.getVideoTracks?.()||[]).forEach(t=>{t.onended=()=>this.scheduleCameraRecovery(1200);t.onmute=()=>this.setBadge('warning','Camera paused');t.onunmute=()=>this.setBadge('connected','Camera connected');});this.setBadge('connected','Camera connected');return true;}catch(e){this.setBadge('warning','Camera error');return false;}}
+  async _startCamera(){if(!navigator.mediaDevices?.getUserMedia){this.setBadge('warning','Camera unavailable');return false;}try{if(this.stream)this.stream.getTracks().forEach(t=>t.stop());this.stream=await navigator.mediaDevices.getUserMedia({video:{width:{ideal:640},height:{ideal:480},frameRate:{ideal:5,max:6},facingMode:'user'},audio:false});const preview=document.getElementById('sharedPreview');preview.srcObject=this.stream;preview.muted=true;preview.playsInline=true;try{await preview.play();}catch(e){}this.syncPreview();(this.stream.getVideoTracks?.()||[]).forEach(t=>{t.onended=()=>this.scheduleCameraRecovery(1200);t.onmute=()=>this.setBadge('warning','Camera paused');t.onunmute=()=>this.setBadge('connected','Camera connected');});this.setBadge('connected','Camera connected');return true;}catch(e){this.setBadge('warning','Camera error');return false;}}
   scheduleCameraRecovery(ms){if(!this.running)return;if(this.cameraRecoveryTimer)clearTimeout(this.cameraRecoveryTimer);this.cameraRecoveryTimer=setTimeout(async()=>{const ok=await this.ensureCamera();if(ok&&(!this.socket||this.socket.readyState===WebSocket.CLOSED))this.scheduleReconnect();},ms);}
-  connectSocket(){if(!this.running||!this.currentScale||this.connecting)return;if(this.socket&&(this.socket.readyState===WebSocket.OPEN||this.socket.readyState===WebSocket.CONNECTING))return;const scheme=location.protocol==='https:'?'wss':'ws';const url=`${scheme}://${location.host}/ws/emotion/${assessmentId}/${this.currentScale}/`;this.connecting=true;this.intentionalClose=false;const socket=new WebSocket(url);this.socket=socket;socket.onopen=()=>{this.reconnectAttempt=0;this.connecting=false;this.connectionReady=true;this.lastPongAt=this.lastServerAt=Date.now();this.setBadge('connected',`${label(this.currentScale)} stream active`);};socket.onmessage=e=>{try{const d=JSON.parse(e.data);this.lastServerAt=Date.now();if(d.type==='pong')this.lastPongAt=Date.now();if(d.type==='frame_result'){this.inflightFrame=false;if(this.inflightTimer)clearTimeout(this.inflightTimer);this.inflightTimer=null;}}catch(err){}};socket.onclose=()=>{this.connecting=false;if(this.socket===socket)this.socket=null;if(!this.running)return;this.connectionReady=false;if(this.intentionalClose){this.intentionalClose=false;return;}this.setBadge('warning','Reconnecting...');this.inflightFrame=false;this.scheduleReconnect();};socket.onerror=()=>{this.connecting=false;this.connectionReady=false;this.setBadge('warning','Socket error');};}
+  connectSocket(){if(!this.running||!this.currentScale||this.connecting)return;if(this.socket&&(this.socket.readyState===WebSocket.OPEN||this.socket.readyState===WebSocket.CONNECTING))return;const scheme=location.protocol==='https:'?'wss':'ws';const url=`${scheme}://${location.host}/ws/emotion/${assessmentId}/${this.currentScale}/`;this.connecting=true;this.intentionalClose=false;const socket=new WebSocket(url);this.socket=socket;socket.onopen=()=>{this.reconnectAttempt=0;this.connecting=false;this.connectionReady=true;this.lastPongAt=this.lastServerAt=Date.now();this.setBadge('connected',`${label(this.currentScale)} stream active`);};socket.onmessage=e=>{try{const d=JSON.parse(e.data);this.lastServerAt=Date.now();if(d.type==='pong')this.lastPongAt=Date.now();if(d.type==='frame_result'){this.inflightFrame=false;if(this.inflightTimer)clearTimeout(this.inflightTimer);this.inflightTimer=null;this.updateEmotionDisplay(d);}}catch(err){console.warn('emotion message parse failed',err);}};socket.onclose=()=>{this.connecting=false;if(this.socket===socket)this.socket=null;if(!this.running)return;this.connectionReady=false;if(this.intentionalClose){this.intentionalClose=false;return;}this.setBadge('warning','Reconnecting...');this.inflightFrame=false;this.scheduleReconnect();};socket.onerror=()=>{this.connecting=false;this.connectionReady=false;this.setBadge('warning','Socket error');};}
   scheduleReconnect(){if(!this.running||this.reconnectTimer)return;if(this.reconnectAttempt>=this.maxReconnect){this.setBadge('warning','Connection failed');return;}const wait=Math.min(1000*(2**this.reconnectAttempt),8000)+Math.floor(Math.random()*250);this.reconnectAttempt+=1;this.reconnectTimer=setTimeout(async()=>{this.reconnectTimer=null;await this.ensureCamera();this.connectSocket();},wait);}
   startHeartbeat(){if(this.pingTimer)clearInterval(this.pingTimer);if(this.heartbeatTimer)clearInterval(this.heartbeatTimer);this.pingTimer=setInterval(()=>{if(!this.running||!this.socket||this.socket.readyState!==WebSocket.OPEN)return;try{this.socket.send(JSON.stringify({type:'ping',ts:Date.now(),assessment_id:assessmentId}));}catch(e){this.scheduleReconnect();}},this.heartbeatIntervalMs);this.heartbeatTimer=setInterval(()=>{if(!this.running||!this.socket||this.socket.readyState!==WebSocket.OPEN)return;const last=Math.max(this.lastServerAt||0,this.lastPongAt||0);if(last&&Date.now()-last>this.heartbeatGraceMs){this.setBadge('warning','Reconnecting...');try{this.socket.close(4000,'missed_heartbeat');}catch(e){}}},5000);}
-  startCaptureLoop(){const canvas=document.getElementById('cameraCanvas'),ctx=canvas.getContext('2d');if(this.captureTimer)clearInterval(this.captureTimer);this.captureTimer=setInterval(()=>{if(!this.running||!this.currentScale||!this.socket||this.socket.readyState!==WebSocket.OPEN||this.inflightFrame)return;if(typeof this.socket.bufferedAmount==='number'&&this.socket.bufferedAmount>512000)return;const preview=document.getElementById('sharedPreview');if(!this.stream||!preview?.videoWidth||!preview?.videoHeight){this.scheduleCameraRecovery(1200);return;}const sw=preview.videoWidth,sh=preview.videoHeight,tw=Math.min(sw,this.maxFrameWidth),th=Math.max(1,Math.round(sh*tw/sw));canvas.width=tw;canvas.height=th;ctx.drawImage(preview,0,0,tw,th);let q=this.jpegQuality,img=canvas.toDataURL('image/jpeg',q);while(img.length*.75>this.maxEncodedBytes&&q>.45){q-=.1;img=canvas.toDataURL('image/jpeg',q);}this.inflightFrame=true;if(this.inflightTimer)clearTimeout(this.inflightTimer);this.inflightTimer=setTimeout(()=>{this.inflightFrame=false;this.inflightTimer=null;},10000);try{this.socket.send(JSON.stringify({type:'frame',frame_id:crypto.randomUUID?crypto.randomUUID():String(Date.now()),assessment_id:assessmentId,scale:this.currentScale,question_id:this.app.state.qid,image_base64:img,client_ts:new Date().toISOString()}));}catch(e){this.inflightFrame=false;if(this.inflightTimer)clearTimeout(this.inflightTimer);this.inflightTimer=null;this.scheduleReconnect();}},this.frameIntervalMs);}
+  simpleHash(text){let hash=0;for(let i=0;i<text.length;i+=1){hash=((hash<<5)-hash)+text.charCodeAt(i);hash|=0;}return String(hash);}
+  blobToDataURL(blob){return new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=()=>reject(reader.error||new Error('read_failed'));reader.readAsDataURL(blob);});}
+  async captureAndSendFrame(){
+    if(!this.running||!this.currentScale||!this.socket||this.socket.readyState!==WebSocket.OPEN||this.inflightFrame||this.captureBusy)return;
+    if(this.framesSentForQuestion>=this.maxFramesPerQuestion)return;
+    if(typeof this.socket.bufferedAmount==='number'&&this.socket.bufferedAmount>512000)return;
+    const preview=document.getElementById('sharedPreview');
+    if(!this.stream||!preview?.videoWidth||!preview?.videoHeight||preview.readyState<2){this.scheduleCameraRecovery(1200);return;}
+    const canvas=document.getElementById('cameraCanvas');
+    const ctx=canvas.getContext('2d',{willReadFrequently:false});
+    const sw=preview.videoWidth,sh=preview.videoHeight,tw=Math.min(sw,this.maxFrameWidth),th=Math.max(1,Math.round(sh*tw/sw));
+    canvas.width=tw;
+    canvas.height=th;
+    ctx.drawImage(preview,0,0,tw,th);
+    this.captureBusy=true;
+    try{
+      let quality=this.jpegQuality;
+      let blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/jpeg',quality));
+      if(!blob)return;
+      while(blob.size>this.maxEncodedBytes&&quality>.45){
+        quality-=.1;
+        blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/jpeg',quality));
+        if(!blob)return;
+      }
+      const imageBase64=String(await this.blobToDataURL(blob));
+      const frameHash=this.simpleHash(imageBase64.slice(-4096));
+      if(frameHash===this.lastFrameHash){
+        this.repeatedFrameCount+=1;
+      }else{
+        this.repeatedFrameCount=0;
+        this.lastFrameHash=frameHash;
+      }
+      if(this.repeatedFrameCount>=2){
+        console.warn('Repeated frame hash from browser capture',frameHash);
+      }
+      this.frameSequence+=1;
+      this.framesSentForQuestion+=1;
+      const frameId=crypto.randomUUID?crypto.randomUUID():`${Date.now()}-${this.frameSequence}`;
+      this.inflightFrame=true;
+      if(this.inflightTimer)clearTimeout(this.inflightTimer);
+      this.inflightTimer=setTimeout(()=>{this.inflightFrame=false;this.inflightTimer=null;},10000);
+      this.socket.send(JSON.stringify({type:'frame',frame_id:frameId,frame_number:this.frameSequence,timestamp_sec:Number(((performance.now()-this.startedAt)/1000).toFixed(3)),assessment_id:assessmentId,scale:this.currentScale,question_id:this.app.state.qid,image_base64:imageBase64,client_ts:new Date().toISOString(),client_frame_hash:frameHash,client_repeated_frames:this.repeatedFrameCount}));
+      console.log('frame sent', frameId);
+      this.setEmotionState('Processing...', `Hash ${frameHash} • frame ${this.frameSequence}`, {});
+    }catch(e){
+      console.warn('frame capture failed',e);
+      this.inflightFrame=false;
+      if(this.inflightTimer)clearTimeout(this.inflightTimer);
+      this.inflightTimer=null;
+    }finally{
+      this.captureBusy=false;
+    }
+  }
+  startCaptureLoop(){if(window.captureRunning)return;if(this.captureTimer)clearInterval(this.captureTimer);window.captureRunning=true;this.captureTimer=setInterval(()=>{this.captureAndSendFrame();},this.frameIntervalMs);}
 }
 
 class App{
-  constructor(state){this.state=state;this.left=document.getElementById('leftPanel');this.right=document.getElementById('rightPanel');this.emotion=new EmotionManager(this);this.loadingTimeout=null;}
+  constructor(state){this.state=state;this.left=document.getElementById('leftPanel');this.right=document.getElementById('rightPanel');this.emotion=new EmotionManager(this);this.loadingTimeout=null;this.navigationInFlight=false;}
 
-  // ── Determine question type ──────────────────────────────────────────────
+  // â”€â”€ Determine question type â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   isOpenEnded(){return this.state.question?.is_open_ended===true||this.state.question?.scale==='open_ended';}
 
-  // ── Render dispatcher ────────────────────────────────────────────────────
+  // â”€â”€ Render dispatcher â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   render(){
     const s=this.state;
     const open=this.isOpenEnded();
@@ -65,30 +181,34 @@ class App{
     if(s.is_final) this.runLoading();
   }
 
-  // ── Left panel renderers ─────────────────────────────────────────────────
+  emotionPanel(light=false){
+    return `<div class="emotion-live ${light?'light':''}"><div class="emotion-live-label">Live Emotion Stream</div><div class="emotion-live-value" data-emotion-label>Waiting for stream...</div><div class="emotion-live-meta" data-emotion-meta>Preparing live frames...</div><div class="emotion-live-bars" data-emotion-bars><div class="emotion-live-meta">Waiting for frame results...</div></div></div>`;
+  }
+
+  // â”€â”€ Left panel renderers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   titleLeft(){
     const q=this.state.question;
     return `<div class="title"><div class="badge scale-badge">${esc(label(this.state.stream_scale))} Assessment</div><h1>${esc(q.title)}</h1><p>${esc(q.subtitle)}</p>${q.item_count?`<div class="count">${q.item_count} Questions</div>`:''}<div class="status">Facial emotion capture starts now and continues through the full ${esc(label(this.state.stream_scale).toLowerCase())} scale.</div></div>`;
   }
   questionLeft(){
-    return `<div class="camera"><video data-shared-preview autoplay muted playsinline></video><div style="margin-top:12px"><span data-camera-badge class="cam-badge disconnected">Camera disconnected</span></div></div>`;
+    return `<div class="camera"><video data-shared-preview autoplay muted playsinline></video><div style="margin-top:12px"><span data-camera-badge class="cam-badge disconnected">Camera disconnected</span></div>${this.emotionPanel(false)}</div>`;
   }
   openLeft(){
-    return `<div class="open-panel"><div class="open-icon">💬</div><h2>Your Voice Matters</h2><p>This is a safe space. Feel free to share anything — a recent experience, how you have been feeling, or something on your mind. Your response is confidential.</p></div>`;
+    return `<div class="open-panel"><div class="open-icon">ðŸ’¬</div><h2>Your Voice Matters</h2><p>This is a safe space. Feel free to share anything â€” a recent experience, how you have been feeling, or something on your mind. Your response is confidential.</p></div>`;
   }
   finalLeft(){
     return `<div class="loading"><h1>Analysing Your Responses</h1><p>Please wait while we process your assessment</p><div class="track" style="width:100%;max-width:400px;height:8px;background:rgba(255,255,255,.2);margin:18px 0 12px"><div class="fill" id="progressFill" style="width:0%"></div></div><div id="progressText" style="font-weight:700;color:#E8925C;margin-bottom:20px">0%</div><div class="loading-steps"><div class="step active" id="step1"><div class="icon"><div class="spinner"></div></div><span>Processing depression responses...</span></div><div class="step" id="step2"><div class="icon"></div><span>Processing stress responses...</span></div><div class="step" id="step3"><div class="icon"></div><span>Processing anxiety responses...</span></div><div class="step" id="step4"><div class="icon"></div><span>Running clinical analysis...</span></div><div class="step" id="step5"><div class="icon"></div><span>Generating report...</span></div></div></div>`;
   }
 
-  // ── Right panel renderers ────────────────────────────────────────────────
+  // â”€â”€ Right panel renderers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   titleRight(){
     const q=this.state.question;
-    return `<div style="display:flex;flex-direction:column;justify-content:center;height:100%"><div class="badge" style="background:rgba(45,95,141,.08);border:2px solid var(--primary);color:var(--primary);margin-bottom:20px">${esc(label(this.state.stream_scale))} Scale</div><h2 style="font-family:var(--display);font-size:2em;color:var(--primary-dark);margin-bottom:12px">${esc(q.title)}</h2><p style="color:#475569;line-height:1.7;margin-bottom:28px">${esc(q.description)}</p><button class="begin" id="beginBtn">Begin Assessment →</button><div class="title-strip"><span data-camera-badge class="cam-badge disconnected">Camera disconnected</span><span class="note">Continuous capture stays active until this scale is finished.</span></div></div>`;
+    return `<div style="display:flex;flex-direction:column;justify-content:center;height:100%"><div class="badge" style="background:rgba(45,95,141,.08);border:2px solid var(--primary);color:var(--primary);margin-bottom:20px">${esc(label(this.state.stream_scale))} Scale</div><h2 style="font-family:var(--display);font-size:2em;color:var(--primary-dark);margin-bottom:12px">${esc(q.title)}</h2><p style="color:#475569;line-height:1.7;margin-bottom:28px">${esc(q.description)}</p><button class="begin" id="beginBtn">Begin Assessment â†’</button><div class="title-strip"><span data-camera-badge class="cam-badge disconnected">Camera disconnected</span><span class="note">Continuous capture stays active until this scale is finished.</span></div>${this.emotionPanel(true)}</div>`;
   }
   questionRight(){
     const s=this.state,q=s.question;
     const opts=(q.options||[]).map((o,i)=>`<button class="opt ${s.previous_score===i?'selected':''}" data-score="${i}"><div class="score">${i}</div><div>${esc(o)}</div></button>`).join('');
-    return `<div class="progress-header"><div class="progress-label"><span>${esc(subtitle(q.scale))} — Question ${s.scale_position} of ${s.scale_total}</span><span>${s.progress_percent}% complete</span></div><div class="track"><div class="fill" style="width:${s.progress_percent}%"></div></div></div><div class="pill ${esc(q.scale)}">${esc(label(q.scale))}</div><div class="qlabel">Question ${s.scale_position} of ${s.scale_total}</div><div class="qtext">${esc(q.question_text)}</div><div class="options">${opts}</div><div class="camera-box"><span data-camera-badge class="cam-badge disconnected">Camera disconnected</span><span class="note">Continuous capture remains active until this scale is finished.</span></div><div class="buttons">${s.prev_qid?'<button class="btn btn-secondary" id="prevBtn">← Back</button>':''}<button class="btn btn-primary" id="nextBtn" ${s.previous_score===null?'disabled':''}>${s.next_qid?'Next →':'Next →'}</button></div>`;
+    return `<div class="progress-header"><div class="progress-label"><span>${esc(subtitle(q.scale))} â€” Question ${s.scale_position} of ${s.scale_total}</span><span>${s.progress_percent}% complete</span></div><div class="track"><div class="fill" style="width:${s.progress_percent}%"></div></div></div><div class="pill ${esc(q.scale)}">${esc(label(q.scale))}</div><div class="qlabel">Question ${s.scale_position} of ${s.scale_total}</div><div class="qtext">${esc(q.question_text)}</div><div class="options">${opts}</div><div class="camera-box"><span data-camera-badge class="cam-badge disconnected">Camera disconnected</span><span class="note">Continuous capture remains active until this scale is finished.</span></div>${this.emotionPanel(true)}<div class="buttons">${s.prev_qid?'<button class="btn btn-secondary" id="prevBtn">â† Back</button>':''}<button class="btn btn-primary" id="nextBtn" ${s.previous_score===null?'disabled':''}>${s.next_qid?'Next â†’':'Next â†’'}</button></div>`;
   }
   openRight(){
     const s=this.state,q=s.question;
@@ -96,7 +216,7 @@ class App{
     return `
       <div class="progress-header">
         <div class="progress-label">
-          <span>Final Question — Optional Reflection</span>
+          <span>Final Question â€” Optional Reflection</span>
           <span>${s.progress_percent}% complete</span>
         </div>
         <div class="track"><div class="fill" style="width:${s.progress_percent}%"></div></div>
@@ -109,13 +229,13 @@ class App{
           class="open-textarea"
           id="openTextarea"
           maxlength="3000"
-          placeholder="Feel free to share anything — a recent experience, something on your mind, or how you have been feeling lately. This is completely optional."
+          placeholder="Feel free to share anything â€” a recent experience, something on your mind, or how you have been feeling lately. This is completely optional."
         >${esc(saved)}</textarea>
         <div class="char-count"><span id="charCount">${saved.length}</span> / 3000</div>
       </div>
       <div class="buttons">
-        ${s.prev_qid?'<button class="btn btn-secondary" id="prevBtn">← Back</button>':''}
-        <button class="btn btn-primary" id="nextBtn">Submit Assessment →</button>
+        ${s.prev_qid?'<button class="btn btn-secondary" id="prevBtn">â† Back</button>':''}
+        <button class="btn btn-primary" id="nextBtn">Submit Assessment â†’</button>
       </div>
       <button class="open-skip" id="skipBtn">Skip this question</button>
     `;
@@ -124,7 +244,7 @@ class App{
     return `<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;text-align:center"><h2 style="font-family:var(--display);font-size:1.8em;color:var(--primary-dark);margin-bottom:12px">Almost done...</h2><p style="color:#64748b;font-size:1.05em">Your responses are being analysed. Please keep this window open.</p></div>`;
   }
 
-  // ── Event binding ────────────────────────────────────────────────────────
+  // â”€â”€ Event binding â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   bind(){
     if(this.state.is_title_screen){
       document.getElementById('beginBtn')?.addEventListener('click',()=>this.navigate(this.state.next_qid));
@@ -154,32 +274,38 @@ class App{
     document.getElementById('prevBtn')?.addEventListener('click',()=>this.navigate(this.state.prev_qid));
   }
 
-  // ── Data fetching ────────────────────────────────────────────────────────
+  // â”€â”€ Data fetching â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   async fetchState(qid){
     const r=await fetch(`/assessment/question/${qid}/`,{headers:{'X-Question-Partial':'1'},credentials:'same-origin'});
     if(!r.ok) throw new Error('Unable to load question');
     return r.json();
   }
 
-  // ── Navigation ───────────────────────────────────────────────────────────
+  // â”€â”€ Navigation â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   async navigate(qid,opt={}){
-    if(!qid) return;
+    if(!qid||this.navigationInFlight) return;
+    this.navigationInFlight=true;
+    try{
     const next=await this.fetchState(qid);
     const prevScale=this.state.stream_scale||'';
     const nextScale=next.stream_scale||'';
     // Stop camera when leaving a streamed scale (open_ended has no stream_scale so camera stops naturally)
     if(prevScale&&prevScale!==nextScale) this.emotion.stop();
     this.state=next;
+    this.emotion.setQuestion(next.qid);
     if(opt.replace) history.replaceState({qid},'',`/assessment/question/${qid}/`);
     else history.pushState({qid},'',`/assessment/question/${qid}/`);
     this.render();
     if(next.is_final){this.emotion.stop();return;}
     if(nextScale){await this.emotion.start(nextScale);this.emotion.syncPreview();}
+    } finally {
+      this.navigationInFlight=false;
+    }
   }
 
-  // ── Save scored answer and advance ───────────────────────────────────────
+  // â”€â”€ Save scored answer and advance â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   async saveAndNext(){
-    if(this.state.previous_score===null) return;
+    if(this.state.previous_score===null||this.navigationInFlight) return;
     const r=await fetch('/assessment/save-answer/',{
       method:'POST',
       headers:{'Content-Type':'application/json','X-CSRFToken':cookie('csrftoken')},
@@ -191,8 +317,9 @@ class App{
     if(this.state.next_qid) await this.navigate(this.state.next_qid);
   }
 
-  // ── Save open-ended text answer and advance ───────────────────────────────
+  // â”€â”€ Save open-ended text answer and advance â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   async saveTextAndNext(skip=false){
+    if(this.navigationInFlight) return;
     const ta=document.getElementById('openTextarea');
     const text=skip?'':(ta?ta.value.trim():'');
     try{
@@ -205,13 +332,13 @@ class App{
       const d=await r.json();
       if(d.status!=='success'){alert(`Failed to save: ${d.message||'Unknown error'}`);return;}
     }catch(e){
-      // Network error — still navigate so the user isn't stuck
+      // Network error â€” still navigate so the user isn't stuck
       console.warn('save-text-answer failed, continuing anyway',e);
     }
     if(this.state.next_qid) await this.navigate(this.state.next_qid);
   }
 
-  // ── Loading screen animation ─────────────────────────────────────────────
+  // â”€â”€ Loading screen animation â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   runLoading(){
     if(this.loadingTimeout) clearTimeout(this.loadingTimeout);
     const steps=[['step1',2200,20],['step2',2200,40],['step3',2200,60],['step4',2000,80],['step5',1800,100]];
@@ -235,7 +362,7 @@ class App{
     this.loadingTimeout=setTimeout(tick,500);
   }
 
-  // ── Startup ──────────────────────────────────────────────────────────────
+  // â”€â”€ Startup â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   async start(){
     this.render();
     if(!this.state.is_final&&this.state.stream_scale){
@@ -255,3 +382,9 @@ new App(state0).start();
 </script>
 </body>
 </html>
+
+
+
+
+
+

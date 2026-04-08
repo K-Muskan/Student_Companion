@@ -213,11 +213,19 @@ body { font-family:var(--font); background:linear-gradient(135deg,#2D5F8D,#1E426
       <div class="interpretation">{{ depression.interpretation }}</div>
       {% if depression.emotion_summary.available %}
       <div class="interpretation">
-        Emotion: {{ depression.emotion_summary.overall_dominant_emotion|default:"Unknown"|title }}
-        • Frames: {{ depression.emotion_summary.frames_analyzed|default:0 }}
+        Most Frequent Emotion: {{ depression.emotion_summary.most_frequent_emotion|default:"Unknown"|title }}
+        • Frames: {{ depression.emotion_summary.total_frames|default:0 }}
         • Distress Ratio: {{ depression.emotion_summary.distress_proxy.ratio|default:0 }}
         {% if depression.emotion_summary.distress_proxy.flag %} • Distress signal detected{% endif %}
       </div>
+      {% if depression.emotion_summary.emotion_percentages %}
+      <div class="interpretation">
+        Distribution:
+        {% for emotion, percentage in depression.emotion_summary.emotion_percentages.items %}
+        {{ emotion|title }} {{ percentage }}%{% if not forloop.last %} • {% endif %}
+        {% endfor %}
+      </div>
+      {% endif %}
       {% else %}
       <div class="interpretation">
         Emotion: Not available.
@@ -251,11 +259,19 @@ body { font-family:var(--font); background:linear-gradient(135deg,#2D5F8D,#1E426
       <div class="interpretation">{{ stress.interpretation }}</div>
       {% if stress.emotion_summary.available %}
       <div class="interpretation">
-        Emotion: {{ stress.emotion_summary.overall_dominant_emotion|default:"Unknown"|title }}
-        • Frames: {{ stress.emotion_summary.frames_analyzed|default:0 }}
+        Most Frequent Emotion: {{ stress.emotion_summary.most_frequent_emotion|default:"Unknown"|title }}
+        • Frames: {{ stress.emotion_summary.total_frames|default:0 }}
         • Distress Ratio: {{ stress.emotion_summary.distress_proxy.ratio|default:0 }}
         {% if stress.emotion_summary.distress_proxy.flag %} • Distress signal detected{% endif %}
       </div>
+      {% if stress.emotion_summary.emotion_percentages %}
+      <div class="interpretation">
+        Distribution:
+        {% for emotion, percentage in stress.emotion_summary.emotion_percentages.items %}
+        {{ emotion|title }} {{ percentage }}%{% if not forloop.last %} • {% endif %}
+        {% endfor %}
+      </div>
+      {% endif %}
       {% else %}
       <div class="interpretation">
         Emotion: Not available.
@@ -289,11 +305,19 @@ body { font-family:var(--font); background:linear-gradient(135deg,#2D5F8D,#1E426
       <div class="interpretation">{{ anxiety.interpretation }}</div>
       {% if anxiety.emotion_summary.available %}
       <div class="interpretation">
-        Emotion: {{ anxiety.emotion_summary.overall_dominant_emotion|default:"Unknown"|title }}
-        • Frames: {{ anxiety.emotion_summary.frames_analyzed|default:0 }}
+        Most Frequent Emotion: {{ anxiety.emotion_summary.most_frequent_emotion|default:"Unknown"|title }}
+        • Frames: {{ anxiety.emotion_summary.total_frames|default:0 }}
         • Distress Ratio: {{ anxiety.emotion_summary.distress_proxy.ratio|default:0 }}
         {% if anxiety.emotion_summary.distress_proxy.flag %} • Distress signal detected{% endif %}
       </div>
+      {% if anxiety.emotion_summary.emotion_percentages %}
+      <div class="interpretation">
+        Distribution:
+        {% for emotion, percentage in anxiety.emotion_summary.emotion_percentages.items %}
+        {{ emotion|title }} {{ percentage }}%{% if not forloop.last %} • {% endif %}
+        {% endfor %}
+      </div>
+      {% endif %}
       {% else %}
       <div class="interpretation">
         Emotion: Not available.
@@ -318,12 +342,16 @@ body { font-family:var(--font); background:linear-gradient(135deg,#2D5F8D,#1E426
     <div class="section-title">Facial Emotion Analysis</div>
     <p style="font-size:0.9em;color:#475569;margin-bottom:12px;">DeepFace emotion data captured during assessment.</p>
     <div style="display:flex;gap:12px;flex-wrap:wrap;">
-      {% if emotion_summary.dominant_emotion %}
+      {% if emotion_summary.most_frequent_emotion or emotion_summary.dominant_emotion %}
       <div style="background:var(--bg);border-radius:8px;padding:12px 18px;border:1px solid var(--border);">
-        <div style="font-size:0.75em;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;">Dominant Emotion</div>
-        <div style="font-weight:700;color:var(--primary);font-size:1.05em;">{{ emotion_summary.dominant_emotion|title }}</div>
+        <div style="font-size:0.75em;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;">Most Frequent Emotion</div>
+        <div style="font-weight:700;color:var(--primary);font-size:1.05em;">{{ emotion_summary.most_frequent_emotion|default:emotion_summary.dominant_emotion|title }}</div>
       </div>
       {% endif %}
+      <div style="background:var(--bg);border-radius:8px;padding:12px 18px;border:1px solid var(--border);">
+        <div style="font-size:0.75em;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;">Frames Analyzed</div>
+        <div style="font-weight:700;color:var(--primary);font-size:1.05em;">{{ emotion_summary.total_frames|default:emotion_summary.frames_analyzed|default:0 }}</div>
+      </div>
       {% if emotion_summary.distress_proxy.flag %}
       <div style="background:#fef2f2;border-radius:8px;padding:12px 18px;border:1px solid #fca5a5;">
         <div style="font-size:0.75em;color:#991b1b;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;">Distress Signal</div>
@@ -331,6 +359,14 @@ body { font-family:var(--font); background:linear-gradient(135deg,#2D5F8D,#1E426
       </div>
       {% endif %}
     </div>
+    {% if emotion_summary.emotion_percentages %}
+    <div class="interpretation" style="margin-top:14px;">
+      Distribution:
+      {% for emotion, percentage in emotion_summary.emotion_percentages.items %}
+      {{ emotion|title }} {{ percentage }}%{% if not forloop.last %} • {% endif %}
+      {% endfor %}
+    </div>
+    {% endif %}
   </div>
   {% endif %}
 
