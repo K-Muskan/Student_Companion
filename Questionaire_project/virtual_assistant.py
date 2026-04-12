@@ -181,7 +181,7 @@ def _try_wav2lip(image_path, audio_path, video_dest):
             ],
             capture_output=True,
             text=True,
-            timeout=60,
+            timeout=1800,
             cwd=WAV2LIP_DIR,
         )
         if conv.returncode != 0:
