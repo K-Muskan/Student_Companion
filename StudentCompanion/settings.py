@@ -30,7 +30,7 @@ DEBUG = True
 ALLOWED_HOSTS = ["crunodal-libbie-preconsciously.ngrok-free.dev","127.0.0.1",
     "localhost"]
 
-SYNC_SO_API_KEY = ""
+SYNC_SO_API_KEY = "#"
 
 # ── Virtual Therapist / Wav2Lip ────────────────────────────────────────────
 WAV2LIP_DIR        = r"C:\Wav2Lip\Wav2Lip"
