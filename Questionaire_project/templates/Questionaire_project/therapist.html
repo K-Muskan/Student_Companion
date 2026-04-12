@@ -1,0 +1,736 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Virtual Therapist — Student Companion</title>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=Lora:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+:root {
+  --ink: #0f172a;
+  --ink-mid: #334155;
+  --ink-soft: #64748b;
+  --paper: #fafaf9;
+  --cream: #f5f0eb;
+  --warm: #e8925c;
+  --warm-light: #fde8d8;
+  --teal: #2d6e6e;
+  --teal-light: #d0eeee;
+  --midnight: #1a2744;
+  --border: #e2e0db;
+  --shadow: 0 4px 24px rgba(15,23,42,0.08);
+  --shadow-lg: 0 16px 48px rgba(15,23,42,0.14);
+  --font: 'Sora', sans-serif;
+  --font-serif: 'Lora', Georgia, serif;
+  --radius: 16px;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: var(--font);
+  background: var(--midnight);
+  min-height: 100vh;
+  color: var(--ink);
+  line-height: 1.6;
+}
+
+.bg-layer {
+  position: fixed; inset: 0; z-index: 0;
+  background: linear-gradient(135deg, #1a2744 0%, #0f2233 50%, #1a1f35 100%);
+}
+.bg-orb {
+  position: absolute; border-radius: 50%; filter: blur(80px); opacity: 0.18;
+}
+.orb1 { width: 500px; height: 500px; top: -10%; left: -5%; background: #2d6e6e; }
+.orb2 { width: 400px; height: 400px; bottom: 10%; right: -8%; background: #e8925c; }
+
+.page {
+  position: relative; z-index: 1;
+  max-width: 1100px; margin: 0 auto;
+  padding: 40px 20px 60px;
+}
+
+/* ── Header ── */
+.header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 36px; flex-wrap: wrap; gap: 16px;
+}
+.header-left { display: flex; align-items: center; gap: 14px; }
+.logo-dot {
+  width: 44px; height: 44px; border-radius: 12px;
+  background: linear-gradient(135deg, var(--teal), var(--warm));
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.3em;
+}
+.header-title { font-family: var(--font-serif); font-size: 1.6em; font-weight: 600; color: #fff; }
+.header-sub { font-size: 0.78em; color: rgba(255,255,255,0.55); margin-top: 2px; }
+.back-btn {
+  padding: 9px 18px; border-radius: 10px; background: rgba(255,255,255,0.08);
+  color: rgba(255,255,255,0.75); text-decoration: none; font-size: 0.82em;
+  font-weight: 500; border: 1px solid rgba(255,255,255,0.12);
+  transition: all 0.2s;
+}
+.back-btn:hover { background: rgba(255,255,255,0.15); color: #fff; }
+
+/* ── Content Layout (switches to split after video ends) ── */
+.content-layout {
+  display: flex; gap: 24px; align-items: flex-start;
+  transition: all 0.6s ease;
+}
+.main-col {
+  flex: 1; min-width: 0;
+  transition: all 0.6s ease;
+}
+.rec-col {
+  width: 0; overflow: hidden; opacity: 0;
+  transition: all 0.6s ease;
+  flex-shrink: 0;
+}
+.rec-col.visible {
+  width: 380px; opacity: 1; overflow: visible;
+}
+
+/* ── Main card ── */
+.card {
+  background: var(--paper);
+  border-radius: var(--radius);
+  overflow: hidden;
+  margin-bottom: 24px;
+}
+
+/* ── Video Section ── */
+.video-section {
+  background: #0a0f1e;
+  position: relative;
+  aspect-ratio: 16/9;
+  display: flex; align-items: center; justify-content: center;
+  overflow: hidden;
+}
+
+.video-player {
+  width: 100%; height: 100%;
+  object-fit: contain;
+  display: none;
+}
+.video-player.ready { display: block; }
+
+/* ── Loading overlay ── */
+.loading-overlay {
+  position: absolute; inset: 0;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  background: radial-gradient(ellipse at center, #0f1e35 0%, #060b14 100%);
+  transition: opacity 0.6s ease;
+  z-index: 2;
+}
+.loading-overlay.hidden { opacity: 0; pointer-events: none; }
+
+.pulse-ring {
+  width: 100px; height: 100px; position: relative; margin-bottom: 28px;
+}
+.pulse-ring::before, .pulse-ring::after {
+  content: ''; position: absolute; inset: 0;
+  border-radius: 50%; border: 2px solid var(--teal);
+  animation: pulse-out 2.4s ease-out infinite;
+}
+.pulse-ring::after { animation-delay: 1.2s; border-color: var(--warm); }
+.pulse-face {
+  position: absolute; inset: 12px;
+  background: linear-gradient(135deg, var(--teal), #1a4a4a);
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 2em;
+}
+@keyframes pulse-out {
+  0% { transform: scale(0.9); opacity: 0.9; }
+  100% { transform: scale(1.8); opacity: 0; }
+}
+.loading-text { color: rgba(255,255,255,0.9); font-size: 1.05em; font-weight: 500; margin-bottom: 8px; }
+.loading-sub { color: rgba(255,255,255,0.45); font-size: 0.8em; text-align: center; max-width: 280px; }
+.loading-steps { display: flex; gap: 8px; margin-top: 24px; }
+.step-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: rgba(255,255,255,0.2); transition: background 0.3s;
+}
+.step-dot.active { background: var(--warm); }
+.step-dot.done { background: var(--teal); }
+.eta-bar-wrap {
+  width: 220px; height: 3px; background: rgba(255,255,255,0.1);
+  border-radius: 999px; margin-top: 20px; overflow: hidden;
+}
+.eta-bar {
+  height: 100%; border-radius: 999px;
+  background: linear-gradient(90deg, var(--teal), var(--warm));
+  width: 0%; transition: width 0.5s linear;
+}
+
+/* Error overlay */
+.error-overlay {
+  display: none; position: absolute; inset: 0; z-index: 3;
+  flex-direction: column; align-items: center; justify-content: center;
+  background: rgba(10,15,30,0.95); color: #fff; text-align: center; padding: 32px;
+}
+.error-overlay.visible { display: flex; }
+.error-icon { font-size: 2.5em; margin-bottom: 12px; }
+.error-msg { font-size: 0.9em; color: rgba(255,255,255,0.7); margin-top: 8px; }
+.retry-btn {
+  margin-top: 20px; padding: 10px 24px; border-radius: 10px;
+  background: var(--warm); color: #fff; border: none;
+  font-family: var(--font); font-size: 0.88em; font-weight: 600;
+  cursor: pointer;
+}
+
+/* ── Info strip ── */
+.info-strip {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 14px 24px; background: var(--cream);
+  border-bottom: 1px solid var(--border); flex-wrap: wrap; gap: 12px;
+}
+.info-label { font-size: 0.75em; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--ink-soft); }
+.status-chip {
+  display: inline-flex; align-items: center; gap: 7px;
+  padding: 5px 12px; border-radius: 999px; font-size: 0.78em; font-weight: 600;
+}
+.chip-pending { background: #fef3c7; color: #92400e; }
+.chip-processing { background: #dbeafe; color: #1e40af; }
+.chip-done { background: #d1fae5; color: #065f46; }
+.chip-error { background: #fee2e2; color: #991b1b; }
+.status-dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+.chip-processing .status-dot { animation: blink 1s infinite; }
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+/* ── Script section ── */
+.script-section { padding: 28px 32px; }
+.script-label {
+  font-size: 0.72em; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.8px; color: var(--ink-soft); margin-bottom: 14px;
+  display: flex; align-items: center; gap: 8px;
+}
+.script-label::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+.script-box {
+  background: var(--cream); border-radius: 10px; padding: 18px 22px;
+  border: 1px solid var(--border);
+  font-family: var(--font-serif); font-size: 0.95em;
+  color: var(--ink-mid); line-height: 1.8; font-style: italic;
+  min-height: 80px;
+}
+
+/* Typewriter cursor */
+.typewriter-cursor {
+  display: inline-block; width: 2px; height: 1em;
+  background: var(--warm); vertical-align: text-bottom;
+  animation: blink-cursor 0.75s step-end infinite;
+  margin-left: 2px;
+}
+@keyframes blink-cursor { 0%,100%{opacity:1} 50%{opacity:0} }
+
+/* ── Timing Card ── */
+.timing-card {
+  background: var(--paper); border-radius: var(--radius);
+  padding: 28px 32px;
+}
+.section-title {
+  font-family: var(--font-serif); font-size: 1.2em; font-weight: 600;
+  color: var(--midnight); margin-bottom: 6px;
+}
+.section-sub { font-size: 0.82em; color: var(--ink-soft); margin-bottom: 24px; }
+
+.stats-row { display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 28px; }
+.stat-pill {
+  flex: 1; min-width: 130px;
+  background: var(--cream); border-radius: 12px;
+  padding: 16px 20px; border: 1px solid var(--border);
+}
+.stat-value { font-size: 1.6em; font-weight: 700; color: var(--midnight); line-height: 1; }
+.stat-unit { font-size: 0.6em; color: var(--ink-soft); font-weight: 400; }
+.stat-label { font-size: 0.74em; color: var(--ink-soft); margin-top: 4px; }
+.chart-wrap { position: relative; height: 200px; }
+
+/* ── Recommendations Panel ── */
+.rec-panel {
+  background: var(--paper); border-radius: var(--radius);
+  overflow: hidden; position: sticky; top: 20px;
+}
+.rec-header {
+  background: linear-gradient(135deg, var(--midnight), #243256);
+  padding: 22px 24px; color: #fff;
+}
+.rec-header-title { font-family: var(--font-serif); font-size: 1.15em; font-weight: 600; margin-bottom: 4px; }
+.rec-header-sub { font-size: 0.78em; opacity: 0.65; }
+
+.rec-scale {
+  border-bottom: 1px solid var(--border);
+  overflow: hidden;
+}
+.rec-scale:last-child { border-bottom: none; }
+
+.rec-scale-header {
+  display: flex; align-items: center; gap: 12px;
+  padding: 16px 20px; cursor: pointer;
+  user-select: none; transition: background 0.2s;
+}
+.rec-scale-header:hover { background: var(--cream); }
+
+.scale-icon {
+  width: 36px; height: 36px; border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1em; flex-shrink: 0;
+}
+.icon-depression { background: #e8d5f5; }
+.icon-stress { background: #fde8d8; }
+.icon-anxiety { background: #d0eeee; }
+
+.scale-meta { flex: 1; }
+.scale-name { font-weight: 600; font-size: 0.9em; color: var(--ink); }
+.scale-level-badge {
+  display: inline-block; padding: 2px 10px; border-radius: 999px;
+  font-size: 0.68em; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px;
+  margin-top: 3px;
+}
+.badge-low { background: #d1fae5; color: #065f46; }
+.badge-moderate { background: #fef3c7; color: #92400e; }
+.badge-severe { background: #fee2e2; color: #991b1b; }
+.badge-high { background: #fee2e2; color: #991b1b; }
+
+.chevron {
+  width: 20px; height: 20px; flex-shrink: 0;
+  border-right: 2px solid var(--ink-soft);
+  border-bottom: 2px solid var(--ink-soft);
+  transform: rotate(45deg); transition: transform 0.3s;
+  margin-right: 4px; margin-top: -4px;
+}
+.rec-scale.open .chevron { transform: rotate(-135deg); margin-top: 4px; }
+
+.rec-scale-body {
+  max-height: 0; overflow: hidden;
+  transition: max-height 0.4s ease, padding 0.3s;
+}
+.rec-scale.open .rec-scale-body { max-height: 600px; }
+
+.rec-message {
+  margin: 0 20px 12px; padding: 12px 16px;
+  border-left: 3px solid var(--warm);
+  background: var(--warm-light); border-radius: 0 8px 8px 0;
+  font-style: italic; font-size: 0.84em; color: var(--ink-mid);
+  line-height: 1.6;
+}
+.rec-tips { padding: 0 20px 16px; }
+.rec-tip {
+  display: flex; align-items: flex-start; gap: 10px;
+  padding: 8px 0; border-bottom: 1px solid var(--border);
+  font-size: 0.82em; color: var(--ink-mid); line-height: 1.5;
+}
+.rec-tip:last-child { border-bottom: none; }
+.tip-num {
+  width: 22px; height: 22px; border-radius: 50%; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.72em; font-weight: 700; color: #fff; margin-top: 1px;
+}
+.num-depression { background: #9333ea; }
+.num-stress { background: var(--warm); }
+.num-anxiety { background: var(--teal); }
+
+.rec-summary {
+  padding: 10px 20px 16px; font-size: 0.78em;
+  color: var(--ink-soft); line-height: 1.6; font-style: italic;
+}
+
+/* ── Appear animation for rec panel ── */
+@keyframes slide-in-right {
+  from { transform: translateX(30px); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+.rec-panel.animating { animation: slide-in-right 0.5s ease forwards; }
+
+@media (max-width: 768px) {
+  .content-layout { flex-direction: column; }
+  .rec-col.visible { width: 100%; }
+  .page { padding: 24px 14px 48px; }
+  .script-section { padding: 20px; }
+  .timing-card { padding: 20px; }
+}
+</style>
+</head>
+<body>
+
+<div class="bg-layer">
+  <div class="bg-orb orb1"></div>
+  <div class="bg-orb orb2"></div>
+</div>
+
+<div class="page">
+
+  <!-- Header -->
+  <div class="header">
+    <div class="header-left">
+      <div class="logo-dot">🧠</div>
+      <div>
+        <div class="header-title">Virtual Therapist</div>
+        <div class="header-sub">AI-powered compassionate support</div>
+      </div>
+    </div>
+    <a href="/dashboard/" class="back-btn">← Return to Dashboard</a>
+  </div>
+
+  <!-- Content Layout -->
+  <div class="content-layout" id="contentLayout">
+
+    <!-- Main Column -->
+    <div class="main-col" id="mainCol">
+
+      <!-- Main Card -->
+      <div class="card">
+
+        <!-- Video Area -->
+        <div class="video-section" id="videoSection">
+          <div class="loading-overlay" id="loadingOverlay">
+            <div class="pulse-ring"><div class="pulse-face">🎙️</div></div>
+            <div class="loading-text" id="loadingText">Preparing your session…</div>
+            <div class="loading-sub">This usually takes 1–3 minutes. Please stay on this page.</div>
+            <div class="loading-steps">
+              <div class="step-dot" id="step1"></div>
+              <div class="step-dot" id="step2"></div>
+              <div class="step-dot" id="step3"></div>
+            </div>
+            <div class="eta-bar-wrap"><div class="eta-bar" id="etaBar"></div></div>
+          </div>
+
+          <div class="error-overlay" id="errorOverlay">
+            <div class="error-icon">⚠️</div>
+            <strong>Video generation failed</strong>
+            <div class="error-msg" id="errorMsg">An unexpected error occurred.</div>
+            <button class="retry-btn" onclick="location.reload()">Try Again</button>
+          </div>
+
+          <video class="video-player" id="therapistVideo" controls playsinline preload="auto"></video>
+        </div>
+
+        <!-- Status strip -->
+        <div class="info-strip">
+          <span class="info-label">Session Status</span>
+          <span class="status-chip chip-processing" id="statusChip">
+            <span class="status-dot"></span>
+            <span id="statusText">Generating…</span>
+          </span>
+          <span class="info-label" id="totalTimeLabel" style="display:none">
+            Total time: <strong id="totalTimeSec">—</strong>
+          </span>
+        </div>
+
+        <!-- Script display -->
+        <div class="script-section">
+          <div class="script-label">Therapist Script</div>
+          <div class="script-box" id="scriptBox"><span class="typewriter-cursor" id="twCursor"></span></div>
+        </div>
+
+      </div>
+
+      <!-- Timing / Performance Card -->
+      <div class="timing-card">
+        <div class="section-title">⏱ Generation Performance</div>
+        <div class="section-sub">Time breakdown for this session's video generation.</div>
+        <div class="stats-row">
+          <div class="stat-pill">
+            <div class="stat-value" id="statAudio">—<span class="stat-unit"> min</span></div>
+            <div class="stat-label">Voice synthesis</div>
+          </div>
+          <div class="stat-pill">
+            <div class="stat-value" id="statVideo">—<span class="stat-unit"> min</span></div>
+            <div class="stat-label">Virtual session generation</div>
+          </div>
+          <div class="stat-pill">
+            <div class="stat-value" id="statTotal">—<span class="stat-unit"> min</span></div>
+            <div class="stat-label">Total response time</div>
+          </div>
+        </div>
+        <div class="chart-wrap"><canvas id="timingChart"></canvas></div>
+      </div>
+
+    </div><!-- /main-col -->
+
+    <!-- Recommendations Column (hidden until video ends) -->
+    <div class="rec-col" id="recCol">
+      <div class="rec-panel" id="recPanel">
+        <div class="rec-header">
+          <div class="rec-header-title">✨ Your Personalised Recommendations</div>
+          <div class="rec-header-sub">Insights based on your assessment results</div>
+        </div>
+        <div id="recContent"></div>
+      </div>
+    </div>
+
+  </div><!-- /content-layout -->
+
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script>
+const ASSESSMENT_ID = {{ assessment_id }};
+const POLL_URL = `/assessment/therapist/status/${ASSESSMENT_ID}/`;
+const POLL_INTERVAL_MS = 4000;
+const FULL_SCRIPT = `{{ therapist_script|escapejs }}`;
+
+let pollTimer = null;
+let etaTimer = null;
+let startedAt = Date.now();
+let chart = null;
+let typewriterStarted = false;
+
+// ── ETA bar ──────────────────────────────────────────────────────────────────
+const etaBar = document.getElementById('etaBar');
+const EXPECTED_SECONDS = 120;
+function tickEta() {
+  const elapsed = (Date.now() - startedAt) / 1000;
+  const pct = Math.min(95, (elapsed / EXPECTED_SECONDS) * 100);
+  etaBar.style.width = pct + '%';
+}
+etaTimer = setInterval(tickEta, 500);
+
+// ── Step animation ────────────────────────────────────────────────────────────
+const steps = [document.getElementById('step1'), document.getElementById('step2'), document.getElementById('step3')];
+let stepIdx = 0;
+function advanceStep() {
+  if (stepIdx > 0) steps[stepIdx - 1].classList.replace('active', 'done');
+  if (stepIdx < steps.length) { steps[stepIdx].classList.add('active'); stepIdx++; }
+}
+advanceStep();
+const stepTimer = setInterval(() => { if (stepIdx < steps.length) advanceStep(); else clearInterval(stepTimer); }, 30000);
+
+// ── Typewriter ────────────────────────────────────────────────────────────────
+function startTypewriter(text) {
+  if (typewriterStarted) return;
+  typewriterStarted = true;
+
+  const box = document.getElementById('scriptBox');
+  const cursor = document.getElementById('twCursor');
+  box.innerHTML = '';
+  box.appendChild(cursor);
+
+  let i = 0;
+  const speed = 80; // ms per character — slow & cinematic
+
+  function typeNext() {
+    if (i < text.length) {
+      const char = text[i];
+      const node = document.createTextNode(char);
+      box.insertBefore(node, cursor);
+      i++;
+      setTimeout(typeNext, speed);
+    } else {
+      // Remove blinking cursor when done
+      setTimeout(() => { cursor.style.display = 'none'; }, 800);
+    }
+  }
+
+  setTimeout(typeNext, 200);
+}
+
+// ── Format seconds → minutes string ──────────────────────────────────────────
+function fmtMin(sec) {
+  if (!sec && sec !== 0) return '—';
+  if (sec < 60) return sec.toFixed(1) + 's';
+  return (sec / 60).toFixed(2) + ' min';
+}
+
+// ── Chart ─────────────────────────────────────────────────────────────────────
+function initChart(audio, video) {
+  const ctx = document.getElementById('timingChart').getContext('2d');
+  if (chart) chart.destroy();
+  chart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: ['Voice Synthesis', 'Virtual Session Generation', 'Total'],
+      datasets: [{
+        label: 'Minutes',
+        data: [+(audio/60).toFixed(3), +(video/60).toFixed(3), +((audio+video)/60).toFixed(3)],
+        backgroundColor: ['rgba(45,110,110,0.7)', 'rgba(232,146,92,0.7)', 'rgba(26,39,68,0.7)'],
+        borderColor: ['#2d6e6e', '#e8925c', '#1a2744'],
+        borderWidth: 1.5, borderRadius: 6,
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: { callbacks: { label: ctx => ` ${ctx.raw.toFixed(2)} min` } }
+      },
+      scales: {
+        x: { grid: { display: false }, ticks: { font: { family: 'Sora, sans-serif', size: 11 } } },
+        y: {
+          beginAtZero: true,
+          title: { display: true, text: 'Minutes', font: { size: 11, family: 'Sora, sans-serif' } },
+          ticks: { font: { family: 'Sora, sans-serif', size: 10 }, callback: v => v.toFixed(2) }
+        }
+      }
+    }
+  });
+}
+
+// ── Status chip ───────────────────────────────────────────────────────────────
+function setChip(status) {
+  const chip = document.getElementById('statusChip');
+  const txt = document.getElementById('statusText');
+  chip.className = 'status-chip';
+  const map = {
+    pending: ['chip-pending', 'Queued'],
+    processing: ['chip-processing', 'Generating…'],
+    done: ['chip-done', 'Ready'],
+    error: ['chip-error', 'Error'],
+  };
+  const [cls, label] = map[status] || ['chip-processing', status];
+  chip.classList.add(cls);
+  txt.textContent = label;
+}
+
+// ── Recommendations ───────────────────────────────────────────────────────────
+const SCALE_CONFIG = {
+  depression: { name: 'Depression', icon: '💜', iconClass: 'icon-depression', numClass: 'num-depression' },
+  stress:     { name: 'Stress',     icon: '🔥', iconClass: 'icon-stress',     numClass: 'num-stress' },
+  anxiety:    { name: 'Anxiety',    icon: '🌊', iconClass: 'icon-anxiety',     numClass: 'num-anxiety' },
+};
+
+function buildRecPanel(recsJson) {
+  const container = document.getElementById('recContent');
+  container.innerHTML = '';
+
+  ['depression', 'stress', 'anxiety'].forEach((scale, scaleIdx) => {
+    const data = recsJson[scale];
+    if (!data) return;
+    const cfg = SCALE_CONFIG[scale];
+    const level = data.level || 'moderate';
+    const badgeClass = level === 'severe' || level === 'high' ? 'badge-severe' : level === 'moderate' ? 'badge-moderate' : 'badge-low';
+
+    const section = document.createElement('div');
+    section.className = 'rec-scale';
+    if (scaleIdx === 0) section.classList.add('open'); // first one open by default
+
+    const tips = (data.tips || []).map((tip, i) => `
+      <div class="rec-tip">
+        <span class="tip-num ${cfg.numClass}">${i+1}</span>
+        <span>${tip}</span>
+      </div>`).join('');
+
+    section.innerHTML = `
+      <div class="rec-scale-header" onclick="toggleScale(this)">
+        <div class="scale-icon ${cfg.iconClass}">${cfg.icon}</div>
+        <div class="scale-meta">
+          <div class="scale-name">${cfg.name}</div>
+          <span class="scale-level-badge ${badgeClass}">${level}</span>
+        </div>
+        <div class="chevron"></div>
+      </div>
+      <div class="rec-scale-body">
+        <div class="rec-message">"${data.message || ''}"</div>
+        <div class="rec-tips">${tips}</div>
+        <div class="rec-summary">${data.summary || ''}</div>
+      </div>`;
+
+    container.appendChild(section);
+  });
+}
+
+window.toggleScale = function(header) {
+  const section = header.parentElement;
+  section.classList.toggle('open');
+};
+
+function showRecommendations(recsJson) {
+  buildRecPanel(recsJson);
+  const recCol = document.getElementById('recCol');
+  const recPanel = document.getElementById('recPanel');
+  recCol.classList.add('visible');
+  setTimeout(() => { recPanel.classList.add('animating'); }, 50);
+}
+
+// ── On video ready ────────────────────────────────────────────────────────────
+function onVideoReady(data) {
+  clearInterval(pollTimer);
+  clearInterval(etaTimer);
+  clearInterval(stepTimer);
+
+  const video = document.getElementById('therapistVideo');
+  video.src = data.video_url;
+  video.classList.add('ready');
+  document.getElementById('loadingOverlay').classList.add('hidden');
+
+  // Autoplay
+  video.play().catch(() => {});
+
+  // When video ends → show recommendations
+  video.addEventListener('ended', () => {
+    if (data.recommendations_json) {
+      showRecommendations(data.recommendations_json);
+    }
+  });
+
+  setChip('done');
+
+  const audio = data.audio_generation_seconds || 0;
+  const vid   = data.video_generation_seconds  || 0;
+  const total = data.total_seconds || (audio + vid);
+
+  document.getElementById('totalTimeLabel').style.display = '';
+  document.getElementById('totalTimeSec').textContent = fmtMin(total);
+
+  document.getElementById('statAudio').innerHTML = fmtMin(audio) + '<span class="stat-unit"></span>';
+  document.getElementById('statVideo').innerHTML = fmtMin(vid)   + '<span class="stat-unit"></span>';
+  document.getElementById('statTotal').innerHTML = fmtMin(total) + '<span class="stat-unit"></span>';
+
+  initChart(audio, vid);
+
+  // Start typewriter 5s after video loads
+  setTimeout(() => startTypewriter(FULL_SCRIPT), 5000);
+}
+
+// ── On error ──────────────────────────────────────────────────────────────────
+function onError(msg) {
+  clearInterval(pollTimer); clearInterval(etaTimer); clearInterval(stepTimer);
+  document.getElementById('loadingOverlay').classList.add('hidden');
+  document.getElementById('errorOverlay').classList.add('visible');
+  document.getElementById('errorMsg').textContent = msg || 'Unknown error.';
+  setChip('error');
+}
+
+// ── Poll ──────────────────────────────────────────────────────────────────────
+function poll() {
+  fetch(POLL_URL)
+    .then(r => r.json())
+    .then(data => {
+      if (data.status === 'done') {
+        onVideoReady(data);
+      } else if (data.status === 'error') {
+        onError(data.error);
+      } else {
+        setChip(data.status || 'processing');
+        if (data.audio_done_at && !data.video_done_at) {
+          document.getElementById('loadingText').textContent = 'Generating virtual session…';
+          if (stepIdx < 2) advanceStep();
+        }
+      }
+    })
+    .catch(err => console.warn('Poll error:', err));
+}
+
+poll();
+pollTimer = setInterval(poll, POLL_INTERVAL_MS);
+
+// ── Demo: if testing without backend, uncomment this block ───────────────────
+/*
+setTimeout(() => {
+  onVideoReady({
+    video_url: '',
+    audio_generation_seconds: 8.2,
+    video_generation_seconds: 47.6,
+    total_seconds: 55.8,
+    recommendations_json: {
+      depression: { level: 'moderate', message: 'What you are feeling is real and valid.', summary: 'You are experiencing moderate depression.', tips: ['Follow a simple daily routine', 'Engage in physical activity', 'Talk to someone you trust', 'Try mindfulness exercises', 'Consider speaking with a counselor'] },
+      stress:     { level: 'moderate', message: 'One small step today can shift things significantly.', summary: 'You are under noticeable stress.', tips: ['Identify your top stressors', 'Use a planner to reduce overwhelm', 'Learn to say no', 'Take 30 min daily for something relaxing', 'Talk to someone'] },
+      anxiety:    { level: 'moderate', message: 'With the right tools, you can rewrite that narrative.', summary: 'Your anxiety is noticeably affecting daily life.', tips: ['Practice deep breathing daily', 'Challenge anxious thoughts', 'Regular physical exercise', 'Reduce caffeine intake', 'Consider CBT therapy'] },
+    }
+  });
+}, 3000);
+*/
+</script>
+</body>
+</html>

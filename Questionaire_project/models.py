@@ -112,6 +112,145 @@ class Answer(models.Model):
     def __str__(self):
         return f"A{self.assessment_id}-Q{self.question_id} score={self.answer_score}"
 
+class MSEReport(models.Model):
+    assessment = models.OneToOneField(
+        Assessment, on_delete=models.CASCADE, related_name="mse_report"
+    )
+    report_html = models.TextField(blank=True)   # stores rendered HTML
+    report_pdf  = models.BinaryField(null=True, blank=True)  # optional PDF bytes
+    generated_at = models.DateTimeField(auto_now_add=True)
+    updated_at   = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"MSEReport for Assessment {self.assessment_id}"
+
+class AnalysisResult(models.Model):
+    """
+    Stores the complete output of the post-assessment analysis pipeline
+    for one completed Assessment.
+
+    This table is written once by pipeline_orchestrator.run_pipeline()
+    and can be re-generated safely (update_or_create is used).
+    """
+
+    # ── Link to Assessment ───────────────────────────────────────────────────
+    assessment = models.OneToOneField(
+        "Assessment",          # string reference avoids circular import issues
+        on_delete=models.CASCADE,
+        related_name="analysis_result",
+        help_text="The completed assessment this result belongs to.",
+    )
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    # ── Extracted Levels (from report_parser) ────────────────────────────────
+    depression_level = models.CharField(
+        max_length=20, blank=True, default="",
+        help_text="Severity level: low | moderate | severe",
+    )
+    anxiety_level = models.CharField(
+        max_length=20, blank=True, default="",
+    )
+    stress_level = models.CharField(
+        max_length=20, blank=True, default="",
+    )
+
+    # ── Emotion Data (from report_parser + emotion_mapper) ───────────────────
+    dominant_emotion = models.CharField(
+        max_length=32, blank=True, default="",
+        help_text="Overall dominant emotion: sad | fear | angry | disgust | surprise | neutral | happy",
+    )
+    scale_emotions = models.JSONField(
+        default=dict, blank=True,
+        help_text='Per-scale dominant emotion. e.g. {"depression": "sad", "stress": "angry"}',
+    )
+    emotional_summary = models.TextField(
+        blank=True, default="",
+        help_text="Free-text summary from the student's open-ended reflection (feeling_analysis).",
+    )
+    emotion_labels = models.JSONField(
+        default=list, blank=True,
+        help_text='Concern labels from feeling_analysis. e.g. ["loneliness", "academic_stress"]',
+    )
+    emotion_conditions = models.JSONField(
+        default=list, blank=True,
+        help_text="Mental health conditions mapped from the dominant emotion.",
+    )
+    facial_note = models.TextField(
+        blank=True, default="",
+        help_text="Human-readable note explaining what the facial expression result means.",
+    )
+
+    # ── Recommendations (from recommendation_fetcher) ────────────────────────
+    recommendations_json = models.JSONField(
+        default=dict, blank=True,
+        help_text=(
+            "Full recommendations block for all three scales. "
+            "e.g. {'depression': {'level': 'moderate', 'tips': [...], 'message': '...'}, ...}"
+        ),
+    )
+
+
+    # ── Past Session Comparison (from session_comparator) ────────────────────
+    past_sessions_found = models.PositiveSmallIntegerField(
+        default=0,
+        help_text="Number of past completed sessions found (0, 1, or 2).",
+    )
+    comparison_results = models.JSONField(
+        default=list, blank=True,
+        help_text="List of comparison dicts, one per past session.",
+    )
+    overall_trend = models.CharField(
+        max_length=20, blank=True, default="no_data",
+        help_text="Trend across sessions: improving | worsening | stable | mixed | no_data",
+    )
+    comparison_summary = models.TextField(
+        blank=True, default="",
+        help_text="Human-readable paragraph summarising the trend across past sessions.",
+    )
+    therapist_script = models.TextField(
+        blank=True, default="",
+        help_text="AI-generated conversational therapist monologue based on full analysis.",
+    )
+
+    class Meta:
+        verbose_name = "Analysis Result"
+        verbose_name_plural = "Analysis Results"
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return (
+            f"AnalysisResult(assessment_id={self.assessment_id}, "
+            f"dep={self.depression_level}, anx={self.anxiety_level}, "
+            f"str={self.stress_level}, trend={self.overall_trend})"
+        )
+
+    # ── Convenience properties ───────────────────────────────────────────────
+
+    @property
+    def depression_recommendations(self) -> dict:
+        """Quick access to just the depression recommendation block."""
+        return self.recommendations_json.get("depression", {})
+
+    @property
+    def anxiety_recommendations(self) -> dict:
+        return self.recommendations_json.get("anxiety", {})
+
+    @property
+    def stress_recommendations(self) -> dict:
+        return self.recommendations_json.get("stress", {})
+
+    @property
+    def all_tips(self) -> list:
+        """Return all tips from all three scales as a flat list."""
+        tips = []
+        for scale in ("depression", "anxiety", "stress"):
+            tips.extend(
+                self.recommendations_json.get(scale, {}).get("tips", [])
+            )
+        return tips
+
 
 class EmotionRecord(models.Model):
     STATUS_OK = "ok"

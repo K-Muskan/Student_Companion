@@ -1,0 +1,193 @@
+{% comment %}
+analysis_result.html
+====================
+Template for displaying the full pipeline analysis result.
+Place this file at:
+    templates/Questionaire_project/analysis_result.html
+
+Context variables (provided by view_analysis_result):
+    result          — AnalysisResult model instance
+    recommendations — dict with depression/anxiety/stress blocks
+    consoling       — dict with summary_response, label_responses, combined_message
+    comparison      — dict with past_sessions_found, comparisons, overall_trend, summary
+{% endcomment %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Your Wellbeing Analysis</title>
+    <style>
+        body        { font-family: Arial, sans-serif; max-width: 900px; margin: 0 auto; padding: 24px; background: #f7f8fc; color: #333; }
+        h1          { color: #4a4e8b; }
+        h2          { color: #5a6090; border-bottom: 2px solid #e0e4f0; padding-bottom: 6px; }
+        h3          { color: #6a70a0; }
+        .card       { background: #fff; border-radius: 10px; padding: 20px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.07); }
+        .badge      { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 0.85em; font-weight: bold; margin-left: 8px; }
+        .low        { background: #d4edda; color: #155724; }
+        .moderate   { background: #fff3cd; color: #856404; }
+        .severe     { background: #f8d7da; color: #721c24; }
+        .improving  { background: #d4edda; color: #155724; }
+        .worsening  { background: #f8d7da; color: #721c24; }
+        .stable     { background: #d1ecf1; color: #0c5460; }
+        .mixed      { background: #e2e3e5; color: #383d41; }
+        .no_data    { background: #e2e3e5; color: #383d41; }
+        .tip-list   { padding-left: 20px; }
+        .tip-list li{ margin-bottom: 8px; }
+        .consoling  { background: #f0f4ff; border-left: 4px solid #6c8cff; padding: 14px 18px; border-radius: 0 8px 8px 0; font-style: italic; }
+        .label-tag  { background: #eef0fb; border-radius: 6px; padding: 8px 12px; margin-bottom: 8px; }
+        .label-name { font-weight: bold; color: #4a4e8b; }
+        .compare-block { border: 1px solid #e0e4f0; border-radius: 8px; padding: 14px; margin-bottom: 12px; }
+        .direction-improved { color: #28a745; font-weight: bold; }
+        .direction-worsened { color: #dc3545; font-weight: bold; }
+        .direction-stable   { color: #6c757d; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<h1>Your Wellbeing Analysis</h1>
+<p style="color:#888;">Generated on {{ result.updated_at|date:"d M Y, H:i" }}</p>
+
+<!-- ══════════════════════════════════════════════════════════════
+     SECTION 1: Current Levels
+══════════════════════════════════════════════════════════════ -->
+<div class="card">
+    <h2>📊 Current Assessment Results</h2>
+
+    <p>
+        <strong>Depression:</strong>
+        <span class="badge {{ result.depression_level }}">{{ result.depression_level|capfirst }}</span>
+    </p>
+    <p>
+        <strong>Anxiety:</strong>
+        <span class="badge {{ result.anxiety_level }}">{{ result.anxiety_level|capfirst }}</span>
+    </p>
+    <p>
+        <strong>Stress:</strong>
+        <span class="badge {{ result.stress_level }}">{{ result.stress_level|capfirst }}</span>
+    </p>
+
+    {% if result.dominant_emotion %}
+    <p>
+        <strong>Dominant Emotion Detected:</strong> {{ result.dominant_emotion|capfirst }}
+    </p>
+    {% endif %}
+
+    {% if result.facial_note %}
+    <p style="color:#555; font-style: italic;">{{ result.facial_note }}</p>
+    {% endif %}
+
+    {% if result.emotion_conditions %}
+    <p>
+        <strong>Emotion linked to:</strong>
+        {% for c in result.emotion_conditions %}
+            <span class="badge moderate">{{ c|capfirst }}</span>
+        {% endfor %}
+    </p>
+    {% endif %}
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════
+     SECTION 2: Consoling Message
+══════════════════════════════════════════════════════════════ -->
+<div class="card">
+    <h2>💬 A Message For You</h2>
+
+    {% if consoling.summary_response %}
+    <div class="consoling">
+        <p>{{ consoling.summary_response }}</p>
+    </div>
+    {% endif %}
+
+    {% if consoling.label_responses %}
+    <h3>Your Specific Concerns</h3>
+    {% for label, message in consoling.label_responses.items %}
+    <div class="label-tag">
+        <span class="label-name">{{ label|title|cut:"_" }}</span>
+        <p style="margin: 6px 0 0 0;">{{ message }}</p>
+    </div>
+    {% endfor %}
+    {% endif %}
+
+    {% if consoling.combined_message %}
+    <div class="consoling" style="margin-top: 16px; background: #f5fff0; border-left-color: #28a745;">
+        <p>{{ consoling.combined_message }}</p>
+    </div>
+    {% endif %}
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════
+     SECTION 3: Recommendations
+══════════════════════════════════════════════════════════════ -->
+<div class="card">
+    <h2>📋 Recommendations</h2>
+
+    {% for scale_name, rec in recommendations.items %}
+    <div style="margin-bottom: 20px;">
+        <h3>{{ scale_name|capfirst }} — <span class="badge {{ rec.level }}">{{ rec.level|capfirst }}</span></h3>
+        <p>{{ rec.summary }}</p>
+        {% if rec.tips %}
+        <ul class="tip-list">
+            {% for tip in rec.tips %}
+            <li>{{ tip }}</li>
+            {% endfor %}
+        </ul>
+        {% endif %}
+        <p style="font-style: italic; color: #555;">{{ rec.message }}</p>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════
+     SECTION 4: Past Session Comparison
+══════════════════════════════════════════════════════════════ -->
+<div class="card">
+    <h2>📈 Progress Over Time</h2>
+
+    <p>
+        <strong>Overall Trend:</strong>
+        <span class="badge {{ comparison.overall_trend }}">{{ comparison.overall_trend|capfirst }}</span>
+    </p>
+
+    <p>{{ comparison.summary }}</p>
+
+    {% if comparison.comparisons %}
+    {% for comp in comparison.comparisons %}
+    <div class="compare-block">
+        <h3>Compared to session on {{ comp.past_session_date }}</h3>
+
+        {% for scale, info in comp.scale_comparisons.items %}
+        <p>
+            <strong>{{ scale|capfirst }}:</strong>
+            {{ info.past_level|capfirst }} →
+            <span class="direction-{{ info.direction }}">{{ info.current_level|capfirst }}</span>
+            ({{ info.direction }})
+            {% if info.score_delta != 0 %}
+                — score change: {{ info.score_delta }}
+            {% endif %}
+        </p>
+        {% endfor %}
+
+        {% if comp.emotion_changes.new_concerns %}
+        <p><strong>New concerns:</strong> {{ comp.emotion_changes.new_concerns|join:", " }}</p>
+        {% endif %}
+        {% if comp.emotion_changes.resolved %}
+        <p><strong>Resolved:</strong> {{ comp.emotion_changes.resolved|join:", " }}</p>
+        {% endif %}
+        {% if comp.emotion_changes.persistent %}
+        <p><strong>Still present:</strong> {{ comp.emotion_changes.persistent|join:", " }}</p>
+        {% endif %}
+    </div>
+    {% endfor %}
+    {% else %}
+    <p style="color:#888;">No previous sessions found. Your progress will be tracked from this point forward.</p>
+    {% endif %}
+</div>
+
+<p style="text-align: center; color: #aaa; margin-top: 30px;">
+    Student Companion — Mental Health Support System
+</p>
+
+</body>
+</html>

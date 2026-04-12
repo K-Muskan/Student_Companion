@@ -30,9 +30,22 @@ DEBUG = True
 ALLOWED_HOSTS = ["crunodal-libbie-preconsciously.ngrok-free.dev","127.0.0.1",
     "localhost"]
 
-##GEMINI_API_KEY = "################"#place api key here
+SYNC_SO_API_KEY = ""
+
+# ── Virtual Therapist / Wav2Lip ────────────────────────────────────────────
+WAV2LIP_DIR        = r"C:\Wav2Lip\Wav2Lip"
+WAV2LIP_CHECKPOINT = r"C:\Wav2Lip\Wav2Lip\checkpoints\wav2lip_gan.pth"
+WAV2LIP_IMAGE      = r"C:\Wav2Lip\Wav2Lip\therapist_image.jpg"  # ADD THIS
+
+MEDIA_URL  = "/media/"
+MEDIA_ROOT = BASE_DIR / "media"
+
+
+GEMINI_API_KEY = ""
+GROQ_API_KEY = ""
 HUGGING_FACE_TOKEN = ""#hugging face token
-OPENROUTER_API_KEY = "s" #openrouter api
+OPENROUTER_API_KEY = "" #openrouter api
+
 # Application definition
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -126,7 +139,7 @@ ASGI_APPLICATION = 'StudentCompanion.asgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'student_companion',
+        'NAME': 'student-companion',
         'USER': 'postgres',
         'PASSWORD': 'admin',
         'HOST': 'localhost',

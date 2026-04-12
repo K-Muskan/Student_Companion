@@ -23,3 +23,6 @@ tensorflow==2.20.0
 tf-keras==2.20.1
 tzdata==2025.3
 urllib3==2.6.3
+google-generativeai
+edge-tts
+gradio_client

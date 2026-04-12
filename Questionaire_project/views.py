@@ -10,6 +10,12 @@ from django.http import HttpResponse, JsonResponse
 from django.shortcuts import redirect, render
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.views.decorators.http import require_http_methods
+from django.template.loader import render_to_string
+from .models import MSEReport
+from django.shortcuts import get_object_or_404
+from .pipeline_orchestrator import run_pipeline, PipelineError
+from .models import AnalysisResult
+
 
 from .emotion_services import (
     build_emotion_summary,
@@ -303,6 +309,69 @@ def _get_or_create_assessment(request):
     request.session.modified = True
     return assessment
 
+@ensure_csrf_cookie
+def therapist_session(request, assessment_id: int):
+    """
+    GET  /assessment/therapist/<assessment_id>/
+    Shows the Virtual Therapist page.
+    If the video hasn't been generated yet for this assessment, kicks off
+    a background thread to generate it, then returns the page immediately
+    (the page polls /therapist/status/<id>/ until the video is ready).
+    """
+    from .virtual_assistant import generate_therapist_video, load_timing_log
+    import threading
+ 
+    assessment = get_object_or_404(Assessment, id=assessment_id, is_completed=True)
+ 
+    # Pull therapist_script from AnalysisResult (preferred) or fall back to
+    # a generic message so the page is never empty.
+    therapist_script = ""
+    try:
+        ar = AnalysisResult.objects.get(assessment=assessment)
+        therapist_script = ar.therapist_script or ""
+    except AnalysisResult.DoesNotExist:
+        pass
+ 
+    if not therapist_script:
+        therapist_script = (
+            "I hear how much you have been carrying lately, and I want you to know "
+            "it is okay to feel overwhelmed. We will take this one step at a time. "
+            "Together, we can explore these feelings and find small ways to bring "
+            "a bit more peace into your day. You are not alone in this."
+        )
+ 
+    # Only kick off generation if not already done / in progress
+    timing = load_timing_log(assessment_id)
+    if timing["status"] not in ("processing", "done"):
+        def _run():
+            generate_therapist_video(assessment_id, therapist_script)
+ 
+        t = threading.Thread(target=_run, daemon=True)
+        t.start()
+ 
+    return render(request, "Questionaire_project/therapist.html", {
+        "assessment_id": assessment_id,
+        "therapist_script": therapist_script,
+    })
+ 
+ 
+@require_http_methods(["GET"])
+def therapist_status(request, assessment_id: int):
+    from .virtual_assistant import load_timing_log
+    assessment = get_object_or_404(Assessment, id=assessment_id, is_completed=True)
+    timing = load_timing_log(assessment_id)
+    
+    # Add recommendations to the status payload
+    if timing.get("status") == "done":
+        try:
+            ar = AnalysisResult.objects.get(assessment=assessment)
+            timing["recommendations_json"] = ar.recommendations_json
+        except AnalysisResult.DoesNotExist:
+            pass
+    
+    return JsonResponse(timing)
+ 
+
 
 def _ensure_questions_in_db():
     """Seed all scale questions in to the DB if not already present."""
@@ -448,6 +517,107 @@ def _build_question_context(request, qid, assessment=None):
         'emotion_client_max_frame_width': int(getattr(settings, "EMOTION_CLIENT_MAX_FRAME_WIDTH", 640)),
         'emotion_client_max_encoded_bytes': int(getattr(settings, "EMOTION_CLIENT_MAX_ENCODED_BYTES", 900000)),
     }
+
+
+def view_saved_report(request, assessment_id):
+    report = get_object_or_404(MSEReport, assessment_id=assessment_id)
+    return HttpResponse(report.report_html, content_type="text/html")
+
+
+
+@require_http_methods(["POST"])
+def trigger_analysis_pipeline(request, assessment_id: int):
+    """
+    POST /questionnaire/analysis/<assessment_id>/run/
+ 
+    Trigger the post-assessment analysis pipeline for a given assessment.
+ 
+    Who calls this?
+    ---------------
+    Option A (recommended): Call this automatically at the END of the
+    `complete` view, right before returning the HttpResponse.
+ 
+    Option B: Call it manually from a button on the results page,
+    or via a background task (Celery etc.) if you prefer async execution.
+ 
+    How to call it from complete() view (Option A)
+    -----------------------------------------------
+    Add these lines inside your `complete` view, just before the final
+    `return HttpResponse(rendered_html)`:
+ 
+        try:
+            run_pipeline(assessment, request.user)
+        except PipelineError as e:
+            logger.warning("pipeline_skipped: %s", e)
+        # Then continue with the normal return
+ 
+    What it returns
+    ---------------
+    JSON:
+        {"status": "success", "analysis_result_id": 42}   on success
+        {"status": "error",   "message": "..."}            on failure
+    """
+    try:
+        assessment = get_object_or_404(Assessment, id=assessment_id, is_completed=True)
+ 
+        # Security: only allow the owner (by session or user) to trigger analysis
+        if request.user.is_authenticated:
+            if assessment.user and assessment.user != request.user:
+                return JsonResponse({"status": "error", "message": "Forbidden"}, status=403)
+        else:
+            if assessment.session_key != request.session.session_key:
+                return JsonResponse({"status": "error", "message": "Forbidden"}, status=403)
+ 
+        result = run_pipeline(assessment, request.user)
+ 
+        return JsonResponse({
+            "status":             "success",
+            "analysis_result_id": result.id,
+            "overall_trend":      result.overall_trend,
+        })
+ 
+    except PipelineError as exc:
+        logger.error("trigger_analysis_pipeline failed: %s", exc)
+        return JsonResponse({"status": "error", "message": str(exc)}, status=500)
+    except Exception:
+        logger.exception("trigger_analysis_pipeline unexpected error")
+        return JsonResponse({"status": "error", "message": "Unexpected error"}, status=500)
+ 
+ 
+@ensure_csrf_cookie
+def view_analysis_result(request, assessment_id: int):
+    """
+    GET /questionnaire/analysis/<assessment_id>/
+ 
+    Display the full pipeline analysis result for an assessment.
+ 
+    What it does:
+    - Fetches the AnalysisResult for the given assessment.
+    - Renders it with a template (analysis_result.html).
+    - Returns 404 if the pipeline hasn't been run yet.
+ 
+    Template context keys:
+        result              AnalysisResult instance
+        recommendations     dict  (depression/anxiety/stress tips)
+        consoling           dict  (summary_response, label_responses, combined_message)
+        comparison          dict  (past_sessions_found, comparisons, overall_trend, summary)
+    """
+    assessment    = get_object_or_404(Assessment, id=assessment_id, is_completed=True)
+    analysis      = get_object_or_404(AnalysisResult, assessment=assessment)
+ 
+    context = {
+        "result":          analysis,
+        "recommendations": analysis.recommendations_json,
+       
+        "comparison": {
+            "past_sessions_found": analysis.past_sessions_found,
+            "comparisons":         analysis.comparison_results,
+            "overall_trend":       analysis.overall_trend,
+            "summary":             analysis.comparison_summary,
+        },
+    }
+ 
+    return render(request, "Questionaire_project/analysis_result.html", context)
 
 
 def _extract_scale_scores(answers_dict):
@@ -948,8 +1118,24 @@ def complete(request):
             'immediate_intervention': immediate,
             'timestamp': report_json['timestamp'],
             'feeling_analysis': report_json.get('feeling_analysis', {}),  # ADD THIS
+            'assessment_id': assessment.id, 
         }
-        return render(request, 'Questionaire_project/complete.html', context)
+        # Render complete.html as string
+        rendered_html = render_to_string('Questionaire_project/complete.html', context)
+
+        # Save in DB
+        MSEReport.objects.update_or_create(
+            assessment=assessment,
+            defaults={'report_html': rendered_html}
+        )
+        try:
+            from .pipeline_orchestrator import run_pipeline, PipelineError
+            run_pipeline(assessment, request.user)
+            logger.info("pipeline_run_ok: assessment_id=%s", assessment.id)
+        except PipelineError as _pe:
+            logger.warning("pipeline_skipped: %s", _pe)
+        # Return the same page to user
+        return HttpResponse(rendered_html)
 
     except Exception:
         logger.exception("complete_failed", extra={"correlation_id": cid})
