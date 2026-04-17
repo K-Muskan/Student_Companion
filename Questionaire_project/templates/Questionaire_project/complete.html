@@ -154,7 +154,13 @@ body { font-family:var(--font); background:linear-gradient(135deg,#2D5F8D,#1E426
       <h1>Mental Health Assessment Results</h1>
       <p>Student Companion — Clinical Scale Report</p>
       <div class="header-meta">
-        <span>📅 {{ timestamp }}</span>
+        <span>📅 
+          {
+            {
+              timestamp
+            }
+          }
+        </span>
         <span>📋 Three-Scale Assessment</span>
       </div>
     </div>
@@ -186,13 +192,20 @@ body { font-family:var(--font); background:linear-gradient(135deg,#2D5F8D,#1E426
   </div>
 
   <!-- ACTION BAR -->
-  <div class="action-bar">
-    <a href="/assessment/" class="btn btn-primary">← New Assessment</a>
-    <a href="/assessment/download-report-text/" class="btn btn-primary">⬇ Text Report</a>
-    <a href="/assessment/download-report-json/" class="btn btn-secondary">⬇ JSON Data</a>
+ <div class="action-bar">
+    <a href="/assessment/" class="btn btn-secondary">← New Assessment</a>
+    
+    <a href="#" 
+       onclick="event.preventDefault(); logAndDownload('{{ assessment_id }}', 'text', '/assessment/download-report-text/')" 
+       class="btn btn-primary">⬇ Text Report</a>
+    
+    <a href="#" 
+       onclick="event.preventDefault(); logAndDownload('{{ assessment_id }}', 'json', '/assessment/download-report-json/')" 
+       class="btn btn-secondary">⬇ JSON Data</a>
+    
     <button onclick="window.print()" class="btn btn-secondary">🖨 Print</button>
     <a href="/assessment/therapist/{{ assessment_id }}/" class="btn btn-primary">🤖 Talk to Therapist</a>
-  </div>
+</div>
 
   <!-- THREE SCALE CARDS -->
   <div class="scales-grid">
@@ -493,7 +506,24 @@ body { font-family:var(--font); background:linear-gradient(135deg,#2D5F8D,#1E426
         }
       }
     });
-  })();
+  }
+  
+)();
+function logAndDownload(assessmentId, downloadType, downloadUrl) {
+    // 1. Attempt to log the activity to your backend
+    fetch(`/api/log-download/${assessmentId}/${downloadType}/`, {
+        method: 'GET',
+        headers: { 
+            'X-Requested-With': 'XMLHttpRequest',
+            'X-CSRFToken': document.cookie.match(/csrftoken=([^;]+)/)?.[1] || '' 
+        }
+    })
+    .catch(err => console.error("Logging failed:", err)) // Log error but don't stop the user
+    .finally(() => {
+        // 2. Trigger the actual download by redirecting the browser
+        window.location.href = downloadUrl;
+    });
+}
   </script>
   {% endif %}
   <!-- ═══════════════════════════════════════════════════════════════════════ -->

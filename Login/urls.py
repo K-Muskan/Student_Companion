@@ -3,7 +3,6 @@ from . import views
 
 urlpatterns = [
     path('', views.home, name='home'),
-    #new urls of this layers app only can be added here
     path('dashboard/', views.dashboard, name='dashboard'),
+    path('api/analytics/', views.dashboard_analytics, name='dashboard_analytics'),
 ]
-

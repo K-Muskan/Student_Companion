@@ -89,7 +89,7 @@ class EmotionManager{
     const smoothed=Object.keys(counts).sort((a,b)=>counts[b]-counts[a])[0]||rawEmotion||'uncertain';
     const latency=payload.latency_ms!=null?`${payload.latency_ms}ms`:'n/a';
     const status=payload.status||'ok';
-    const meta=`Frame ${payload.frame_number??'-'} â€¢ ${status} â€¢ ${latency}`;
+    const meta=`Frame ${payload.frame_number??'-'}    ${status}    ${latency}`;
     this.setEmotionState(smoothed,meta,payload.scores||payload.emotion_scores||{});
   }
   syncPreview(){document.querySelectorAll('[data-shared-preview]').forEach(v=>{v.srcObject=this.stream;});}
@@ -194,7 +194,7 @@ class App{
     return `<div class="camera"><video data-shared-preview autoplay muted playsinline></video><div style="margin-top:12px"><span data-camera-badge class="cam-badge disconnected">Camera disconnected</span></div>${this.emotionPanel(false)}</div>`;
   }
   openLeft(){
-    return `<div class="open-panel"><div class="open-icon">ðŸ’¬</div><h2>Your Voice Matters</h2><p>This is a safe space. Feel free to share anything â€” a recent experience, how you have been feeling, or something on your mind. Your response is confidential.</p></div>`;
+    return `<div class="open-panel"><div class="open-icon"> </div><h2>Your Voice Matters</h2><p>This is a safe space. Feel free to share anything” a recent experience, how you have been feeling, or something on your mind. Your response is confidential.</p></div>`;
   }
   finalLeft(){
     return `<div class="loading"><h1>Analysing Your Responses</h1><p>Please wait while we process your assessment</p><div class="track" style="width:100%;max-width:400px;height:8px;background:rgba(255,255,255,.2);margin:18px 0 12px"><div class="fill" id="progressFill" style="width:0%"></div></div><div id="progressText" style="font-weight:700;color:#E8925C;margin-bottom:20px">0%</div><div class="loading-steps"><div class="step active" id="step1"><div class="icon"><div class="spinner"></div></div><span>Processing depression responses...</span></div><div class="step" id="step2"><div class="icon"></div><span>Processing stress responses...</span></div><div class="step" id="step3"><div class="icon"></div><span>Processing anxiety responses...</span></div><div class="step" id="step4"><div class="icon"></div><span>Running clinical analysis...</span></div><div class="step" id="step5"><div class="icon"></div><span>Generating report...</span></div></div></div>`;
@@ -203,12 +203,12 @@ class App{
   // â”€â”€ Right panel renderers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   titleRight(){
     const q=this.state.question;
-    return `<div style="display:flex;flex-direction:column;justify-content:center;height:100%"><div class="badge" style="background:rgba(45,95,141,.08);border:2px solid var(--primary);color:var(--primary);margin-bottom:20px">${esc(label(this.state.stream_scale))} Scale</div><h2 style="font-family:var(--display);font-size:2em;color:var(--primary-dark);margin-bottom:12px">${esc(q.title)}</h2><p style="color:#475569;line-height:1.7;margin-bottom:28px">${esc(q.description)}</p><button class="begin" id="beginBtn">Begin Assessment â†’</button><div class="title-strip"><span data-camera-badge class="cam-badge disconnected">Camera disconnected</span><span class="note">Continuous capture stays active until this scale is finished.</span></div>${this.emotionPanel(true)}</div>`;
+    return `<div style="display:flex;flex-direction:column;justify-content:center;height:100%"><div class="badge" style="background:rgba(45,95,141,.08);border:2px solid var(--primary);color:var(--primary);margin-bottom:20px">${esc(label(this.state.stream_scale))} Scale</div><h2 style="font-family:var(--display);font-size:2em;color:var(--primary-dark);margin-bottom:12px">${esc(q.title)}</h2><p style="color:#475569;line-height:1.7;margin-bottom:28px">${esc(q.description)}</p><button class="begin" id="beginBtn">Begin Assessment </button><div class="title-strip"><span data-camera-badge class="cam-badge disconnected">Camera disconnected</span><span class="note">Continuous capture stays active until this scale is finished.</span></div>${this.emotionPanel(true)}</div>`;
   }
   questionRight(){
     const s=this.state,q=s.question;
     const opts=(q.options||[]).map((o,i)=>`<button class="opt ${s.previous_score===i?'selected':''}" data-score="${i}"><div class="score">${i}</div><div>${esc(o)}</div></button>`).join('');
-    return `<div class="progress-header"><div class="progress-label"><span>${esc(subtitle(q.scale))} â€” Question ${s.scale_position} of ${s.scale_total}</span><span>${s.progress_percent}% complete</span></div><div class="track"><div class="fill" style="width:${s.progress_percent}%"></div></div></div><div class="pill ${esc(q.scale)}">${esc(label(q.scale))}</div><div class="qlabel">Question ${s.scale_position} of ${s.scale_total}</div><div class="qtext">${esc(q.question_text)}</div><div class="options">${opts}</div><div class="camera-box"><span data-camera-badge class="cam-badge disconnected">Camera disconnected</span><span class="note">Continuous capture remains active until this scale is finished.</span></div>${this.emotionPanel(true)}<div class="buttons">${s.prev_qid?'<button class="btn btn-secondary" id="prevBtn">â† Back</button>':''}<button class="btn btn-primary" id="nextBtn" ${s.previous_score===null?'disabled':''}>${s.next_qid?'Next â†’':'Next â†’'}</button></div>`;
+    return `<div class="progress-header"><div class="progress-label"><span>${esc(subtitle(q.scale))}  Question ${s.scale_position} of ${s.scale_total}</span><span>${s.progress_percent}% complete</span></div><div class="track"><div class="fill" style="width:${s.progress_percent}%"></div></div></div><div class="pill ${esc(q.scale)}">${esc(label(q.scale))}</div><div class="qlabel">Question ${s.scale_position} of ${s.scale_total}</div><div class="qtext">${esc(q.question_text)}</div><div class="options">${opts}</div><div class="camera-box"><span data-camera-badge class="cam-badge disconnected">Camera disconnected</span><span class="note">Continuous capture remains active until this scale is finished.</span></div>${this.emotionPanel(true)}<div class="buttons">${s.prev_qid?'<button class="btn btn-secondary" id="prevBtn">   Back</button>':''}<button class="btn btn-primary" id="nextBtn" ${s.previous_score===null?'disabled':''}>${s.next_qid?'Next  ':'Next  '}</button></div>`;
   }
   openRight(){
     const s=this.state,q=s.question;
@@ -216,7 +216,7 @@ class App{
     return `
       <div class="progress-header">
         <div class="progress-label">
-          <span>Final Question â€” Optional Reflection</span>
+          <span>Final Question  ” Optional Reflection</span>
           <span>${s.progress_percent}% complete</span>
         </div>
         <div class="track"><div class="fill" style="width:${s.progress_percent}%"></div></div>
@@ -229,13 +229,14 @@ class App{
           class="open-textarea"
           id="openTextarea"
           maxlength="3000"
-          placeholder="Feel free to share anything â€” a recent experience, something on your mind, or how you have been feeling lately. This is completely optional."
+          placeholder="Feel free to share anything ” a recent experience, something on your mind, or how you have been feeling lately. This is completely optional."
         >${esc(saved)}</textarea>
         <div class="char-count"><span id="charCount">${saved.length}</span> / 3000</div>
       </div>
       <div class="buttons">
-        ${s.prev_qid?'<button class="btn btn-secondary" id="prevBtn">â† Back</button>':''}
-        <button class="btn btn-primary" id="nextBtn">Submit Assessment â†’</button>
+        ${s.prev_qid?'<button class="btn btn-secondary" id="prevBtn">Back</button>':''}
+        <button class="btn btn-primary" id="nextBtn">Submit Assessment 
+          </button>
       </div>
       <button class="open-skip" id="skipBtn">Skip this question</button>
     `;
@@ -332,7 +333,7 @@ class App{
       const d=await r.json();
       if(d.status!=='success'){alert(`Failed to save: ${d.message||'Unknown error'}`);return;}
     }catch(e){
-      // Network error â€” still navigate so the user isn't stuck
+      // Network error  ” still navigate so the user isn't stuck
       console.warn('save-text-answer failed, continuing anyway',e);
     }
     if(this.state.next_qid) await this.navigate(this.state.next_qid);

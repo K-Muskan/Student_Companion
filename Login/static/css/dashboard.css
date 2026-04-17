@@ -164,6 +164,9 @@ body {
     font-weight: 500;
 }
 
+
+
+
 .btn-logout {
     padding: var(--spacing-sm) var(--spacing-lg);
     background: transparent;
@@ -309,27 +312,68 @@ body {
     background: var(--color-bg-secondary);
 }
 
-/* Metrics Grid */
-.metrics-grid {
-    display: grid;
-    grid-template-columns: 2fr 1fr 1fr 1fr;
-    gap: var(--spacing-lg);
-    animation: fadeInUp 0.6s ease 0.1s both;
+
+
+/* Card Styling */
+/* FORCE THE ROW LAYOUT */
+.dashboard-overview-row {
+    display: grid !important;
+    grid-template-columns: repeat(3, 1fr) !important; /* Forces 3 columns */
+    gap: var(--spacing-lg) !important;
+    width: 100% !important;
+    margin-bottom: var(--spacing-xl);
 }
 
+/* FORCE THE CARD STYLE */
 .metric-card {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: flex-start !important; /* Stops the stretching */
     background: var(--color-bg-card);
+    padding: var(--spacing-lg);
     border-radius: var(--radius-xl);
-    padding: var(--spacing-xl);
-    box-shadow: var(--shadow-sm);
     border: 1px solid var(--color-border-light);
-    transition: all var(--transition-base);
+    min-width: 0; /* Prevents overflow */
+    height: 100%;
+}
+
+/* STOP THE ICONS FROM STRETCHING */
+.metric-icon {
+    width: 48px !important;
+    height: 48px !important;
+    flex-shrink: 0 !important;
 }
 
 .metric-card:hover {
     box-shadow: var(--shadow-md);
     transform: translateY(-2px);
 }
+
+/* Colors for specific card icons */
+.risk-card .metric-icon { background: #E89B9B; color: white; }
+.mood-card .metric-icon { background: #E8A87C; color: white; }
+.streak-card .metric-icon { background: var(--color-accent); color: white; }
+
+/* Font styling for consistency */
+.metric-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin: var(--spacing-xs) 0;
+    color: var(--color-text-primary);
+}
+
+.metric-description {
+    font-size: 0.85rem;
+    color: var(--color-text-secondary);
+}
+
+/* Responsive: Stack them on mobile devices */
+@media (max-width: 992px) {
+    .dashboard-overview-row {
+        grid-template-columns: 1fr; /* Stacks them on small screens */
+    }
+}
+
 
 .metric-card.featured {
     background: linear-gradient(135deg, #6B9AC4 0%, #4A7AA0 100%);
@@ -459,10 +503,8 @@ body {
     margin-bottom: var(--spacing-sm);
 }
 
-.metric-card .metric-description {
-    color: var(--color-text-secondary);
-    text-align: left;
-}
+
+
 
 /* Mood Card */
 .mood-card {
@@ -890,7 +932,96 @@ body {
     background: #DBEAFE;
     color: #1E40AF;
 }
+/* ─── CLINICAL RECOMMENDATIONS (FIXED) ────────────────────────────────────── */
+/* Paste this block into dashboard.css, replacing or after any existing .recommendation-card styles */
 
+.rec-empty {
+    color: #9ca3af;
+    font-size: 13px;
+    padding: 12px 0;
+}
+
+/* One block per scale (Depression / Anxiety / Stress) */
+.rec-scale-block {
+    background: var(--scale-bg, rgba(107,154,196,0.06));
+    border: 1px solid color-mix(in srgb, var(--scale-color, #6B9AC4) 20%, transparent);
+    border-left: 3px solid var(--scale-color, #6B9AC4);
+    border-radius: 10px;
+    padding: 14px 16px;
+    margin-bottom: 12px;
+    transition: box-shadow 0.2s;
+}
+
+.rec-scale-block:last-child {
+    margin-bottom: 0;
+}
+
+.rec-scale-block:hover {
+    box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+}
+
+/* Header row: icon · label · badge */
+.rec-scale-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 10px;
+}
+
+.rec-scale-icon {
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+.rec-scale-label {
+    font-weight: 700;
+    font-size: 14px;
+    color: #1f2937;
+    flex: 1;
+}
+
+/* Level badge */
+.rec-level-badge {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 2px 9px;
+    border-radius: 20px;
+    letter-spacing: 0.3px;
+    text-transform: uppercase;
+}
+
+.lvl-low      { background: #e8f5e9; color: #2e7d32; }
+.lvl-moderate { background: #fff3e0; color: #e65100; }
+.lvl-high     { background: #fce4ec; color: #c62828; }
+.lvl-extreme  { background: #b71c1c; color: #fff; }
+
+/* Tips list */
+.rec-tips-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+}
+
+.rec-tip-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    font-size: 13px;
+    color: #374151;
+    line-height: 1.5;
+}
+
+.rec-tip-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    margin-top: 6px;
+}
 .panel-footer {
     margin-top: var(--spacing-lg);
     padding-top: var(--spacing-lg);
@@ -915,22 +1046,26 @@ body {
 }
 
 /* Quick Stats */
+
 .quick-stats {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: var(--spacing-lg);
-    animation: fadeInUp 0.6s ease 0.4s both;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+    margin-top: 40px;
+    margin-bottom: 60px; /* Space between cards and footer */
+    width: 100%;
 }
 
+/* Fix for individual stat items to prevent squishing */
 .stat-item {
-    background: var(--color-bg-card);
-    border-radius: var(--radius-lg);
-    padding: var(--spacing-lg);
+    background: white;
+    padding: 24px;
+    border-radius: 16px;
     display: flex;
     align-items: center;
-    gap: var(--spacing-md);
-    border: 1px solid var(--color-border-light);
-    transition: all var(--transition-base);
+    gap: 16px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    min-height: 100px;
 }
 
 .stat-item:hover {
@@ -967,20 +1102,29 @@ body {
     color: var(--color-text-secondary);
     margin-top: var(--spacing-xs);
 }
-
-/* Modal */
 .modal {
-    display: none;
+    display: none; 
     position: fixed;
     z-index: 1000;
-    left: 0;
-    top: 0;
-    width: 100%;
+    left: 0; top: 0;
+    width: 100%; 
     height: 100%;
-    overflow: auto;
-    background-color: rgba(26, 31, 54, 0.7);
+    background-color: rgba(0,0,0,0.6);
+    align-items: center;
+    justify-content: center;
     backdrop-filter: blur(4px);
-    animation: fadeIn 0.3s ease;
+}
+
+/* Allow the report container to be wide and readable */
+.modal-content.mse-report {
+    background: #fff;
+    width: 95%;
+    max-width: 1100px; /* Increased width for better report layout */
+    max-height: 90vh;
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
 }
 
 .modal.show {
@@ -991,18 +1135,13 @@ body {
 }
 
 .modal-content {
-    background: var(--color-bg-card);
-    border-radius: var(--radius-xl);
-    max-width: 900px;
-    width: 100%;
-    max-height: 90vh;
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
-    box-shadow: var(--shadow-xl);
-    animation: slideUp 0.3s ease;
+    margin: 5% auto;
+    width: 80%;
+    max-width: 800px;
+    background: #fff;
+    border-radius: 12px;
+    padding: 20px;
 }
-
 .modal-header {
     padding: var(--spacing-xl);
     border-bottom: 1px solid var(--color-border);
@@ -1039,8 +1178,14 @@ body {
     color: white;
 }
 
+/* Fix for the report internal "page" look */
+.modal-body .page {
+    box-shadow: none !important;
+    margin: 0 auto !important;
+    border-radius: 0 !important;
+}
 .modal-body {
-    padding: var(--spacing-xl);
+    padding: 0; /* Remove padding to let report header touch edges */
     overflow-y: auto;
     flex: 1;
 }
@@ -1356,7 +1501,7 @@ body {
     .metrics-grid {
         grid-template-columns: 1fr 1fr;
     }
-    
+        
     .metric-card.featured {
         grid-column: span 2;
         grid-row: auto;
@@ -1424,6 +1569,55 @@ body {
     }
     
     .stat-item {
+        flex-direction: column;
+        text-align: center;
+    }
+}
+
+
+.dashboard-footer {
+    background: #ffffff;
+    border-top: 1px solid #e2e8f0;
+    padding: 40px 0;
+    margin-top: 60px;
+    color: #64748b;
+}
+
+.footer-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 20px;
+}
+
+.footer-brand {
+    font-weight: 700;
+    color: #1a365d;
+    margin-bottom: 4px;
+}
+
+.footer-links {
+    display: flex;
+    gap: 24px;
+}
+
+.footer-links a {
+    color: #64748b;
+    text-decoration: none;
+    font-size: 0.9rem;
+    transition: color 0.2s;
+}
+
+.footer-links a:hover {
+    color: #1a365d;
+}
+
+@media (max-width: 600px) {
+    .footer-container {
         flex-direction: column;
         text-align: center;
     }

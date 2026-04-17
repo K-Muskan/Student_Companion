@@ -139,3 +139,6 @@ def generate_therapist_script(analysis_result) -> str:
                 "and remember that your well-being is the most important thing right now.")
 
     return response_text
+
+
+    

@@ -23,7 +23,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY =  'django-insecure-)x_iiq9%b(zpq(6%0y0h*vhu^)6ym(y21!tie87_e*#kmcg&'
+SECRET_KEY =  ''
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
@@ -40,11 +40,11 @@ WAV2LIP_IMAGE      = r"C:\Wav2Lip\Wav2Lip\therapist_image.jpg"  # ADD THIS
 MEDIA_URL  = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
 
-
 GEMINI_API_KEY = ""
 GROQ_API_KEY = ""
 HUGGING_FACE_TOKEN = ""#hugging face token
 OPENROUTER_API_KEY = "" #openrouter api
+
 
 # Application definition
 INSTALLED_APPS = [
@@ -86,8 +86,8 @@ SOCIALACCOUNT_PROVIDERS = {
             'include_granted_scopes': 'true',
         },
         'APP': {
-            'client_id': "",
-            'secret': '',
+            'client_id': "799103574658-8kdno7qkq5j2pgd03t3jf4ooa5l6s576.apps.googleusercontent.com",
+            'secret': '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',
             'key': ''
         }
     }
@@ -139,9 +139,9 @@ ASGI_APPLICATION = 'StudentCompanion.asgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'student-companion',
+        'NAME': 'Student_companion',
         'USER': 'postgres',
-        'PASSWORD': 'admin',
+        'PASSWORD': 'muskan',
         'HOST': 'localhost',
         'PORT': '5432',
     }

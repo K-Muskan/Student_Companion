@@ -35,3 +35,4 @@ urlpatterns = [
     path('therapist/<int:assessment_id>/', views.therapist_session, name='therapist_session'),
     path('therapist/status/<int:assessment_id>/', views.therapist_status, name='therapist_status'),
 ]
+
