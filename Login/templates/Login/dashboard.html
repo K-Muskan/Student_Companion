@@ -20,11 +20,16 @@
                 <h1 class="brand-name">StudentCompanion</h1>
                 <span class="brand-tagline">Mental Wellness Hub</span>
             </div>
-            <div class="nav-menu">
+            <!-- <div class="nav-menu">
                 <a href="#overview" class="nav-link active">Overview</a>
                 <a href="#sessions" class="nav-link">Sessions</a>
                 <a href="#insights" class="nav-link">Insights</a>
                 <a href="#resources" class="nav-link">Resources</a>
+            </div> -->
+            <div class="nav-menu">
+                <a href="#overview-top" class="nav-link active">Overview</a>
+                <a href="#sessions-section" class="nav-link">Sessions</a>
+                <a href="#insights-section" class="nav-link">Insights</a>
             </div>
             <div class="nav-user">
                 <span class="user-email">{{ user.email|default:"mallahkhadija97@gmail.com" }}</span>
@@ -54,7 +59,7 @@
         <div class="dashboard-container">
 
             <!-- Welcome Section -->
-            <section class="welcome-section">
+            <section id="overview-top" class="welcome-section">
                 <div class="welcome-content">
                     <h2 class="welcome-title">Welcome back, {{ user.first_name|default:"Student" }}! 👋</h2>
                     <p class="welcome-subtitle">Here's your mental wellness overview</p>
@@ -109,16 +114,17 @@
 </div>
 
             <!-- Charts Section -->
-            <section class="charts-section">
+            <section id="insights-section" class="charts-section">
                 <!-- Mood Trend Chart -->
                 <div class="chart-card">
                     <div class="chart-header">
                         <h3 class="chart-title">Mood Trend (Last 30 Days)</h3>
-                        <select class="chart-filter">
-                            <option>Last 7 Days</option>
-                            <option selected>Last 30 Days</option>
-                            <option>Last 3 Months</option>
-                        </select>
+                        <select id="chartTimeFilter" class="chart-filter">
+    <option value="7">Last 7 Days</option>
+    <option value="30" selected>Last 30 Days</option>
+    <option value="90">Last 3 Months</option>
+    <option value="0">All Time</option>
+</select>
                     </div>
                     <div class="chart-container">
                         <canvas id="moodChart"></canvas>
@@ -187,7 +193,7 @@
             </section>
 
             <!-- Session History & Recommendations -->
-            <section class="content-grid">
+            <section id="sessions-section" class="content-grid">
                 <!-- Recent Sessions -->
                 <div class="sessions-panel">
                     <div class="panel-header">
@@ -361,17 +367,42 @@
         </div>
     </div>
     <div id="supportModal" class="modal">
-    <div class="modal-content">
+    <div class="modal-content support-card">
         <div class="modal-header">
             <h2 class="modal-title">Emergency Support</h2>
             <button class="modal-close" onclick="closeSupportModal()">×</button>
         </div>
         <div class="modal-body">
-            <p>If you are in immediate danger, please contact emergency services or use these hotlines:</p>
-            <ul style="margin-top: 15px; list-style: none; padding: 0;">
-                <li style="padding: 10px; border-bottom: 1px solid #eee;"><strong>Crisis Text Line:</strong> Text HOME to 741741</li>
-                <li style="padding: 10px;"><strong>National Suicide Prevention Lifeline:</strong> 988</li>
-            </ul>
+            <p class="support-intro">If you are in immediate danger, please contact emergency services or use these 24/7 resources:</p>
+            
+            <div class="support-resources">
+                <div class="resource-item">
+                    <div class="resource-icon">🆘</div>
+                    <div class="resource-info">
+                        <strong>National Suicide Prevention Lifeline</strong>
+                        <p>Call or Text: <span class="highlight">988</span></p>
+                    </div>
+                </div>
+
+                <div class="resource-item">
+                    <div class="resource-icon">📱</div>
+                    <div class="resource-info">
+                        <strong>Crisis Text Line</strong>
+                        <p>Text <span class="highlight">HOME</span> to 741741</p>
+                    </div>
+                </div>
+
+                <div class="resource-item">
+                    <div class="resource-icon">💚</div>
+                    <div class="resource-info">
+                        <strong>Campus Counseling</strong>
+                        <p>Contact your local student health center</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn-primary" onclick="closeSupportModal()">Close</button>
         </div>
     </div>
 </div>

@@ -15,6 +15,7 @@ from .models import MSEReport
 from django.shortcuts import get_object_or_404
 from .pipeline_orchestrator import run_pipeline, PipelineError
 from .models import AnalysisResult
+from django.template import Template, Context
 
 
 from .emotion_services import (

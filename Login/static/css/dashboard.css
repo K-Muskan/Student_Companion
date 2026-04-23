@@ -1,3 +1,54 @@
+html { scroll-behavior: smooth; }
+/* Support Modal Styling */
+.support-card {
+    max-width: 450px;
+    border-radius: 16px;
+    overflow: hidden;
+}
+
+.support-intro {
+    color: #64748b;
+    font-size: 0.95rem;
+    margin-bottom: 20px;
+    line-height: 1.5;
+}
+
+.support-resources {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.resource-item {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 15px;
+    background: #f8fafc;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+}
+
+.resource-icon {
+    font-size: 1.5rem;
+}
+
+.resource-info strong {
+    display: block;
+    color: #1e293b;
+    font-size: 0.9rem;
+}
+
+.resource-info p {
+    margin: 0;
+    color: #64748b;
+    font-size: 0.85rem;
+}
+
+.highlight {
+    color: #0f172a;
+    font-weight: 700;
+}
 :root {
     /* Color Palette - Matching Auth Theme */
     --color-primary: #2D5F8D;
@@ -625,16 +676,27 @@ body {
     text-align: right;
 }
 
-/* Content Grid */
+/* Ensure both columns in the grid stretch to the same height */
 .content-grid {
     display: grid;
     grid-template-columns: 1.5fr 1fr;
     gap: var(--spacing-lg);
-    animation: fadeInUp 0.6s ease 0.3s both;
+    align-items: stretch; /* This forces both panels to be equal height */
+    margin-bottom: var(--spacing-xl);
 }
 
 /* Sessions Panel */
-.sessions-panel,
+/* Make the session panel a flex container that fills its grid space */
+.sessions-panel {
+    display: flex;
+    flex-direction: column;
+    height: 100%; 
+    background: var(--color-bg-card);
+    border-radius: var(--radius-xl);
+    padding: var(--spacing-xl);
+    box-shadow: var(--shadow-sm);
+    border: 1px solid var(--color-border-light);
+}
 .recommendations-panel {
     background: var(--color-bg-card);
     border-radius: var(--radius-xl);
@@ -678,12 +740,12 @@ body {
     font-weight: 600;
 }
 
-/* Session Cards */
 .sessions-list {
     display: flex;
     flex-direction: column;
     gap: var(--spacing-md);
-    max-height: 600px;
+    flex: 1; /* This tells the list to grow and fill all empty space */
+    min-height: 500px; /* Adjust this value to match your chart's typical height */
     overflow-y: auto;
     padding-right: var(--spacing-sm);
 }
@@ -710,17 +772,18 @@ body {
     display: grid;
     grid-template-columns: auto 1fr auto;
     gap: var(--spacing-md);
-    padding: var(--spacing-md);
+    padding: var(--spacing-lg); /* Increased padding */
+    background: #ffffff;
     border: 1px solid var(--color-border-light);
     border-radius: var(--radius-lg);
-    cursor: pointer;
     transition: all var(--transition-base);
 }
 
+/* Add a subtle hover effect to make the list feel interactive */
 .session-card:hover {
     border-color: var(--color-primary-light);
     background: var(--color-bg-secondary);
-    box-shadow: var(--shadow-sm);
+    transform: translateX(5px);
 }
 
 .session-card.recent {

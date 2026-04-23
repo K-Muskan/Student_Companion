@@ -7,6 +7,7 @@ document.addEventListener('DOMContentLoaded', function () {
     initModalHandlers();
     initNavHandlers();
     autoDismissAlert();
+    initChartFilters();
 });
 
 // ─── ANALYTICS LOADER ────────────────────────────────────────────────────────
@@ -422,6 +423,8 @@ function renderSummaryCards(summary) {
         low:      { label: 'Low Risk',       note: 'No immediate intervention needed',          color: '#8BC34A' },
         moderate: { label: 'Moderate Risk',  note: 'Consider seeking professional support',     color: '#FF9800' },
         severe:   { label: 'Severe Risk',    note: 'Immediate professional help recommended',   color: '#F44336' },
+        normal:   { label: 'Healthy', note: 'Indicators are in a normal range', color: '#4CAF50' }, // ADD THIS LINE
+        minimal:  { label: 'Minimal Risk',  note: 'No immediate intervention needed', color: '#4CAF50' },
         extreme:  { label: 'Extreme Risk',   note: 'Seek immediate professional help',          color: '#B71C1C' },
         high:     { label: 'High Risk',      note: 'Immediate professional help recommended',   color: '#F44336' },
     };
@@ -433,6 +436,7 @@ function renderSummaryCards(summary) {
     const riskCard = document.querySelector('.risk-card');
     if (riskCard) {
         riskCard.classList.remove('low-risk', 'moderate-risk', 'high-risk');
+        riskCard.classList.add(`${risk}-risk`);
         riskCard.style.borderLeftColor = riskInfo.color;
     }
 
@@ -741,15 +745,20 @@ function initModalHandlers() {
 }
 
 function showEmergencyResources() {
-    alert(`Emergency Mental Health Resources:\n\n🆘 National Suicide Prevention Lifeline\n📞 988 (24/7 Support)\n\n🏥 Crisis Text Line\n📱 Text HOME to 741741\n\n💚 Your campus counseling center is also available.`);
+    const modal = document.getElementById('supportModal');
+    modal.style.display = 'flex'; // Shows the modal
 }
 
-// Initialize the count from the current UI value
+function closeSupportModal() {
+    const modal = document.getElementById('supportModal');
+    modal.style.display = 'none'; // Hides the modal
+}
 
+// Optional: Close modal if user clicks outside of the box
 window.onclick = function(event) {
-    const modal = document.getElementById('mseModal');
+    const modal = document.getElementById('supportModal');
     if (event.target == modal) {
-        closeMSEReport();
+        modal.style.display = "none";
     }
 }
 
@@ -778,3 +787,33 @@ function autoDismissAlert() {
         setTimeout(() => alertEl.remove(), 300);
     }, 5000);
 }
+
+// Add this to your event listeners or init block
+function initChartFilters() {
+    const filterSelect = document.getElementById('chartTimeFilter'); // Ensure this ID matches your HTML
+    if (!filterSelect) return;
+
+    filterSelect.addEventListener('change', function(e) {
+        const days = parseInt(e.target.value);
+        if (!analyticsData || !analyticsData.score_trend) return;
+
+        // Filter the global data
+        const filteredTrend = filterDataByDays(analyticsData.score_trend, days);
+        
+        // Re-render only the trend chart
+        renderScoreTrendChart(filteredTrend);
+    });
+}
+
+function filterDataByDays(data, days) {
+    if (days === 0) return data; // "All Time" option
+
+    const cutoff = new Date();
+    cutoff.setDate(cutoff.getDate() - days);
+
+    return data.filter(item => {
+        const sessionDate = new Date(item.session_date);
+        return sessionDate >= cutoff;
+    });
+}
+
