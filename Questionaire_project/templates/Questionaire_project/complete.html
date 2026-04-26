@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Assessment Results</title>
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Crimson+Pro:wght@400;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Crimson+Pro:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
 :root {
   --primary: #1a365d; --primary-light: #2c5282;
@@ -14,203 +14,525 @@
   --text: #1e293b; --text-muted: #64748b;
   --font: 'DM Sans', sans-serif;
   --font-display: 'Crimson Pro', Georgia, serif;
-  --shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
-  --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.1);
+  --shadow: 0 4px 6px -1px rgba(0,0,0,0.07), 0 2px 4px -1px rgba(0,0,0,0.05);
+  --shadow-lg: 0 10px 25px -5px rgba(0,0,0,0.1), 0 4px 10px -3px rgba(0,0,0,0.05);
 }
 * { margin:0; padding:0; box-sizing:border-box; }
-body { font-family:var(--font); background:linear-gradient(135deg,#2D5F8D,#1E4266); min-height:100vh; padding:32px 16px; color:var(--text); line-height:1.6; }
+body {
+  font-family: var(--font);
+  background: linear-gradient(160deg, #1a2f4a 0%, #0f1e30 100%);
+  min-height: 100vh;
+  padding: 32px 16px 48px;
+  color: var(--text);
+  line-height: 1.6;
+}
 
-.page { max-width:1000px; margin:0 auto; background:white; border-radius:16px; overflow:hidden; box-shadow:0 20px 60px rgba(0,0,0,0.25); }
+.page {
+  max-width: 980px;
+  margin: 0 auto;
+  background: white;
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: 0 25px 80px rgba(0,0,0,0.35);
+}
 
-/* HEADER */
-.header { background:linear-gradient(135deg,var(--primary),var(--primary-light)); color:white; padding:44px 40px; position:relative; overflow:hidden; }
-.header::before { content:''; position:absolute; top:-40%; right:-5%; width:350px; height:350px; background:rgba(255,255,255,0.05); border-radius:50%; }
-.header-inner { position:relative; z-index:1; }
-.header h1 { font-family:var(--font-display); font-size:2.4em; font-weight:700; margin-bottom:6px; }
-.header p { opacity:0.85; font-size:1em; margin-bottom:20px; }
-.header-meta { display:flex; gap:24px; flex-wrap:wrap; font-size:0.88em; opacity:0.9; }
-.header-meta span { display:flex; align-items:center; gap:6px; }
+/* ── HEADER ── */
+.header {
+  background: linear-gradient(135deg, #1a365d 0%, #2c5282 60%, #2d6a9f 100%);
+  color: white;
+  padding: 44px 44px 36px;
+  position: relative;
+  overflow: hidden;
+}
+.header::before {
+  content:'';
+  position: absolute;
+  top: -30%;
+  right: -8%;
+  width: 420px; height: 420px;
+  background: rgba(255,255,255,0.04);
+  border-radius: 50%;
+  pointer-events: none;
+}
+.header::after {
+  content:'';
+  position: absolute;
+  bottom: -50%;
+  left: -5%;
+  width: 300px; height: 300px;
+  background: rgba(255,255,255,0.03);
+  border-radius: 50%;
+  pointer-events: none;
+}
+.header-inner { position: relative; z-index: 1; }
+.header-logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.78em;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  opacity: 0.7;
+  margin-bottom: 14px;
+}
+.header-logo svg { width:18px; height:18px; fill:currentColor; opacity:0.9; }
+.header h1 {
+  font-family: var(--font-display);
+  font-size: 2.5em;
+  font-weight: 700;
+  margin-bottom: 4px;
+  letter-spacing: -0.5px;
+}
+.header-sub {
+  opacity: 0.75;
+  font-size: 0.95em;
+  margin-bottom: 24px;
+}
+.header-meta {
+  display: flex;
+  gap: 24px;
+  flex-wrap: wrap;
+  font-size: 0.84em;
+  opacity: 0.85;
+}
+.header-meta span {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  background: rgba(255,255,255,0.1);
+  padding: 6px 14px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.12);
+}
 
-/* ALERT */
-.alert-bar { padding:24px 40px; background:var(--bg); }
-.alert { padding:16px 20px; border-radius:10px; display:flex; align-items:flex-start; gap:14px; border-left:4px solid; font-weight:500; font-size:0.95em; }
-.alert-danger { background:#fef2f2; border-color:var(--danger); color:#991b1b; }
-.alert-warning { background:#fffbeb; border-color:var(--warning); color:#92400e; }
-.alert-success { background:#f0fdf4; border-color:var(--success); color:#065f46; }
-.alert-icon { font-size:1.3em; flex-shrink:0; margin-top:1px; }
+/* ── ALERT ── */
+.alert-bar { padding: 20px 44px; background: var(--bg); border-bottom: 1px solid var(--border); }
+.alert {
+  padding: 16px 20px;
+  border-radius: 12px;
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  border-left: 4px solid;
+  font-size: 0.93em;
+}
+.alert-danger  { background:#fef2f2; border-color: var(--danger); color:#7f1d1d; }
+.alert-warning { background:#fffbeb; border-color: var(--warning); color:#78350f; }
+.alert-success { background:#f0fdf4; border-color: var(--success); color:#14532d; }
+.alert-icon { font-size:1.25em; flex-shrink:0; margin-top:1px; }
+.alert strong { display:block; font-weight:700; margin-bottom:2px; }
 
-/* ACTION BAR */
-.action-bar { padding:20px 40px; border-bottom:1px solid var(--border); display:flex; gap:10px; flex-wrap:wrap; background:white; }
-.btn { padding:10px 20px; border:none; border-radius:8px; font-family:var(--font); font-size:0.88em; font-weight:600; cursor:pointer; text-decoration:none; display:inline-flex; align-items:center; gap:7px; transition:all 0.2s; white-space:nowrap; }
-.btn-primary { background:var(--primary); color:white; }
-.btn-primary:hover { background:var(--primary-light); transform:translateY(-1px); }
-.btn-secondary { background:white; color:var(--text); border:1.5px solid var(--border); }
-.btn-secondary:hover { border-color:var(--primary); color:var(--primary); }
+/* ── ACTION BAR ── (hidden on print) */
+.action-bar {
+  padding: 18px 44px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items: center;
+  background: white;
+}
+.btn {
+  padding: 9px 20px;
+  border: none;
+  border-radius: 8px;
+  font-family: var(--font);
+  font-size: 0.84em;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  transition: all 0.18s;
+  white-space: nowrap;
+}
+.btn-primary   { background: var(--primary); color: white; }
+.btn-primary:hover { background: var(--primary-light); transform: translateY(-1px); box-shadow: 0 4px 12px rgba(26,54,93,0.3); }
+.btn-secondary { background: white; color: var(--text); border: 1.5px solid var(--border); }
+.btn-secondary:hover { border-color: var(--primary); color: var(--primary); }
+.btn-danger    { background: #fef2f2; color: var(--danger); border: 1.5px solid #fca5a5; }
+.btn-danger:hover { background: #fee2e2; }
+.btn-dashboard { background: linear-gradient(135deg, var(--primary), var(--primary-light)); color:white; }
+.btn-dashboard:hover { opacity: 0.9; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(26,54,93,0.3); }
 
-/* SCALE CARDS GRID */
-.scales-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:20px; padding:32px 40px; background:var(--bg); }
-@media(max-width:800px) { .scales-grid { grid-template-columns:1fr; } }
+/* ── SCALE CARDS GRID ── */
+.scales-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+  padding: 32px 44px;
+  background: var(--bg);
+}
+@media(max-width: 860px) { .scales-grid { grid-template-columns: 1fr; } }
 
-.scale-card { background:white; border-radius:14px; padding:24px; border:1px solid var(--border); box-shadow:var(--shadow); transition:box-shadow 0.2s; }
-.scale-card:hover { box-shadow:var(--shadow-lg); }
+.scale-card {
+  background: white;
+  border-radius: 16px;
+  padding: 26px;
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+  transition: box-shadow 0.2s, transform 0.2s;
+  display: flex;
+  flex-direction: column;
+}
+.scale-card:hover { box-shadow: var(--shadow-lg); transform: translateY(-2px); }
 
-.scale-card-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; }
-.scale-name { font-size:0.72em; font-weight:700; text-transform:uppercase; letter-spacing:1px; padding:4px 10px; border-radius:999px; }
+.scale-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 18px;
+}
+.scale-name {
+  font-size: 0.68em;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+  padding: 4px 11px;
+  border-radius: 999px;
+}
 .scale-name.depression { background:#fce7f3; color:#9d174d; }
-.scale-name.stress { background:#dbeafe; color:#1e40af; }
-.scale-name.anxiety { background:#d1fae5; color:#065f46; }
+.scale-name.stress     { background:#dbeafe; color:#1e40af; }
+.scale-name.anxiety    { background:#d1fae5; color:#065f46; }
 
-.risk-badge { font-size:0.72em; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; padding:4px 10px; border-radius:999px; border:1.5px solid; }
+.risk-badge {
+  font-size: 0.68em;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  padding: 4px 11px;
+  border-radius: 999px;
+  border: 1.5px solid;
+}
 .risk-normal,.risk-low { background:#f0fdf4; color:var(--success); border-color:var(--success); }
-.risk-mild { background:#f0fdf4; color:#16a34a; border-color:#16a34a; }
-.risk-borderline,.risk-moderate { background:#fffbeb; color:#b45309; border-color:#b45309; }
-.risk-severe { background:#fef2f2; color:#b91c1c; border-color:#b91c1c; }
+.risk-mild             { background:#f0fdf4; color:#16a34a; border-color:#16a34a; }
+.risk-borderline,
+.risk-moderate         { background:#fffbeb; color:#b45309; border-color:#d97706; }
+.risk-severe           { background:#fef2f2; color:#b91c1c; border-color:#ef4444; }
 .risk-extreme,.risk-high { background:#fef2f2; color:var(--danger); border-color:var(--danger); }
 
-.scale-title { font-family:var(--font-display); font-size:1.2em; font-weight:700; color:var(--primary); margin-bottom:4px; }
-.scale-subtitle { font-size:0.8em; color:var(--text-muted); margin-bottom:16px; }
+.scale-title {
+  font-family: var(--font-display);
+  font-size: 1.25em;
+  font-weight: 700;
+  color: var(--primary);
+  margin-bottom: 2px;
+}
+.scale-subtitle { font-size: 0.78em; color: var(--text-muted); margin-bottom: 18px; }
 
-.score-display { text-align:center; margin-bottom:14px; }
-.score-number { font-size:2.4em; font-weight:700; color:var(--primary); line-height:1; }
-.score-max { font-size:0.95em; color:var(--text-muted); }
-.score-bar-track { width:100%; height:8px; background:#f1f5f9; border-radius:999px; overflow:hidden; margin-bottom:4px; }
-.score-bar-fill { height:100%; border-radius:999px; transition:width 0.8s ease; }
-.fill-normal,.fill-low { background:linear-gradient(90deg,#10b981,#34d399); }
-.fill-mild { background:linear-gradient(90deg,#10b981,#34d399); }
-.fill-borderline,.fill-moderate { background:linear-gradient(90deg,#f59e0b,#fbbf24); }
-.fill-severe { background:linear-gradient(90deg,#ef4444,#f87171); }
-.fill-extreme,.fill-high { background:linear-gradient(90deg,#dc2626,#ef4444); }
+.score-display { text-align: center; margin-bottom: 12px; }
+.score-number  { font-size: 2.6em; font-weight: 800; color: var(--primary); line-height: 1; }
+.score-max     { font-size: 0.95em; color: var(--text-muted); font-weight: 500; }
 
-.interpretation { font-size:0.86em; color:#475569; line-height:1.5; margin-bottom:14px; padding:10px 12px; background:var(--bg); border-radius:8px; border-left:3px solid var(--border); }
+.score-bar-track {
+  width: 100%;
+  height: 7px;
+  background: #f1f5f9;
+  border-radius: 999px;
+  overflow: hidden;
+  margin-bottom: 16px;
+}
+.score-bar-fill { height: 100%; border-radius: 999px; transition: width 0.8s ease; }
+.fill-normal,.fill-low   { background: linear-gradient(90deg,#10b981,#34d399); }
+.fill-mild               { background: linear-gradient(90deg,#10b981,#34d399); }
+.fill-borderline,
+.fill-moderate           { background: linear-gradient(90deg,#f59e0b,#fbbf24); }
+.fill-severe             { background: linear-gradient(90deg,#ef4444,#f87171); }
+.fill-extreme,.fill-high { background: linear-gradient(90deg,#dc2626,#ef4444); }
 
-.recs-title { font-size:0.75em; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; color:var(--text-muted); margin-bottom:8px; }
-.rec-item { font-size:0.83em; color:#374151; padding:6px 10px 6px 26px; position:relative; line-height:1.45; margin-bottom:4px; background:var(--bg); border-radius:6px; }
-.rec-item::before { content:'→'; position:absolute; left:8px; color:var(--accent); font-weight:700; }
+.interpretation {
+  font-size: 0.84em;
+  color: #475569;
+  line-height: 1.55;
+  margin-bottom: 12px;
+  padding: 10px 14px;
+  background: var(--bg);
+  border-radius: 8px;
+  border-left: 3px solid var(--border);
+}
 
-/* SECTION */
-.section { padding:28px 40px; border-top:1px solid var(--border); }
-.section-title { font-family:var(--font-display); font-size:1.4em; font-weight:700; color:var(--primary); margin-bottom:16px; display:flex; align-items:center; gap:10px; }
-.section-title::before { content:''; width:4px; height:24px; background:var(--accent); border-radius:2px; flex-shrink:0; }
+.recs-title {
+  font-size: 0.7em;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: var(--text-muted);
+  margin: 4px 0 10px;
+}
+.rec-item {
+  font-size: 0.82em;
+  color: #374151;
+  padding: 7px 10px 7px 28px;
+  position: relative;
+  line-height: 1.5;
+  margin-bottom: 5px;
+  background: var(--bg);
+  border-radius: 7px;
+}
+.rec-item::before { content:'→'; position:absolute; left:9px; color:var(--accent); font-weight:700; }
 
-/* FEELING ANALYSIS */
+/* ── SECTION ── */
+.section { padding: 28px 44px; border-top: 1px solid var(--border); }
+.section-title {
+  font-family: var(--font-display);
+  font-size: 1.4em;
+  font-weight: 700;
+  color: var(--primary);
+  margin-bottom: 18px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.section-title::before {
+  content:'';
+  width: 4px; height: 26px;
+  background: var(--accent);
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+/* ── EMOTION STAT CHIPS ── */
+.stat-chips { display:flex; gap:10px; flex-wrap:wrap; margin-bottom:14px; }
+.stat-chip {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px 18px;
+}
+.stat-chip-label {
+  font-size: 0.68em;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+}
+.stat-chip-value { font-weight: 700; color: var(--primary); font-size:1.05em; }
+.stat-chip-distress {
+  background: #fef2f2;
+  border-color: #fca5a5;
+}
+.stat-chip-distress .stat-chip-label { color:#991b1b; }
+.stat-chip-distress .stat-chip-value { color:#dc2626; }
+
+/* ── FEELING / REFLECTION ── */
 .feeling-summary-box {
-  background:#fffbeb;
-  border-left:4px solid #d97706;
-  border-radius:8px;
-  padding:16px 20px;
-  margin-bottom:24px;
-  font-size:0.93em;
-  color:#374151;
-  line-height:1.75;
-  font-style:italic;
+  background: #fffbeb;
+  border-left: 4px solid var(--accent);
+  border-radius: 10px;
+  padding: 18px 22px;
+  margin-bottom: 24px;
+  font-size: 0.93em;
+  color: #374151;
+  line-height: 1.8;
+  font-style: italic;
 }
-.feeling-layout {
-  display:flex;
-  gap:32px;
-  flex-wrap:wrap;
-  align-items:flex-start;
-}
-.feeling-chart-wrap {
-  flex:0 0 300px;
-  max-width:100%;
-}
-.feeling-bars {
-  flex:1;
-  min-width:220px;
+.feeling-layout { display:flex; gap:36px; flex-wrap:wrap; align-items:flex-start; }
+.feeling-chart-wrap { flex: 0 0 280px; max-width:100%; }
+.feeling-bars { flex:1; min-width:220px; }
+
+.feeling-bars-heading {
+  font-size: 0.7em;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: var(--text-muted);
+  margin-bottom: 14px;
 }
 .feeling-bar-label-row {
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  font-size:0.84em;
-  margin-bottom:4px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.84em;
+  margin-bottom: 5px;
 }
-.feeling-bar-label { color:var(--text); font-weight:500; }
-.feeling-bar-score { color:var(--text-muted); font-size:0.9em; min-width:38px; text-align:right; }
-.feeling-bar-track { height:6px; background:#f1f5f9; border-radius:999px; overflow:hidden; margin-bottom:10px; }
-.feeling-bar-fill { height:100%; border-radius:999px; background:linear-gradient(90deg,#2D5F8D,#E8925C); }
-.feeling-bars-heading { font-size:0.72em; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; color:var(--text-muted); margin-bottom:14px; }
+.feeling-bar-label { color: var(--text); font-weight: 500; }
+.feeling-bar-score { color: var(--text-muted); font-size:0.9em; min-width:38px; text-align:right; font-weight:600; }
+.feeling-bar-track { height: 7px; background: #f1f5f9; border-radius:999px; overflow:hidden; margin-bottom:12px; }
+.feeling-bar-fill  { height:100%; border-radius:999px; background: linear-gradient(90deg,#2D5F8D,#E8925C); }
 
-/* DISCLAIMER */
-.disclaimer { margin:0 40px 32px; padding:20px 24px; background:#fffbeb; border:1.5px solid var(--warning); border-radius:10px; }
-.disclaimer strong { color:#92400e; display:block; margin-bottom:6px; }
-.disclaimer p { font-size:0.88em; color:#78350f; line-height:1.6; }
+/* ── DISCLAIMER ── */
+.disclaimer {
+  margin: 0 44px 36px;
+  padding: 20px 24px;
+  background: #fffbeb;
+  border: 1.5px solid var(--warning);
+  border-radius: 12px;
+}
+.disclaimer strong { color:#92400e; display:block; margin-bottom:6px; font-size:0.95em; }
+.disclaimer p { font-size: 0.85em; color:#78350f; line-height:1.65; }
 
+/* ══════════════════════════════════════════════
+   PRINT STYLES
+   ══════════════════════════════════════════════ */
+@media print {
+  @page {
+    size: A4;
+    margin: 14mm 12mm;
+  }
+
+  /* Kill empty-page sources */
+  html, body {
+    background: white !important;
+    min-height: 0 !important;
+    height: auto !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+  .page {
+    box-shadow: none !important;
+    border-radius: 0 !important;
+    max-width: 100% !important;
+    width: 100% !important;
+    overflow: visible !important;
+  }
+
+  /* Hide interactive elements */
+  .action-bar,
+  .btn,
+  .no-print {
+    display: none !important;
+  }
+
+  /* Header */
+  .header {
+    background: #1a365d !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+    padding: 24px 28px 20px !important;
+  }
+  .header h1 { font-size: 1.75em !important; }
+  .header::before, .header::after { display: none !important; }
+
+  /* Stack cards vertically — no overflow, no empty pages */
+  .scales-grid {
+    display: block !important;
+    padding: 20px 28px !important;
+    background: #f8fafc !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  .scale-card {
+    display: block !important;
+    box-shadow: none !important;
+    border: 1px solid #d1d5db !important;
+    border-radius: 10px !important;
+    margin-bottom: 16px !important;
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  .scale-card:last-child { margin-bottom: 0 !important; }
+
+  .alert-bar {
+    padding: 14px 28px !important;
+    break-inside: avoid;
+  }
+  .section { padding: 18px 28px !important; }
+  .disclaimer { margin: 0 28px 24px !important; break-inside: avoid; }
+  .feeling-layout { break-inside: avoid; }
+
+  /* Keep colours */
+  .risk-badge, .scale-name, .alert, .score-bar-fill,
+  .feeling-bar-fill, .stat-chip, .stat-chip-distress,
+  .rec-item, .interpretation, .feeling-summary-box,
+  .disclaimer {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+}
+
+/* ── RESPONSIVE ── */
 @media(max-width:600px) {
-  .header,.action-bar,.alert-bar,.section { padding-left:20px; padding-right:20px; }
-  .scales-grid { padding:20px; }
-  .disclaimer { margin:0 20px 24px; }
-  .header h1 { font-size:1.8em; }
-  .feeling-chart-wrap { flex:none; width:100%; }
+  .header, .action-bar, .alert-bar, .section { padding-left:20px; padding-right:20px; }
+  .scales-grid { padding: 20px !important; }
+  .disclaimer { margin: 0 20px 24px !important; }
+  .header h1 { font-size: 1.75em; }
+  .feeling-chart-wrap { flex: none; width: 100%; }
 }
 </style>
 </head>
 <body>
 <div class="page">
 
-  <!-- HEADER -->
+  <!-- ══ HEADER ══ -->
   <div class="header">
     <div class="header-inner">
+      <div class="header-logo">
+        <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z"/></svg>
+        Student Companion
+      </div>
       <h1>Mental Health Assessment Results</h1>
-      <p>Student Companion — Clinical Scale Report</p>
+      <p class="header-sub">Clinical Scale Report — Three-Scale Assessment</p>
       <div class="header-meta">
-        <span>📅 
-          {
-            {
-              timestamp
-            }
-          }
-        </span>
-        <span>📋 Three-Scale Assessment</span>
+        <span>📅 {{ timestamp|date:"N j, Y — g:i A" }}</span>
+        <span>📋 BDI · PSS-10 · BAI</span>
+        <span>🆔 #{{ assessment_id }}</span>
       </div>
     </div>
   </div>
 
-  <!-- ALERT BANNER -->
+  <!-- ══ ALERT BANNER ══ -->
   <div class="alert-bar">
     {% if immediate_intervention %}
     <div class="alert alert-danger">
       <span class="alert-icon">🚨</span>
-      <div><strong>IMMEDIATE INTERVENTION REQUIRED</strong> — High-risk indicators detected across one or more scales. Immediate clinical review and safety measures are needed.</div>
+      <div>
+        <strong>IMMEDIATE INTERVENTION REQUIRED</strong>
+        High-risk indicators detected across one or more scales. Immediate clinical review and safety measures are needed.
+      </div>
     </div>
     {% elif overall_risk == 'severe' or overall_risk == 'extreme' or overall_risk == 'high' %}
     <div class="alert alert-danger">
       <span class="alert-icon">⚠️</span>
-      <div><strong>HIGH RISK DETECTED</strong> — Significant distress indicators found. Urgent professional attention is recommended.</div>
+      <div>
+        <strong>HIGH RISK DETECTED</strong>
+        Significant distress indicators found. Urgent professional attention is recommended.
+      </div>
     </div>
     {% elif overall_risk == 'moderate' or overall_risk == 'borderline' %}
     <div class="alert alert-warning">
       <span class="alert-icon">⚠️</span>
-      <div><strong>MODERATE RISK</strong> — Clinical attention recommended within 24–48 hours.</div>
+      <div>
+        <strong>MODERATE RISK</strong>
+        Clinical attention recommended within 24–48 hours.
+      </div>
     </div>
     {% else %}
     <div class="alert alert-success">
       <span class="alert-icon">✅</span>
-      <div><strong>LOW RISK</strong> — Results within normal range. Routine follow-up recommended.</div>
+      <div>
+        <strong>LOW RISK</strong>
+        Results within normal range. Routine follow-up recommended.
+      </div>
     </div>
     {% endif %}
   </div>
 
-  <!-- ACTION BAR -->
- <div class="action-bar">
+  <!-- ══ ACTION BAR (hidden on print) ══ -->
+  <div class="action-bar no-print">
+    <a href="/" class="btn btn-dashboard">🏠 Dashboard</a>
     <a href="/assessment/" class="btn btn-secondary">← New Assessment</a>
-    
-    <a href="#" 
-       onclick="event.preventDefault(); logAndDownload('{{ assessment_id }}', 'text', '/assessment/download-report-text/')" 
-       class="btn btn-primary">⬇ Text Report</a>
-    
-    <a href="#" 
-       onclick="event.preventDefault(); logAndDownload('{{ assessment_id }}', 'json', '/assessment/download-report-json/')" 
-       class="btn btn-secondary">⬇ JSON Data</a>
-    
-    <button onclick="window.print()" class="btn btn-secondary">🖨 Print</button>
-    <a href="/assessment/therapist/{{ assessment_id }}/" class="btn btn-primary">🤖 Talk to Therapist</a>
-</div>
 
-  <!-- THREE SCALE CARDS -->
+    <a href="#"
+       onclick="event.preventDefault(); logAndDownload('{{ assessment_id }}', 'text', '/assessment/download-report-text/')"
+       class="btn btn-primary">⬇ Text Report</a>
+
+    <a href="#"
+       onclick="event.preventDefault(); logAndDownload('{{ assessment_id }}', 'json', '/assessment/download-report-json/')"
+       class="btn btn-secondary">⬇ JSON Data</a>
+
+    <button onclick="window.print()" class="btn btn-secondary">🖨 Print / Save PDF</button>
+    <a href="/assessment/therapist/{{ assessment_id }}/" class="btn btn-primary">🤖 Talk to Therapist</a>
+  </div>
+
+  <!-- ══ THREE SCALE CARDS ══ -->
   <div class="scales-grid">
 
-    <!-- DEPRESSION CARD -->
+    <!-- DEPRESSION -->
     <div class="scale-card">
       <div class="scale-card-header">
         <span class="scale-name depression">Depression</span>
@@ -219,7 +541,7 @@ body { font-family:var(--font); background:linear-gradient(135deg,#2D5F8D,#1E426
       <div class="scale-title">BDI Score</div>
       <div class="scale-subtitle">Beck's Depression Inventory</div>
       <div class="score-display">
-        <div class="score-number">{{ depression.total_score }}<span class="score-max">/63</span></div>
+        <span class="score-number">{{ depression.total_score }}</span><span class="score-max">/63</span>
       </div>
       <div class="score-bar-track">
         <div class="score-bar-fill fill-{{ depression.risk_level }}" style="width:{{ depression.score_percentage }}%;"></div>
@@ -227,27 +549,23 @@ body { font-family:var(--font); background:linear-gradient(135deg,#2D5F8D,#1E426
       <div class="interpretation">{{ depression.interpretation }}</div>
       {% if depression.emotion_summary.available %}
       <div class="interpretation">
-        Most Frequent Emotion: {{ depression.emotion_summary.most_frequent_emotion|default:"Unknown"|title }}
-        • Frames: {{ depression.emotion_summary.total_frames|default:0 }}
-        • Distress Ratio: {{ depression.emotion_summary.distress_proxy.ratio|default:0 }}
-        {% if depression.emotion_summary.distress_proxy.flag %} • Distress signal detected{% endif %}
+        Most Frequent Emotion: <strong>{{ depression.emotion_summary.most_frequent_emotion|default:"Unknown"|title }}</strong>
+        &nbsp;·&nbsp; Frames: {{ depression.emotion_summary.total_frames|default:0 }}
+        &nbsp;·&nbsp; Distress Ratio: {{ depression.emotion_summary.distress_proxy.ratio|default:0 }}
+        {% if depression.emotion_summary.distress_proxy.flag %}&nbsp;·&nbsp; ⚠ Distress signal detected{% endif %}
       </div>
       {% if depression.emotion_summary.emotion_percentages %}
       <div class="interpretation">
-        Distribution:
+        <strong>Distribution:</strong>
         {% for emotion, percentage in depression.emotion_summary.emotion_percentages.items %}
-        {{ emotion|title }} {{ percentage }}%{% if not forloop.last %} • {% endif %}
+        {{ emotion|title }} {{ percentage }}%{% if not forloop.last %} &nbsp;·&nbsp; {% endif %}
         {% endfor %}
       </div>
       {% endif %}
       {% else %}
       <div class="interpretation">
-        Emotion: Not available.
-        {% if depression.emotion_summary.raw_record_count %}
-        Captured {{ depression.emotion_summary.raw_record_count }} frame(s), but no valid STATUS_OK frame was available.
-        {% else %}
-        {{ depression.emotion_summary.note|default:"No emotion frames were captured." }}
-        {% endif %}
+        Emotion data not available.
+        {% if depression.emotion_summary.note %}{{ depression.emotion_summary.note }}{% endif %}
       </div>
       {% endif %}
       <div class="recs-title">Recommendations</div>
@@ -256,7 +574,7 @@ body { font-family:var(--font); background:linear-gradient(135deg,#2D5F8D,#1E426
       {% endfor %}
     </div>
 
-    <!-- STRESS CARD -->
+    <!-- STRESS -->
     <div class="scale-card">
       <div class="scale-card-header">
         <span class="scale-name stress">Stress</span>
@@ -265,7 +583,7 @@ body { font-family:var(--font); background:linear-gradient(135deg,#2D5F8D,#1E426
       <div class="scale-title">PSS-10 Score</div>
       <div class="scale-subtitle">Perceived Stress Scale</div>
       <div class="score-display">
-        <div class="score-number">{{ stress.total_score }}<span class="score-max">/40</span></div>
+        <span class="score-number">{{ stress.total_score }}</span><span class="score-max">/40</span>
       </div>
       <div class="score-bar-track">
         <div class="score-bar-fill fill-{{ stress.risk_level }}" style="width:{{ stress.score_percentage }}%;"></div>
@@ -273,27 +591,23 @@ body { font-family:var(--font); background:linear-gradient(135deg,#2D5F8D,#1E426
       <div class="interpretation">{{ stress.interpretation }}</div>
       {% if stress.emotion_summary.available %}
       <div class="interpretation">
-        Most Frequent Emotion: {{ stress.emotion_summary.most_frequent_emotion|default:"Unknown"|title }}
-        • Frames: {{ stress.emotion_summary.total_frames|default:0 }}
-        • Distress Ratio: {{ stress.emotion_summary.distress_proxy.ratio|default:0 }}
-        {% if stress.emotion_summary.distress_proxy.flag %} • Distress signal detected{% endif %}
+        Most Frequent Emotion: <strong>{{ stress.emotion_summary.most_frequent_emotion|default:"Unknown"|title }}</strong>
+        &nbsp;·&nbsp; Frames: {{ stress.emotion_summary.total_frames|default:0 }}
+        &nbsp;·&nbsp; Distress Ratio: {{ stress.emotion_summary.distress_proxy.ratio|default:0 }}
+        {% if stress.emotion_summary.distress_proxy.flag %}&nbsp;·&nbsp; ⚠ Distress signal detected{% endif %}
       </div>
       {% if stress.emotion_summary.emotion_percentages %}
       <div class="interpretation">
-        Distribution:
+        <strong>Distribution:</strong>
         {% for emotion, percentage in stress.emotion_summary.emotion_percentages.items %}
-        {{ emotion|title }} {{ percentage }}%{% if not forloop.last %} • {% endif %}
+        {{ emotion|title }} {{ percentage }}%{% if not forloop.last %} &nbsp;·&nbsp; {% endif %}
         {% endfor %}
       </div>
       {% endif %}
       {% else %}
       <div class="interpretation">
-        Emotion: Not available.
-        {% if stress.emotion_summary.raw_record_count %}
-        Captured {{ stress.emotion_summary.raw_record_count }} frame(s), but no valid STATUS_OK frame was available.
-        {% else %}
-        {{ stress.emotion_summary.note|default:"No emotion frames were captured." }}
-        {% endif %}
+        Emotion data not available.
+        {% if stress.emotion_summary.note %}{{ stress.emotion_summary.note }}{% endif %}
       </div>
       {% endif %}
       <div class="recs-title">Recommendations</div>
@@ -302,7 +616,7 @@ body { font-family:var(--font); background:linear-gradient(135deg,#2D5F8D,#1E426
       {% endfor %}
     </div>
 
-    <!-- ANXIETY CARD -->
+    <!-- ANXIETY -->
     <div class="scale-card">
       <div class="scale-card-header">
         <span class="scale-name anxiety">Anxiety</span>
@@ -311,7 +625,7 @@ body { font-family:var(--font); background:linear-gradient(135deg,#2D5F8D,#1E426
       <div class="scale-title">BAI Score</div>
       <div class="scale-subtitle">Beck Anxiety Inventory</div>
       <div class="score-display">
-        <div class="score-number">{{ anxiety.total_score }}<span class="score-max">/63</span></div>
+        <span class="score-number">{{ anxiety.total_score }}</span><span class="score-max">/63</span>
       </div>
       <div class="score-bar-track">
         <div class="score-bar-fill fill-{{ anxiety.risk_level }}" style="width:{{ anxiety.score_percentage }}%;"></div>
@@ -319,27 +633,23 @@ body { font-family:var(--font); background:linear-gradient(135deg,#2D5F8D,#1E426
       <div class="interpretation">{{ anxiety.interpretation }}</div>
       {% if anxiety.emotion_summary.available %}
       <div class="interpretation">
-        Most Frequent Emotion: {{ anxiety.emotion_summary.most_frequent_emotion|default:"Unknown"|title }}
-        • Frames: {{ anxiety.emotion_summary.total_frames|default:0 }}
-        • Distress Ratio: {{ anxiety.emotion_summary.distress_proxy.ratio|default:0 }}
-        {% if anxiety.emotion_summary.distress_proxy.flag %} • Distress signal detected{% endif %}
+        Most Frequent Emotion: <strong>{{ anxiety.emotion_summary.most_frequent_emotion|default:"Unknown"|title }}</strong>
+        &nbsp;·&nbsp; Frames: {{ anxiety.emotion_summary.total_frames|default:0 }}
+        &nbsp;·&nbsp; Distress Ratio: {{ anxiety.emotion_summary.distress_proxy.ratio|default:0 }}
+        {% if anxiety.emotion_summary.distress_proxy.flag %}&nbsp;·&nbsp; ⚠ Distress signal detected{% endif %}
       </div>
       {% if anxiety.emotion_summary.emotion_percentages %}
       <div class="interpretation">
-        Distribution:
+        <strong>Distribution:</strong>
         {% for emotion, percentage in anxiety.emotion_summary.emotion_percentages.items %}
-        {{ emotion|title }} {{ percentage }}%{% if not forloop.last %} • {% endif %}
+        {{ emotion|title }} {{ percentage }}%{% if not forloop.last %} &nbsp;·&nbsp; {% endif %}
         {% endfor %}
       </div>
       {% endif %}
       {% else %}
       <div class="interpretation">
-        Emotion: Not available.
-        {% if anxiety.emotion_summary.raw_record_count %}
-        Captured {{ anxiety.emotion_summary.raw_record_count }} frame(s), but no valid STATUS_OK frame was available.
-        {% else %}
-        {{ anxiety.emotion_summary.note|default:"No emotion frames were captured." }}
-        {% endif %}
+        Emotion data not available.
+        {% if anxiety.emotion_summary.note %}{{ anxiety.emotion_summary.note }}{% endif %}
       </div>
       {% endif %}
       <div class="recs-title">Recommendations</div>
@@ -350,62 +660,142 @@ body { font-family:var(--font); background:linear-gradient(135deg,#2D5F8D,#1E426
 
   </div>
 
-  <!-- EMOTION SUMMARY (if available) -->
+  <!-- ══ FACIAL EMOTION ANALYSIS ══ -->
   {% if emotion_summary.available %}
   <div class="section">
     <div class="section-title">Facial Emotion Analysis</div>
-    <p style="font-size:0.9em;color:#475569;margin-bottom:12px;">DeepFace emotion data captured during assessment.</p>
-    <div style="display:flex;gap:12px;flex-wrap:wrap;">
+    <p style="font-size:0.88em;color:#475569;margin-bottom:16px;">DeepFace emotion data captured during assessment.</p>
+    <div class="stat-chips">
       {% if emotion_summary.most_frequent_emotion or emotion_summary.dominant_emotion %}
-      <div style="background:var(--bg);border-radius:8px;padding:12px 18px;border:1px solid var(--border);">
-        <div style="font-size:0.75em;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;">Most Frequent Emotion</div>
-        <div style="font-weight:700;color:var(--primary);font-size:1.05em;">{{ emotion_summary.most_frequent_emotion|default:emotion_summary.dominant_emotion|title }}</div>
+      <div class="stat-chip">
+        <div class="stat-chip-label">Most Frequent Emotion</div>
+        <div class="stat-chip-value">{{ emotion_summary.most_frequent_emotion|default:emotion_summary.dominant_emotion|title }}</div>
       </div>
       {% endif %}
-      <div style="background:var(--bg);border-radius:8px;padding:12px 18px;border:1px solid var(--border);">
-        <div style="font-size:0.75em;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;">Frames Analyzed</div>
-        <div style="font-weight:700;color:var(--primary);font-size:1.05em;">{{ emotion_summary.total_frames|default:emotion_summary.frames_analyzed|default:0 }}</div>
+      <div class="stat-chip">
+        <div class="stat-chip-label">Frames Analyzed</div>
+        <div class="stat-chip-value">{{ emotion_summary.total_frames|default:emotion_summary.frames_analyzed|default:0 }}</div>
       </div>
       {% if emotion_summary.distress_proxy.flag %}
-      <div style="background:#fef2f2;border-radius:8px;padding:12px 18px;border:1px solid #fca5a5;">
-        <div style="font-size:0.75em;color:#991b1b;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;">Distress Signal</div>
-        <div style="font-weight:700;color:#dc2626;font-size:1.05em;">Detected</div>
+      <div class="stat-chip stat-chip-distress">
+        <div class="stat-chip-label">Distress Signal</div>
+        <div class="stat-chip-value">⚠ Detected</div>
       </div>
       {% endif %}
     </div>
     {% if emotion_summary.emotion_percentages %}
-    <div class="interpretation" style="margin-top:14px;">
-      Distribution:
+    <div class="interpretation">
+      <strong>Distribution:</strong>&nbsp;
       {% for emotion, percentage in emotion_summary.emotion_percentages.items %}
-      {{ emotion|title }} {{ percentage }}%{% if not forloop.last %} • {% endif %}
+      {{ emotion|title }} {{ percentage }}%{% if not forloop.last %} &nbsp;·&nbsp; {% endif %}
       {% endfor %}
     </div>
     {% endif %}
   </div>
   {% endif %}
 
-  <!-- ═══════════════════════════════════════════════════════════════════════
-       FEELING / REFLECTION ANALYSIS
-       Shown only when Gemini returned valid concern_feeling_label data.
-       ═══════════════════════════════════════════════════════════════════════ -->
+  <!-- ══ EMOTIONAL REFLECTION ANALYSIS ══ -->
   {% if feeling_analysis and feeling_analysis.concern_feeling_label %}
   <div class="section">
     <div class="section-title">Emotional Reflection Analysis</div>
-    <p style="font-size:0.9em;color:#475569;margin-bottom:20px;">
+    <p style="font-size:0.88em;color:#475569;margin-bottom:20px;">
       Based on what you shared, here is an emotional profile generated from your personal statement.
     </p>
 
     {% if feeling_analysis.summary %}
-    <div class="feeling-summary-box">
-      {{ feeling_analysis.summary }}
-    </div>
+    <div class="feeling-summary-box">{{ feeling_analysis.summary }}</div>
     {% endif %}
 
     <div class="feeling-layout">
 
-      <!-- Radar chart -->
       <div class="feeling-chart-wrap">
-        <canvas id="feelingRadarChart" width="300" height="300"></canvas>
+        <svg id="radarSvg" viewBox="0 0 280 280" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;"></svg>
+        {{ feeling_analysis.concern_feeling_label|json_script:"feeling-scores-data" }}
+
+        <script>
+        (function() {
+          var raw = {};
+          try {
+            raw = JSON.parse(document.getElementById('feeling-scores-data').textContent);
+          } catch(e) { return; }
+
+          var labels = Object.keys(raw);
+          var values = Object.values(raw).map(function(v){ return Math.max(0, Math.min(1, parseFloat(v)||0)); });
+          var n = labels.length;
+          if (n < 3) return;
+
+          var cx = 140, cy = 140, R = 105, innerR = 8;
+          var svg = document.getElementById('radarSvg');
+
+          // ── grid rings ──
+          [0.2,0.4,0.6,0.8,1.0].forEach(function(r) {
+            var pts = labels.map(function(_, i) {
+              var angle = (Math.PI * 2 * i / n) - Math.PI / 2;
+              return [(cx + R * r * Math.cos(angle)).toFixed(2), (cy + R * r * Math.sin(angle)).toFixed(2)].join(',');
+            }).join(' ');
+            var poly = document.createElementNS('http://www.w3.org/2000/svg','polygon');
+            poly.setAttribute('points', pts);
+            poly.setAttribute('fill','none');
+            poly.setAttribute('stroke','rgba(100,116,139,0.28)');
+            poly.setAttribute('stroke-width','1');
+            svg.appendChild(poly);
+          });
+
+          // ── spokes ──
+          labels.forEach(function(_, i) {
+            var angle = (Math.PI * 2 * i / n) - Math.PI / 2;
+            var line = document.createElementNS('http://www.w3.org/2000/svg','line');
+            line.setAttribute('x1', cx); line.setAttribute('y1', cy);
+            line.setAttribute('x2', (cx + R * Math.cos(angle)).toFixed(2));
+            line.setAttribute('y2', (cy + R * Math.sin(angle)).toFixed(2));
+            line.setAttribute('stroke','rgba(100,116,139,0.38)');
+            line.setAttribute('stroke-width','1.2');
+            svg.appendChild(line);
+          });
+
+          // ── data polygon ──
+          var dataPoints = values.map(function(v, i) {
+            var angle = (Math.PI * 2 * i / n) - Math.PI / 2;
+            return [(cx + R * v * Math.cos(angle)).toFixed(2), (cy + R * v * Math.sin(angle)).toFixed(2)].join(',');
+          });
+          var poly = document.createElementNS('http://www.w3.org/2000/svg','polygon');
+          poly.setAttribute('points', dataPoints.join(' '));
+          poly.setAttribute('fill','rgba(129,230,217,0.25)');
+          poly.setAttribute('stroke','rgba(94,186,172,1)');
+          poly.setAttribute('stroke-width','2.5');
+          poly.setAttribute('stroke-linejoin','round');
+          svg.appendChild(poly);
+
+          // ── dots ──
+          dataPoints.forEach(function(pt) {
+            var parts = pt.split(',');
+            var dot = document.createElementNS('http://www.w3.org/2000/svg','circle');
+            dot.setAttribute('cx', parts[0]); dot.setAttribute('cy', parts[1]);
+            dot.setAttribute('r','5.5');
+            dot.setAttribute('fill','rgba(167,139,250,1)');
+            dot.setAttribute('stroke','white'); dot.setAttribute('stroke-width','2');
+            svg.appendChild(dot);
+          });
+
+          // ── labels ──
+          labels.forEach(function(label, i) {
+            var angle = (Math.PI * 2 * i / n) - Math.PI / 2;
+            var lx = cx + (R + 22) * Math.cos(angle);
+            var ly = cy + (R + 22) * Math.sin(angle);
+            var text = document.createElementNS('http://www.w3.org/2000/svg','text');
+            text.setAttribute('x', lx.toFixed(1));
+            text.setAttribute('y', ly.toFixed(1));
+            text.setAttribute('text-anchor','middle');
+            text.setAttribute('dominant-baseline','middle');
+            text.setAttribute('font-size','10');
+            text.setAttribute('font-weight','600');
+            text.setAttribute('fill','#1e293b');
+            text.setAttribute('font-family',"'DM Sans', sans-serif");
+            text.textContent = label;
+            svg.appendChild(text);
+          });
+        })();
+        </script>
       </div>
 
       <!-- Score bars -->
@@ -418,7 +808,6 @@ body { font-family:var(--font); background:linear-gradient(135deg,#2D5F8D,#1E426
             <span class="feeling-bar-score">{{ score|floatformat:2 }}</span>
           </div>
           <div class="feeling-bar-track">
-            {# score is 0.0–1.0; multiply by 100 for percentage width #}
             <div class="feeling-bar-fill" style="width:{% widthratio score 1 100 %}%;"></div>
           </div>
         </div>
@@ -427,113 +816,35 @@ body { font-family:var(--font); background:linear-gradient(135deg,#2D5F8D,#1E426
 
     </div>
   </div>
-
-  <!-- ── Chart.js radar ─────────────────────────────────────────────────── -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
-
-  {# CRITICAL FIX: use json_script to emit valid JSON, not Python dict repr #}
-  {{ feeling_analysis.concern_feeling_label|json_script:"feeling-scores-data" }}
-
-  <script>
-  (function () {
-    // json_script emits a <script type="application/json"> tag — always valid JSON.
-    var rawScores = JSON.parse(document.getElementById('feeling-scores-data').textContent);
-    var chartLabels = Object.keys(rawScores);
-    var chartData   = Object.values(rawScores).map(function(v){ return parseFloat(v) || 0; });
-
-    var ctx = document.getElementById('feelingRadarChart');
-    if (!ctx || chartLabels.length === 0) return;
-
-    new Chart(ctx.getContext('2d'), {
-      type: 'radar',
-      data: {
-        labels: chartLabels,
-        datasets: [{
-          label: 'Emotional Profile',
-          data: chartData,
-          backgroundColor: 'rgba(129, 230, 217, 0.25)',   // Soft Teal, semi-transparent fill
-          borderColor: 'rgba(94, 186, 172, 1)',             // Solid Teal border for the data shape
-          borderWidth: 2.5,
-          pointBackgroundColor: 'rgba(167, 139, 250, 1)',  // Lavender dots
-          pointBorderColor: '#ffffff',
-          pointBorderWidth: 2,
-          pointRadius: 6,
-          pointHoverRadius: 8,
-          pointHoverBackgroundColor: 'rgba(139, 92, 246, 1)',
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: true,
-        scales: {
-          r: {
-            beginAtZero: true,
-            min: 0,
-            max: 1,
-            ticks: {
-              stepSize: 0.2,                                // More rings = denser web
-              font: { size: 10, family: "'DM Sans', sans-serif" },
-              backdropColor: 'transparent',
-              color: '#94a3b8',
-              display: false,                               // Hide tick numbers, keep grid rings
-            },
-            pointLabels: {
-              font: { size: 11, family: "'DM Sans', sans-serif", weight: '600' },
-              color: '#1e293b',
-            },
-            grid: {
-              color: 'rgba(100, 116, 139, 0.35)',           // Darker, more visible web rings
-              lineWidth: 1.5,
-            },
-            angleLines: {
-              color: 'rgba(100, 116, 139, 0.45)',           // Darker spokes radiating from center
-              lineWidth: 1.5,
-            },
-          }
-        },
-        plugins: {
-          legend: { display: false },
-          tooltip: {
-            backgroundColor: '#1e293b',
-            titleFont: { size: 12, family: "'DM Sans', sans-serif" },
-            bodyFont:  { size: 12, family: "'DM Sans', sans-serif" },
-            callbacks: {
-              label: function(ctx) {
-                return ' ' + ctx.label + ': ' + parseFloat(ctx.raw).toFixed(2);
-              }
-            }
-          }
-        }
-      }
-    });
-  }
-  
-)();
-function logAndDownload(assessmentId, downloadType, downloadUrl) {
-    // 1. Attempt to log the activity to your backend
-    fetch(`/api/log-download/${assessmentId}/${downloadType}/`, {
-        method: 'GET',
-        headers: { 
-            'X-Requested-With': 'XMLHttpRequest',
-            'X-CSRFToken': document.cookie.match(/csrftoken=([^;]+)/)?.[1] || '' 
-        }
-    })
-    .catch(err => console.error("Logging failed:", err)) // Log error but don't stop the user
-    .finally(() => {
-        // 2. Trigger the actual download by redirecting the browser
-        window.location.href = downloadUrl;
-    });
-}
-  </script>
   {% endif %}
-  <!-- ═══════════════════════════════════════════════════════════════════════ -->
 
-  <!-- DISCLAIMER -->
+  <!-- ══ DISCLAIMER ══ -->
   <div class="disclaimer">
     <strong>⚠️ Important Medical Disclaimer</strong>
     <p>This is an AI-assisted screening tool and does not constitute a formal clinical diagnosis or treatment plan. All results should be reviewed by a qualified mental health professional. In case of emergency, contact emergency services immediately.</p>
   </div>
 
 </div>
+
+<script>
+function logAndDownload(assessmentId, downloadType, downloadUrl) {
+  fetch('/api/log-download/' + assessmentId + '/' + downloadType + '/', {
+    method: 'GET',
+    headers: {
+      'X-Requested-With': 'XMLHttpRequest',
+      'X-CSRFToken': (document.cookie.match(/csrftoken=([^;]+)/) || [])[1] || ''
+    }
+  })
+  .catch(function(err){ console.error("Logging failed:", err); })
+  .finally(function(){ window.location.href = downloadUrl; });
+}
+</script>
+<script>
+  history.pushState(null, null, location.href);
+  window.addEventListener('popstate', function () {
+    window.location.replace("/");  <!-- "/" goes to home/dashboard -->
+  });
+</script>
+
 </body>
 </html>

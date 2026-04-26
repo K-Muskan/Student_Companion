@@ -100,7 +100,7 @@ function renderScoreTrendChart(scoreTrend) {
                 {
                     label: 'Anxiety',
                     data: scoreTrend.map(s => s.anxiety_score),
-                    borderColor: '#E8A87C',
+                    borderColor: '#cc8758',
                     backgroundColor: 'rgba(232,168,124,0.08)',
                     borderWidth: 3, tension: 0.4, fill: true,
                     pointRadius: 6, pointBackgroundColor: '#E8A87C',
@@ -109,7 +109,7 @@ function renderScoreTrendChart(scoreTrend) {
                 {
                     label: 'Stress',
                     data: scoreTrend.map(s => s.stress_score),
-                    borderColor: '#6B9AC4',
+                    borderColor: '#5886ae',
                     backgroundColor: 'rgba(107,154,196,0.08)',
                     borderWidth: 3, tension: 0.4, fill: true,
                     pointRadius: 6, pointBackgroundColor: '#6B9AC4',
@@ -357,46 +357,24 @@ function incrementResourceCount() {
 // 2. Updated Session Report Opener
 function openSessionReport(index) {
     const session = globalSessions[index];
-    const modal = document.getElementById('mseModal');
-    const modalBody = modal.querySelector('.modal-body');
 
-    if (session && session.report_html) {
-        modalBody.innerHTML = session.report_html;
-        modal.style.display = 'flex';
-
-        // --- NEW: Direct Listener for the 3 internal buttons ---
-        // We wait a split second for the HTML to render, then attach listeners
-        setTimeout(() => {
-            const internalLinks = modalBody.querySelectorAll('a, button');
-            internalLinks.forEach(link => {
-                link.addEventListener('click', () => {
-                    // Check if it's one of your 3 specific buttons
-                    const text = link.innerText.toLowerCase();
-                    if (text.includes('text') || text.includes('json') || text.includes('print')) {
-                        incrementResourceCount();
-                    }
-                });
-            });
-        }, 100);
-
-    } else {
+    if (!session || !session.report_html) {
         alert("Report content not found.");
+        return;
     }
+
+    const newTab = window.open('', '_blank');
+    newTab.document.open();
+    newTab.document.write(session.report_html);
+    newTab.document.close();
 }
 
 // 3. The Footer Download Button
 function downloadReport() {
-    const modalBody = document.querySelector('#mseModal .modal-body');
-    // Find the actual Text Report link inside the HTML and click it
-    const textLink = modalBody ? modalBody.querySelector('a[href*="download-report-text"]') : null;
-    
-    if (textLink) {
-        textLink.click(); // This triggers the download AND the listener we added above
-    } else {
-        window.print();
-        incrementResourceCount();
-    }
+    window.print();
+    incrementResourceCount();
 }
+
 function closeMSEReport() {
     document.getElementById('mseModal').style.display = 'none';
 }
@@ -816,4 +794,3 @@ function filterDataByDays(data, days) {
         return sessionDate >= cutoff;
     });
 }
-

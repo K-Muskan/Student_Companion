@@ -732,5 +732,11 @@ setTimeout(() => {
 }, 3000);
 */
 </script>
+<script>
+  history.pushState(null, null, location.href);
+  window.addEventListener('popstate', function () {
+    window.location.replace("/");  <!-- "/" goes to home/dashboard -->
+  });
+</script>
 </body>
 </html>

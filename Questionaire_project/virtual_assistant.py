@@ -13,7 +13,7 @@ SETUP — do this once:
 2. Add to your settings.py:
        WAV2LIP_DIR        = r"C:\Wav2Lip\Wav2Lip"
        WAV2LIP_CHECKPOINT = r"C:\Wav2Lip\Wav2Lip\checkpoints\wav2lip_gan.pth"
-       WAV2LIP_IMAGE      = r"C:\Wav2Lip\Wav2Lip\therapist_image.jpg"
+       WAV2LIP_VIDEO      = r"C:\Wav2Lip\Wav2Lip\therapist_video.mp4"
 
 3. FFmpeg must be on PATH (already confirmed working).
 
@@ -52,7 +52,7 @@ TIMING_LOG_DIR    = os.path.join(settings.BASE_DIR, "media", "therapist_timing")
 
 WAV2LIP_DIR        = getattr(settings, "WAV2LIP_DIR",        r"C:\Wav2Lip\Wav2Lip")
 WAV2LIP_CHECKPOINT = getattr(settings, "WAV2LIP_CHECKPOINT", r"C:\Wav2Lip\Wav2Lip\checkpoints\wav2lip_gan.pth")
-WAV2LIP_IMAGE      = getattr(settings, "WAV2LIP_IMAGE",      r"C:\Wav2Lip\Wav2Lip\therapist_image.jpg")
+WAV2LIP_VIDEO      = getattr(settings, "WAV2LIP_VIDEO",      r"C:\Wav2Lip\Wav2Lip\therapist_video.mp4")
 
 # Python interpreter inside the Wav2Lip venv
 WAV2LIP_PYTHON = os.path.join(WAV2LIP_DIR, "wav2lip_env", "Scripts", "python.exe")
@@ -102,29 +102,17 @@ def _generate_audio(text, path):
         loop.close()
 
 
-# ── Therapist image ───────────────────────────────────────────────────────────
+# ── Therapist video ───────────────────────────────────────────────────────────
 
-def _resolve_image_path():
-    # Use the Wav2Lip-local image first (confirmed working, no path space issues)
-    if WAV2LIP_IMAGE and os.path.exists(WAV2LIP_IMAGE):
-        logger.info(f"[image] Using Wav2Lip-local image: {WAV2LIP_IMAGE}")
-        return WAV2LIP_IMAGE
-
-    # Fallback to Django static folder
-    p = os.path.join(
-        settings.BASE_DIR,
-        "Questionaire_project", "static",
-        "Questionaire_project", "videos",
-        "therapist_image.jpg",
-    )
-    if os.path.exists(p):
-        logger.info(f"[image] Using Django static image: {p}")
-        return p
+def _resolve_video_path():
+    if WAV2LIP_VIDEO and os.path.exists(WAV2LIP_VIDEO):
+        logger.info(f"[face] Using therapist video: {WAV2LIP_VIDEO}")
+        return WAV2LIP_VIDEO
 
     raise FileNotFoundError(
-        f"Therapist image not found.\n"
-        f"  Checked: {WAV2LIP_IMAGE}\n"
-        f"  Checked: {p}"
+        f"Therapist video not found.\n"
+        f"  Checked: {WAV2LIP_VIDEO}\n"
+        f"  Set WAV2LIP_VIDEO in settings.py to the correct path."
     )
 
 
@@ -139,7 +127,7 @@ def _ffmpeg():
 
 # ── STRATEGY 1: Wav2Lip AI lip-sync ──────────────────────────────────────────
 
-def _try_wav2lip(image_path, audio_path, video_dest):
+def _try_wav2lip(video_path, audio_path, video_dest):
     """
     Converts mp3 → wav into Wav2Lip's own temp/ dir (pre-seeding temp/temp.wav),
     then runs inference.py with all absolute paths.
@@ -162,8 +150,6 @@ def _try_wav2lip(image_path, audio_path, video_dest):
     ff = _ffmpeg()
 
     # ── Step 1: Pre-seed temp/temp.wav inside Wav2Lip's directory ────────────
-    # Wav2Lip's audio.py always writes to temp/temp.wav relative to cwd.
-    # We pre-convert our mp3 to exactly that path so inference finds it.
     wav2lip_temp_dir = os.path.join(WAV2LIP_DIR, "temp")
     os.makedirs(wav2lip_temp_dir, exist_ok=True)
     preseeded_wav = os.path.join(wav2lip_temp_dir, "temp.wav")
@@ -173,15 +159,15 @@ def _try_wav2lip(image_path, audio_path, video_dest):
         conv = subprocess.run(
             [
                 ff, "-y",
-                "-i", audio_path,        # Django mp3 — absolute path
-                "-ar", "16000",          # 16 kHz — Wav2Lip's expected sample rate
-                "-ac", "1",              # mono
-                "-c:a", "pcm_s16le",     # uncompressed PCM wav
+                "-i", audio_path,
+                "-ar", "16000",
+                "-ac", "1",
+                "-c:a", "pcm_s16le",
                 preseeded_wav,
             ],
             capture_output=True,
             text=True,
-            timeout=1800,
+            timeout=1800000,
             cwd=WAV2LIP_DIR,
         )
         if conv.returncode != 0:
@@ -191,8 +177,8 @@ def _try_wav2lip(image_path, audio_path, video_dest):
     except Exception as e:
         logger.error(f"[wav2lip] Audio conversion error: {e}")
         return False
-    ####
-    # ── Step 2: Prepare output path (no spaces, inside Wav2Lip results/) ──────
+
+    # ── Step 2: Prepare output path ───────────────────────────────────────────
     results_dir = os.path.join(WAV2LIP_DIR, "results")
     os.makedirs(results_dir, exist_ok=True)
     wav2lip_outfile = os.path.join(results_dir, f"out_{os.getpid()}.mp4")
@@ -200,11 +186,11 @@ def _try_wav2lip(image_path, audio_path, video_dest):
     # ── Step 3: Build the command ─────────────────────────────────────────────
     cmd = [
         python_exe,
-        "inference.py",              # relative to cwd — avoids any space issues
+        "inference.py",
         "--checkpoint_path", WAV2LIP_CHECKPOINT,
-        "--face",            image_path,       # absolute
-        "--audio",           preseeded_wav,    # absolute — the pre-converted wav
-        "--outfile",         wav2lip_outfile,  # absolute — no spaces
+        "--face",            video_path,
+        "--audio",           preseeded_wav,
+        "--outfile",         wav2lip_outfile,
     ]
 
     logger.info(f"[wav2lip] CMD: {' '.join(cmd)}")
@@ -217,10 +203,9 @@ def _try_wav2lip(image_path, audio_path, video_dest):
             cwd=WAV2LIP_DIR,
             capture_output=True,
             text=True,
-            timeout=600,
+            timeout=1800000,
         )
 
-        # Always log full output for debugging
         logger.info(f"[wav2lip] exit={proc.returncode}")
         if proc.stdout:
             logger.info(f"[wav2lip] STDOUT:\n{proc.stdout[-1500:]}")
@@ -260,7 +245,6 @@ def _try_wav2lip(image_path, audio_path, video_dest):
         logger.error(f"[wav2lip] Unexpected error: {e}", exc_info=True)
         return False
     finally:
-        # Clean up only the pid-specific outfile; leave default output.mp4 alone
         if os.path.exists(wav2lip_outfile):
             try:
                 os.remove(wav2lip_outfile)
@@ -270,75 +254,61 @@ def _try_wav2lip(image_path, audio_path, video_dest):
 
 # ── STRATEGY 2: FFmpeg Ken Burns animated video ───────────────────────────────
 
-def _ffmpeg_kenburns(image_path, audio_path, video_dest):
+def _ffmpeg_kenburns(video_path, audio_path, video_dest):
     """
-    Produces a video with a slow zoom-in (Ken Burns) effect.
+    Re-encodes the therapist video with the new audio track.
+    Falls back to a simple re-mux if re-encode fails.
     No AI — guaranteed to work as long as ffmpeg is installed.
     """
     ff = _ffmpeg()
     logger.info(f"[ffmpeg] binary: {ff}")
 
-    if not os.path.exists(image_path):
-        logger.error(f"[ffmpeg] Image not found: {image_path}")
+    if not os.path.exists(video_path):
+        logger.error(f"[ffmpeg] Video not found: {video_path}")
         return False
     if not os.path.exists(audio_path):
         logger.error(f"[ffmpeg] Audio not found: {audio_path}")
         return False
 
-    vf_kenburns = (
-        "scale=8000:-1,"
-        "zoompan="
-          "z='min(zoom+0.0003,1.08)':"
-          "x='iw/2-(iw/zoom/2)':"
-          "y='ih/2-(ih/zoom/2)':"
-          "d=10000:"
-          "s=640x480:"
-          "fps=25,"
-        "format=yuv420p"
-    )
-
     try:
-        logger.info("[ffmpeg] Running Ken Burns encode …")
+        logger.info("[ffmpeg] Re-encoding therapist video with new audio …")
         cmd = [
             ff, "-y",
-            "-loop", "1", "-i", image_path,
+            "-stream_loop", "-1", "-i", video_path,
             "-i", audio_path,
-            "-vf", vf_kenburns,
-            "-c:v", "libx264", "-tune", "stillimage",
+            "-c:v", "libx264", "-tune", "film",
             "-c:a", "aac", "-b:a", "192k",
             "-shortest",
+            "-pix_fmt", "yuv420p",
             video_dest,
         ]
-        proc = subprocess.run(cmd, capture_output=True, text=True, timeout=180)
+        proc = subprocess.run(cmd, capture_output=True, text=True, timeout=1800000)
 
         if proc.returncode == 0 and os.path.getsize(video_dest) > 10_000:
-            logger.info(f"[ffmpeg] Ken Burns OK — {os.path.getsize(video_dest):,} bytes")
+            logger.info(f"[ffmpeg] Re-encode OK — {os.path.getsize(video_dest):,} bytes")
             return True
 
         logger.warning(
-            f"[ffmpeg] Ken Burns failed (code {proc.returncode}), "
-            f"trying plain static …\n{proc.stderr[-800:]}"
+            f"[ffmpeg] Re-encode failed (code {proc.returncode}), "
+            f"trying simple remux …\n{proc.stderr[-800:]}"
         )
 
-        # Plain static fallback (no zoom, but still a valid video + audio)
-        cmd_plain = [
+        # Simple remux fallback — replace audio stream, copy video as-is
+        cmd_remux = [
             ff, "-y",
-            "-loop", "1", "-i", image_path,
+            "-stream_loop", "-1", "-i", video_path,
             "-i", audio_path,
-            "-c:v", "libx264", "-tune", "stillimage",
+            "-c:v", "copy",
             "-c:a", "aac", "-b:a", "192k",
-            "-pix_fmt", "yuv420p",
-            "-vf", "scale=640:480:force_original_aspect_ratio=decrease,"
-                   "pad=640:480:(ow-iw)/2:(oh-ih)/2",
             "-shortest",
             video_dest,
         ]
-        proc2 = subprocess.run(cmd_plain, capture_output=True, text=True, timeout=120)
+        proc2 = subprocess.run(cmd_remux, capture_output=True, text=True, timeout=1800000)
         if proc2.returncode == 0:
-            logger.info("[ffmpeg] Plain static encode OK")
+            logger.info("[ffmpeg] Simple remux OK")
             return True
 
-        logger.error(f"[ffmpeg] Plain static also failed:\n{proc2.stderr[-800:]}")
+        logger.error(f"[ffmpeg] Simple remux also failed:\n{proc2.stderr[-800:]}")
         return False
 
     except FileNotFoundError:
@@ -388,11 +358,11 @@ def generate_therapist_video(assessment_id: int, therapist_script: str) -> dict:
 
     timing["audio_generation_seconds"] = audio_seconds
     timing["audio_done_at"] = _now_iso()
-    save_timing_log(assessment_id, timing)   # frontend sees audio is done
+    save_timing_log(assessment_id, timing)
 
-    # ── 2. Resolve therapist image ────────────────────────────────────────────
+    # ── 2. Resolve therapist video ────────────────────────────────────────────
     try:
-        image_path = _resolve_image_path()
+        video_path = _resolve_video_path()
     except FileNotFoundError as e:
         logger.error(str(e))
         timing.update({"status": "error", "error": str(e)})
@@ -403,7 +373,7 @@ def generate_therapist_video(assessment_id: int, therapist_script: str) -> dict:
     logger.info("[video] Attempting Wav2Lip …")
     t1 = time.time()
 
-    if _try_wav2lip(image_path, audio_path, video_dest):
+    if _try_wav2lip(video_path, audio_path, video_dest):
         video_seconds = round(time.time() - t1, 1)
         timing.update({
             "status":                   "done",
@@ -414,12 +384,12 @@ def generate_therapist_video(assessment_id: int, therapist_script: str) -> dict:
         })
         logger.info(f"[video] ✓ Wav2Lip succeeded in {video_seconds}s")
 
-    # ── 4. FFmpeg Ken Burns fallback ──────────────────────────────────────────
+    # ── 4. FFmpeg fallback ────────────────────────────────────────────────────
     else:
-        logger.info("[video] Wav2Lip failed — falling back to Ken Burns …")
+        logger.info("[video] Wav2Lip failed — falling back to FFmpeg re-encode …")
         t1 = time.time()
 
-        if _ffmpeg_kenburns(image_path, audio_path, video_dest):
+        if _ffmpeg_kenburns(video_path, audio_path, video_dest):
             video_seconds = round(time.time() - t1, 1)
             timing.update({
                 "status":                   "done",
@@ -428,14 +398,14 @@ def generate_therapist_video(assessment_id: int, therapist_script: str) -> dict:
                 "video_done_at":            _now_iso(),
                 "total_seconds":            round(audio_seconds + video_seconds, 1),
             })
-            logger.info(f"[video] ✓ Ken Burns fallback OK in {video_seconds}s")
+            logger.info(f"[video] ✓ FFmpeg fallback OK in {video_seconds}s")
         else:
             timing.update({
                 "status": "error",
                 "error": (
                     "All video methods failed.\n\n"
                     "Wav2Lip: check WAV2LIP_DIR, WAV2LIP_CHECKPOINT, "
-                    "WAV2LIP_IMAGE in settings.py\n"
+                    "WAV2LIP_VIDEO in settings.py\n"
                     "FFmpeg:  ensure ffmpeg is installed and on PATH"
                 ),
             })

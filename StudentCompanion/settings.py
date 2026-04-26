@@ -23,28 +23,11 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = ''
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
 ALLOWED_HOSTS = ["crunodal-libbie-preconsciously.ngrok-free.dev","127.0.0.1",
     "localhost"]
-
-SYNC_SO_API_KEY = "#"
-
-# ── Virtual Therapist / Wav2Lip ────────────────────────────────────────────
-WAV2LIP_DIR        = r"C:\Wav2Lip\Wav2Lip"
-WAV2LIP_CHECKPOINT = r"C:\Wav2Lip\Wav2Lip\checkpoints\wav2lip_gan.pth"
-WAV2LIP_IMAGE      = r"C:\Wav2Lip\Wav2Lip\therapist_image.jpg"  # ADD THIS
-
-MEDIA_URL  = "/media/"
-MEDIA_ROOT = BASE_DIR / "media"
-
-GEMINI_API_KEY = ""
-GROQ_API_KEY = ""
-HUGGING_FACE_TOKEN = ""#hugging face token
-OPENROUTER_API_KEY = "" #openrouter api
-
 
 # Application definition
 INSTALLED_APPS = [
@@ -108,6 +91,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'allauth.account.middleware.AccountMiddleware',
+    'Login.middleware.NoCacheMiddleware',
 ]
 
 
@@ -139,9 +123,9 @@ ASGI_APPLICATION = 'StudentCompanion.asgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'Student_companion',
+        'NAME': 'student-companion',
         'USER': 'postgres',
-        'PASSWORD': 'muskan',
+        'PASSWORD': 'admin',
         'HOST': 'localhost',
         'PORT': '5432',
     }
@@ -214,7 +198,7 @@ EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 
 EMAIL_HOST_USER = "mallahkhadija97@gmail.com"
-EMAIL_HOST_PASSWORD = ""
+EMAIL_HOST_PASSWORD =  ""
 
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 
