@@ -27,7 +27,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 DEBUG = False
 
 ALLOWED_HOSTS = ["crunodal-libbie-preconsciously.ngrok-free.dev","127.0.0.1",
-    "localhost" ,"*" , 'student-companion-1.onrender.com']
+    "localhost" ,'*' , 'student-companion-1.onrender.com']
 
 # Application definition
 INSTALLED_APPS = [
