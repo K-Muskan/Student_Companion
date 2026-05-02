@@ -28,3 +28,4 @@ edge-tts
 gradio_client
 dj-database-url
 psycopg2-binary
+whitenoise
