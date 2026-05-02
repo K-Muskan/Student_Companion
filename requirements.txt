@@ -26,3 +26,5 @@ urllib3==2.6.3
 google-generativeai
 edge-tts
 gradio_client
+dj-database-url
+psycopg2-binary

@@ -119,16 +119,10 @@ STATICFILES_DIRS = [
 WSGI_APPLICATION = 'StudentCompanion.wsgi.application'
 ASGI_APPLICATION = 'StudentCompanion.asgi.application'
 
+import dj_database_url
 
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'student-companion',
-        'USER': 'postgres',
-        'PASSWORD': 'admin',
-        'HOST': 'localhost',
-        'PORT': '5432',
-    }
+    'default': dj_database_url.parse(os.environ.get("DATABASE_URL"))
 }
 
 
