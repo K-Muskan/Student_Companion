@@ -24,10 +24,10 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 # SECURITY WARNING: keep the secret key used in production secret!
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
 ALLOWED_HOSTS = ["crunodal-libbie-preconsciously.ngrok-free.dev","127.0.0.1",
-    "localhost" ,"*"]
+    "localhost" ,"*" , 'student-companion-1.onrender.com']
 
 # Application definition
 INSTALLED_APPS = [
