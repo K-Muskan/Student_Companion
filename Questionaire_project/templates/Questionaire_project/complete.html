@@ -370,10 +370,13 @@ body {
 @media print {
   @page {
     size: A4;
-    margin: 14mm 12mm;
+    margin: 10mm 12mm;
   }
 
-  /* Kill empty-page sources */
+  html {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
   html, body {
     background: white !important;
     min-height: 0 !important;
@@ -387,59 +390,192 @@ body {
     max-width: 100% !important;
     width: 100% !important;
     overflow: visible !important;
+    background: white !important;
   }
 
   /* Hide interactive elements */
-  .action-bar,
-  .btn,
-  .no-print {
-    display: none !important;
-  }
+  .action-bar, .btn, .no-print { display: none !important; }
 
-  /* Header */
+  /* ── HEADER: strictly sized, no bleeding ── */
   .header {
     background: #1a365d !important;
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
-    padding: 24px 28px 20px !important;
+    padding: 16px 28px 14px !important;
+    min-height: 0 !important;
+    height: auto !important;
+    overflow: hidden !important;
+    break-after: avoid !important;
+    page-break-after: avoid !important;
   }
-  .header h1 { font-size: 1.75em !important; }
+  .header h1 { font-size: 1.5em !important; margin-bottom: 2px !important; }
+  .header-sub { font-size: 0.80em !important; margin-bottom: 10px !important; }
+  .header-logo { margin-bottom: 8px !important; }
+  .header-meta { gap: 8px !important; flex-wrap: nowrap !important; }
+  .header-meta span { padding: 3px 9px !important; font-size: 0.74em !important; }
+  /* Kill the giant pseudo-element circles that cause bleeding */
   .header::before, .header::after { display: none !important; }
 
-  /* Stack cards vertically — no overflow, no empty pages */
+  /* ── ALERT: compact, glued to header ── */
+  .alert-bar {
+    padding: 10px 28px !important;
+    background: #f8fafc !important;
+    break-before: avoid !important;
+    page-break-before: avoid !important;
+    break-after: avoid !important;
+    page-break-after: avoid !important;
+  }
+  .alert { padding: 10px 14px !important; font-size: 0.83em !important; }
+
+  /* ── SCALES GRID ── */
   .scales-grid {
     display: block !important;
-    padding: 20px 28px !important;
+    padding: 12px 28px !important;
     background: #f8fafc !important;
+    break-before: avoid !important;
+    page-break-before: avoid !important;
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
   }
+
   .scale-card {
     display: block !important;
     box-shadow: none !important;
     border: 1px solid #d1d5db !important;
     border-radius: 10px !important;
-    margin-bottom: 16px !important;
+    padding: 14px 18px !important;
+    margin-bottom: 10px !important;
     break-inside: avoid !important;
     page-break-inside: avoid !important;
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
   }
-  .scale-card:last-child { margin-bottom: 0 !important; }
 
-  .alert-bar {
-    padding: 14px 28px !important;
-    break-inside: avoid;
+  /* Card internals — compact */
+  .scale-card-header { margin-bottom: 8px !important; }
+  .scale-title { font-size: 1.0em !important; }
+  .scale-subtitle { font-size: 0.72em !important; margin-bottom: 8px !important; }
+  .score-display { margin-bottom: 6px !important; }
+  .score-number { font-size: 1.9em !important; }
+  .score-max { font-size: 0.85em !important; }
+  .score-bar-track { height: 5px !important; margin-bottom: 8px !important; }
+  .interpretation {
+    font-size: 0.76em !important;
+    padding: 6px 10px !important;
+    margin-bottom: 6px !important;
+    line-height: 1.4 !important;
   }
-  .section { padding: 18px 28px !important; }
-  .disclaimer { margin: 0 28px 24px !important; break-inside: avoid; }
-  .feeling-layout { break-inside: avoid; }
+  .recs-title { font-size: 0.61em !important; margin: 3px 0 5px !important; }
+  .rec-item {
+    font-size: 0.74em !important;
+    padding: 4px 8px 4px 20px !important;
+    margin-bottom: 3px !important;
+    line-height: 1.35 !important;
+  }
+  .scale-name { font-size: 0.61em !important; padding: 3px 9px !important; }
+  .risk-badge { font-size: 0.61em !important; padding: 3px 9px !important; }
 
-  /* Keep colours */
+  /* ══════════════════════════════════════════
+     PAGE LAYOUT:
+     Page 1: Header + Alert + Depression + Stress
+     Page 2: Anxiety + Facial Emotion Analysis
+     Page 3: Emotional Reflection + Disclaimer
+  ══════════════════════════════════════════ */
+
+  /* Depression: glued to alert above, glued to Stress below */
+  .scale-card:nth-child(1) {
+    break-before: avoid !important;
+    page-break-before: avoid !important;
+    break-after: avoid !important;
+    page-break-after: avoid !important;
+  }
+
+  /* Stress: glued to Depression, BREAK after */
+  .scale-card:nth-child(2) {
+    break-before: avoid !important;
+    page-break-before: avoid !important;
+    break-after: page !important;
+    page-break-after: always !important;
+    margin-bottom: 0 !important;
+  }
+
+  /* Anxiety: starts page 2, glued to Facial Emotion below */
+  .scale-card:nth-child(3) {
+    break-before: avoid !important;
+    page-break-before: avoid !important;
+    break-after: avoid !important;
+    page-break-after: avoid !important;
+    margin-bottom: 10px !important;
+  }
+
+  /* ── SECTIONS ── */
+  .section {
+    padding: 14px 28px !important;
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+  .section-title { font-size: 1.08em !important; margin-bottom: 10px !important; }
+
+  /* Facial Emotion (1st section): glued after Anxiety on page 2 */
+  .section:nth-of-type(1) {
+    break-before: avoid !important;
+    page-break-before: avoid !important;
+    break-after: page !important;
+    page-break-after: always !important;
+  }
+
+  /* Emotional Reflection (2nd section): page 3 */
+  .section:nth-of-type(2) {
+    break-before: avoid !important;
+    page-break-before: avoid !important;
+  }
+
+  /* If ONLY ONE section (no facial emotion):
+     keep glued after Anxiety, no forced breaks */
+  .section:only-of-type {
+    break-before: avoid !important;
+    page-break-before: avoid !important;
+    break-after: avoid !important;
+    page-break-after: avoid !important;
+  }
+
+  /* Stat chips */
+  .stat-chips { gap: 8px !important; margin-bottom: 10px !important; }
+  .stat-chip { padding: 8px 12px !important; }
+  .stat-chip-label { font-size: 0.61em !important; }
+  .stat-chip-value { font-size: 0.88em !important; }
+
+  /* Feeling layout */
+  .feeling-layout { gap: 18px !important; break-inside: avoid !important; }
+  .feeling-summary-box {
+    padding: 11px 15px !important;
+    margin-bottom: 12px !important;
+    font-size: 0.83em !important;
+    line-height: 1.52 !important;
+  }
+  .feeling-bars-heading { font-size: 0.63em !important; margin-bottom: 8px !important; }
+  .feeling-bar-label-row { font-size: 0.78em !important; margin-bottom: 3px !important; }
+  .feeling-bar-track { height: 5px !important; margin-bottom: 8px !important; }
+  .feeling-chart-wrap { flex: 0 0 195px !important; }
+
+  /* Disclaimer: glued to whatever is last */
+  .disclaimer {
+    margin: 12px 28px 14px !important;
+    padding: 11px 15px !important;
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+    break-before: avoid !important;
+    page-break-before: avoid !important;
+    font-size: 0.78em !important;
+  }
+  .disclaimer strong { font-size: 0.87em !important; margin-bottom: 4px !important; }
+  .disclaimer p { line-height: 1.5 !important; }
+
+  /* Preserve colours */
   .risk-badge, .scale-name, .alert, .score-bar-fill,
   .feeling-bar-fill, .stat-chip, .stat-chip-distress,
   .rec-item, .interpretation, .feeling-summary-box,
-  .disclaimer {
+  .disclaimer, .header, .scales-grid, .alert-bar {
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
   }
@@ -713,88 +849,97 @@ body {
         {{ feeling_analysis.concern_feeling_label|json_script:"feeling-scores-data" }}
 
         <script>
-        (function() {
-          var raw = {};
-          try {
-            raw = JSON.parse(document.getElementById('feeling-scores-data').textContent);
-          } catch(e) { return; }
+          (function() {
+            var raw = {};
+            try {
+              raw = JSON.parse(document.getElementById('feeling-scores-data').textContent);
+            } catch(e) { return; }
 
-          var labels = Object.keys(raw);
-          var values = Object.values(raw).map(function(v){ return Math.max(0, Math.min(1, parseFloat(v)||0)); });
-          var n = labels.length;
-          if (n < 3) return;
+            var labels = Object.keys(raw);
+            var values = Object.values(raw).map(function(v){ return Math.max(0, Math.min(1, parseFloat(v)||0)); });
+            var n = labels.length;
+            if (n < 3) return;
 
-          var cx = 140, cy = 140, R = 105, innerR = 8;
-          var svg = document.getElementById('radarSvg');
+            var cx = 140, cy = 140, R = 105;
+            var svg = document.getElementById('radarSvg');
 
-          // ── grid rings ──
-          [0.2,0.4,0.6,0.8,1.0].forEach(function(r) {
-            var pts = labels.map(function(_, i) {
+            // ── background fill ──
+            var bg = document.createElementNS('http://www.w3.org/2000/svg','rect');
+            bg.setAttribute('width','280'); bg.setAttribute('height','280');
+            bg.setAttribute('fill','white');
+            svg.appendChild(bg);
+
+            // ── grid rings ──
+            [0.2,0.4,0.6,0.8,1.0].forEach(function(r) {
+              var pts = labels.map(function(_, i) {
+                var angle = (Math.PI * 2 * i / n) - Math.PI / 2;
+                return [(cx + R * r * Math.cos(angle)).toFixed(2), (cy + R * r * Math.sin(angle)).toFixed(2)].join(',');
+              }).join(' ');
+              var poly = document.createElementNS('http://www.w3.org/2000/svg','polygon');
+              poly.setAttribute('points', pts);
+              poly.setAttribute('fill','none');
+              poly.setAttribute('stroke','#cbd5e1');
+              poly.setAttribute('stroke-width','0.8');
+              poly.setAttribute('stroke-linejoin','round');
+              svg.appendChild(poly);
+            });
+
+            // ── spokes ──
+            labels.forEach(function(_, i) {
               var angle = (Math.PI * 2 * i / n) - Math.PI / 2;
-              return [(cx + R * r * Math.cos(angle)).toFixed(2), (cy + R * r * Math.sin(angle)).toFixed(2)].join(',');
-            }).join(' ');
+              var line = document.createElementNS('http://www.w3.org/2000/svg','line');
+              line.setAttribute('x1', cx); line.setAttribute('y1', cy);
+              line.setAttribute('x2', (cx + R * Math.cos(angle)).toFixed(2));
+              line.setAttribute('y2', (cy + R * Math.sin(angle)).toFixed(2));
+              line.setAttribute('stroke','#cbd5e1');
+              line.setAttribute('stroke-width','0.8');
+              svg.appendChild(line);
+            });
+
+            // ── data polygon ──
+            var dataPoints = values.map(function(v, i) {
+              var angle = (Math.PI * 2 * i / n) - Math.PI / 2;
+              return [(cx + R * v * Math.cos(angle)).toFixed(2), (cy + R * v * Math.sin(angle)).toFixed(2)].join(',');
+            });
             var poly = document.createElementNS('http://www.w3.org/2000/svg','polygon');
-            poly.setAttribute('points', pts);
-            poly.setAttribute('fill','none');
-            poly.setAttribute('stroke','rgba(100,116,139,0.28)');
-            poly.setAttribute('stroke-width','1');
+            poly.setAttribute('points', dataPoints.join(' '));
+            poly.setAttribute('fill','rgba(129,230,217,0.25)');
+            poly.setAttribute('stroke','#5ebaac');
+            poly.setAttribute('stroke-width','2');
+            poly.setAttribute('stroke-linejoin','round');
             svg.appendChild(poly);
-          });
 
-          // ── spokes ──
-          labels.forEach(function(_, i) {
-            var angle = (Math.PI * 2 * i / n) - Math.PI / 2;
-            var line = document.createElementNS('http://www.w3.org/2000/svg','line');
-            line.setAttribute('x1', cx); line.setAttribute('y1', cy);
-            line.setAttribute('x2', (cx + R * Math.cos(angle)).toFixed(2));
-            line.setAttribute('y2', (cy + R * Math.sin(angle)).toFixed(2));
-            line.setAttribute('stroke','rgba(100,116,139,0.38)');
-            line.setAttribute('stroke-width','1.2');
-            svg.appendChild(line);
-          });
+            // ── dots ──
+            dataPoints.forEach(function(pt) {
+              var parts = pt.split(',');
+              var dot = document.createElementNS('http://www.w3.org/2000/svg','circle');
+              dot.setAttribute('cx', parts[0]); dot.setAttribute('cy', parts[1]);
+              dot.setAttribute('r','4.5');
+              dot.setAttribute('fill','#a78bfa');
+              dot.setAttribute('stroke','white');
+              dot.setAttribute('stroke-width','2');
+              svg.appendChild(dot);
+            });
 
-          // ── data polygon ──
-          var dataPoints = values.map(function(v, i) {
-            var angle = (Math.PI * 2 * i / n) - Math.PI / 2;
-            return [(cx + R * v * Math.cos(angle)).toFixed(2), (cy + R * v * Math.sin(angle)).toFixed(2)].join(',');
-          });
-          var poly = document.createElementNS('http://www.w3.org/2000/svg','polygon');
-          poly.setAttribute('points', dataPoints.join(' '));
-          poly.setAttribute('fill','rgba(129,230,217,0.25)');
-          poly.setAttribute('stroke','rgba(94,186,172,1)');
-          poly.setAttribute('stroke-width','2.5');
-          poly.setAttribute('stroke-linejoin','round');
-          svg.appendChild(poly);
-
-          // ── dots ──
-          dataPoints.forEach(function(pt) {
-            var parts = pt.split(',');
-            var dot = document.createElementNS('http://www.w3.org/2000/svg','circle');
-            dot.setAttribute('cx', parts[0]); dot.setAttribute('cy', parts[1]);
-            dot.setAttribute('r','5.5');
-            dot.setAttribute('fill','rgba(167,139,250,1)');
-            dot.setAttribute('stroke','white'); dot.setAttribute('stroke-width','2');
-            svg.appendChild(dot);
-          });
-
-          // ── labels ──
-          labels.forEach(function(label, i) {
-            var angle = (Math.PI * 2 * i / n) - Math.PI / 2;
-            var lx = cx + (R + 22) * Math.cos(angle);
-            var ly = cy + (R + 22) * Math.sin(angle);
-            var text = document.createElementNS('http://www.w3.org/2000/svg','text');
-            text.setAttribute('x', lx.toFixed(1));
-            text.setAttribute('y', ly.toFixed(1));
-            text.setAttribute('text-anchor','middle');
-            text.setAttribute('dominant-baseline','middle');
-            text.setAttribute('font-size','10');
-            text.setAttribute('font-weight','600');
-            text.setAttribute('fill','#1e293b');
-            text.setAttribute('font-family',"'DM Sans', sans-serif");
-            text.textContent = label;
-            svg.appendChild(text);
-          });
-        })();
+            // ── labels ──
+            labels.forEach(function(label, i) {
+              var angle = (Math.PI * 2 * i / n) - Math.PI / 2;
+              var lx = cx + (R + 22) * Math.cos(angle);
+              var ly = cy + (R + 22) * Math.sin(angle);
+              var text = document.createElementNS('http://www.w3.org/2000/svg','text');
+              text.setAttribute('x', lx.toFixed(1));
+              text.setAttribute('y', ly.toFixed(1));
+              text.setAttribute('text-anchor','middle');
+              text.setAttribute('dominant-baseline','middle');
+              text.setAttribute('font-size','10');
+              text.setAttribute('font-weight','600');
+              text.setAttribute('fill','#1e293b');
+              text.setAttribute('stroke','none');
+              text.setAttribute('font-family',"'DM Sans', sans-serif");
+              text.textContent = label;
+              svg.appendChild(text);
+            });
+          })();
         </script>
       </div>
 

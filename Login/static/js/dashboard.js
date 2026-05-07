@@ -363,9 +363,23 @@ function openSessionReport(index) {
         return;
     }
 
+
+    // Parse the HTML and remove the Talk to Therapist button
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(session.report_html, 'text/html');
+
+    // Remove any element containing "Talk to Therapist" text
+    doc.querySelectorAll('a, button').forEach(el => {
+        if (el.textContent.trim().toLowerCase().includes('talk to therapist')) {
+            el.remove();
+        }
+    });
+
+    const cleanedHtml = doc.documentElement.outerHTML;
+
     const newTab = window.open('', '_blank');
     newTab.document.open();
-    newTab.document.write(session.report_html);
+    newTab.document.write(cleanedHtml);
     newTab.document.close();
 }
 
