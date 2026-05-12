@@ -1,0 +1,216 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crisis Support - Student Companion</title>
+    <link rel="icon" type="image/png" href="{% static 'img/logo.png' %}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Literata:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+</head>
+<body>
+
+    {% include 'partials/navbar.html' %}
+
+    <main class="static-page">
+        <div class="static-page-container">
+
+            <!-- Crisis Banner -->
+            <div class="crisis-banner">
+                <div class="crisis-banner-icon">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+                        <path d="M12 9v4M12 17h.01"/>
+                        <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+                    </svg>
+                </div>
+                <div>
+                    <h2>If you are in immediate danger</h2>
+                    <p>Please call <strong>1122</strong> (Pakistan Emergency) or go to the nearest hospital emergency department right now. You are not alone, and help is available.</p>
+                </div>
+            </div>
+
+            <div class="static-page-header">
+                <span class="static-page-eyebrow">Pakistan Mental Health Resources</span>
+                <h1 class="static-page-title">Crisis & Support Helplines</h1>
+                <p class="static-page-subtitle">
+                    Free, confidential helplines available across Pakistan. Reaching out is a sign of strength.
+                </p>
+            </div>
+
+            <div class="static-page-content">
+
+                <h2>24/7 Mental Health Helplines</h2>
+                <p>These services are free, confidential, and run by trained mental health professionals. You don't need to be in extreme crisis — they are available for anyone who needs to talk.</p>
+
+                <div class="helpline-grid">
+
+                    <!-- Umang -->
+                    <div class="helpline-card urgent">
+                        <div class="helpline-name">
+                            Umang Pakistan
+                            <span class="helpline-badge urgent">24/7</span>
+                        </div>
+                        <p class="helpline-desc">Pakistan's first 24/7 mental health helpline. Run by clinical psychologists and psychiatrists. WHO-recognized.</p>
+                        <div class="helpline-contact">
+                            <div class="helpline-row">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72 12.84 12.84 0 00.7 2.81 2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45 12.84 12.84 0 002.81.7A2 2 0 0122 16.92z"/></svg>
+                                <a href="tel:+923117786264">0311 778 6264</a>
+                            </div>
+                            <div class="helpline-row">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><path d="M22 6l-10 7L2 6"/></svg>
+                                <a href="mailto:info@umang.com.pk">info@umang.com.pk</a>
+                            </div>
+                            <div class="helpline-hours">Available 24 hours, every day</div>
+                        </div>
+                    </div>
+
+                    <!-- Rozan -->
+                    <div class="helpline-card">
+                        <div class="helpline-name">
+                            Rozan Helpline
+                            <span class="helpline-badge">Mon–Sat</span>
+                        </div>
+                        <p class="helpline-desc">Psychological counseling and emotional support. Free of charge. Trained counselors.</p>
+                        <div class="helpline-contact">
+                            <div class="helpline-row">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72 12.84 12.84 0 00.7 2.81 2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45 12.84 12.84 0 002.81.7A2 2 0 0122 16.92z"/></svg>
+                                <a href="tel:+925190544941">051 90 544 941</a>
+                            </div>
+                            <div class="helpline-hours">9 AM – 9 PM, Monday to Saturday</div>
+                        </div>
+                    </div>
+
+                    <!-- National Youth Helpline -->
+                    <div class="helpline-card">
+                        <div class="helpline-name">
+                            National Youth Helpline
+                            <span class="helpline-badge">Free</span>
+                        </div>
+                        <p class="helpline-desc">By UNFPA & HEC. Mental health, education, and reproductive health support for young people.</p>
+                        <div class="helpline-contact">
+                            <div class="helpline-row">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72 12.84 12.84 0 00.7 2.81 2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45 12.84 12.84 0 002.81.7A2 2 0 0122 16.92z"/></svg>
+                                <a href="tel:080069457">0800-69457</a>
+                            </div>
+                            <div class="helpline-hours">Toll-free across Pakistan</div>
+                        </div>
+                    </div>
+
+                    <!-- Taskeen -->
+                    <div class="helpline-card">
+                        <div class="helpline-name">
+                            Taskeen Health Initiative
+                            <span class="helpline-badge">NGO</span>
+                        </div>
+                        <p class="helpline-desc">Free mental health support and awareness. Affordable counseling for underserved communities.</p>
+                        <div class="helpline-contact">
+                            <div class="helpline-row">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>
+                                <a href="https://taskeen.org" target="_blank" rel="noopener">taskeen.org</a>
+                            </div>
+                            <div class="helpline-hours">Visit website to book a session</div>
+                        </div>
+                    </div>
+
+                    <!-- Pakistan Emergency -->
+                    <div class="helpline-card urgent">
+                        <div class="helpline-name">
+                            Pakistan Emergency
+                            <span class="helpline-badge urgent">Emergency</span>
+                        </div>
+                        <p class="helpline-desc">National emergency number for medical, fire, and police assistance throughout Pakistan.</p>
+                        <div class="helpline-contact">
+                            <div class="helpline-row">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72 12.84 12.84 0 00.7 2.81 2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45 12.84 12.84 0 002.81.7A2 2 0 0122 16.92z"/></svg>
+                                <a href="tel:1122">1122</a>
+                            </div>
+                            <div class="helpline-hours">24/7 — for life-threatening emergencies</div>
+                        </div>
+                    </div>
+
+                    <!-- Bahria University Counseling -->
+                    <div class="helpline-card">
+                        <div class="helpline-name">
+                            Bahria University Counseling
+                            <span class="helpline-badge">Campus</span>
+                        </div>
+                        <p class="helpline-desc">On-campus mental health counseling for Bahria University students. Confidential and free for enrolled students.</p>
+                        <div class="helpline-contact">
+                            <div class="helpline-row">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                                Umeed-e-Nau Office, Karachi Campus
+                            </div>
+                            <div class="helpline-hours">Mon–Fri, 9 AM – 5 PM</div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <h2>What to Expect When You Call</h2>
+                <p>Reaching out for the first time can feel scary. Here's what typically happens:</p>
+
+                <div class="help-step">
+                    <div class="help-step-num">1</div>
+                    <div class="help-step-content">
+                        <h4>A trained listener picks up</h4>
+                        <p>You don't need to introduce yourself or share your name unless you want to. Conversations are confidential.</p>
+                    </div>
+                </div>
+
+                <div class="help-step">
+                    <div class="help-step-num">2</div>
+                    <div class="help-step-content">
+                        <h4>You talk at your own pace</h4>
+                        <p>You don't need to have everything figured out. Even saying "I don't know what's wrong, I just feel bad" is enough.</p>
+                    </div>
+                </div>
+
+                <div class="help-step">
+                    <div class="help-step-num">3</div>
+                    <div class="help-step-content">
+                        <h4>You'll get support and options</h4>
+                        <p>The counselor will listen without judgment, help you understand what you're feeling, and suggest next steps if you want them.</p>
+                    </div>
+                </div>
+
+                <h2>Warning Signs to Take Seriously</h2>
+                <p>Please reach out for help if you or someone you know is experiencing:</p>
+                <ul>
+                    <li>Thoughts of suicide, self-harm, or wanting to "disappear"</li>
+                    <li>Feeling completely hopeless or that nothing will ever get better</li>
+                    <li>Inability to perform daily tasks (eating, sleeping, attending classes)</li>
+                    <li>Severe panic attacks or constant overwhelming anxiety</li>
+                    <li>Hearing or seeing things others don't</li>
+                    <li>Sudden, drastic changes in mood, behavior, or personality</li>
+                    <li>Substance abuse as a coping mechanism</li>
+                </ul>
+
+                <h2>Supporting a Friend in Crisis</h2>
+                <p>If you're worried about someone:</p>
+                <ul>
+                    <li><strong>Listen without trying to fix.</strong> Sometimes people just need to be heard.</li>
+                    <li><strong>Take it seriously.</strong> Don't dismiss their feelings as "just a phase."</li>
+                    <li><strong>Ask directly.</strong> Asking "are you thinking about hurting yourself?" does not plant the idea — research shows it actually reduces risk.</li>
+                    <li><strong>Stay with them</strong> if they are in immediate danger and call a helpline together.</li>
+                    <li><strong>Encourage professional help</strong>, but don't force it. You can offer to go with them.</li>
+                </ul>
+
+                <h2>About This Service</h2>
+                <p>
+                    Student Companion is an AI-powered tool designed to help you understand and track your mental wellness. It is <strong>not</strong> a replacement for professional mental health care, therapy, or crisis intervention.
+                </p>
+                <p>
+                    If you are in crisis, please contact one of the helplines above. They are staffed by trained professionals who can provide immediate, human support that AI cannot.
+                </p>
+
+            </div>
+        </div>
+    </main>
+
+    {% include 'partials/footer.html' %}
+
+</body>
+</html>

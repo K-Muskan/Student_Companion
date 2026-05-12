@@ -1,0 +1,25 @@
+{% load static %}
+<nav class="navbar">
+    <div class="nav-container">
+        <a href="/" class="nav-brand">
+            <img src="{% static 'img/logo.png' %}" alt="Student Companion" class="nav-brand-logo">
+            <div class="nav-brand-text">
+                <h1 class="brand-name">Student Companion</h1>
+                <span class="brand-tagline">Mental Wellness Hub</span>
+            </div>
+        </a>
+        <div class="nav-menu">
+            <a href="{% url 'dashboard' %}" class="nav-link">Dashboard</a>
+            <a href="{% url 'crisis_support' %}" class="nav-link">Crisis Support</a>
+            <a href="{% url 'help_center' %}" class="nav-link">Help Center</a>
+        </div>
+        <div class="nav-user">
+            {% if user.is_authenticated %}
+                <span class="user-email">{{ user.email }}</span>
+                <a href="{% url 'account_logout' %}" class="btn-logout">Logout</a>
+            {% else %}
+                <a href="{% url 'account_login' %}" class="btn-logout">Sign In</a>
+            {% endif %}
+        </div>
+    </div>
+</nav>

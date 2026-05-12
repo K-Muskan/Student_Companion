@@ -10,6 +10,27 @@ document.addEventListener('DOMContentLoaded', function () {
     initChartFilters();
 });
 
+// ─── CHART COLOR CONSTANTS (DARKENED for readability) ────────────────────────
+const CHART_COLORS = {
+    depression: { line: '#C76B6B', point: '#A04545', fill: 'rgba(199,107,107,0.10)' },
+    anxiety:    { line: '#C97A4D', point: '#A35A30', fill: 'rgba(201,122,77,0.10)' },
+    stress:     { line: '#4A7BA0', point: '#2D5F8D', fill: 'rgba(74,123,160,0.10)' },
+    feeling:    '#C97A4D',
+    text:       '#334155',  // Dark text for axis labels
+    grid:       '#CBD5E1'   // Slightly darker grid
+};
+
+const EMOTION_COLORS = {
+    angry:    '#C76B6B',
+    sad:      '#4A7BA0',
+    happy:    '#5A9985',
+    neutral:  '#7B6FB8',
+    fear:     '#C97A4D',
+    surprise: '#D4A017',
+    disgust:  '#6B4F6B',
+    unknown:  '#94A3B8'
+};
+
 // ─── ANALYTICS LOADER ────────────────────────────────────────────────────────
 
 let analyticsData = null;
@@ -23,9 +44,6 @@ function loadAnalytics() {
         .then(data => {
             analyticsData = data;
             console.log('✅ Analytics loaded:', data);
-
-            // API keys: score_trend, facial_emotions, feeling_scores,
-            //           recommendations, summary, sessions, stats, wellness
 
             renderScoreTrendChart(data.score_trend);
             renderFacialEmotionChart(data.facial_emotions);
@@ -54,17 +72,16 @@ function showEmptyState() {
     _setText('stat-days', '0');
 
     const container = document.querySelector('.sessions-list');
-    if (container) container.innerHTML = '<p style="color:#9AA5B9;font-size:14px;padding:16px;">No sessions yet. Start your first assessment!</p>';
+    if (container) container.innerHTML = '<p style="color:#64748B;font-size:14px;padding:16px;font-weight:500;">No sessions yet. Start your first assessment!</p>';
 
     const recList = document.getElementById('recommendations-list');
-    if (recList) recList.innerHTML = '<p style="color:#9ca3af;font-size:13px;padding:12px 0;">Complete an assessment to see recommendations.</p>';
+    if (recList) recList.innerHTML = '<p class="rec-empty">Complete an assessment to see recommendations.</p>';
 
     const noteEl = document.querySelector('.panel-note span');
     if (noteEl) noteEl.textContent = 'Complete an assessment to see personalised notes.';
 }
 
 // ─── CHART 1: Score Trend Line ────────────────────────────────────────────────
-// Data source: data.score_trend  (array, ASC by date)
 
 function renderScoreTrendChart(scoreTrend) {
     const ctx = document.getElementById('moodChart');
@@ -74,7 +91,7 @@ function renderScoreTrendChart(scoreTrend) {
     if (existing) existing.destroy();
 
     if (!scoreTrend || !scoreTrend.length) {
-        ctx.parentElement.innerHTML = '<p style="text-align:center;color:#9ca3af;font-size:13px;padding:40px 0;">No session data yet. Complete an assessment to see your trend.</p>';
+        ctx.parentElement.innerHTML = '<p style="text-align:center;color:#64748B;font-size:13px;padding:40px 0;font-weight:500;">No session data yet. Complete an assessment to see your trend.</p>';
         return;
     }
 
@@ -91,28 +108,28 @@ function renderScoreTrendChart(scoreTrend) {
                 {
                     label: 'Depression',
                     data: scoreTrend.map(s => s.depression_score),
-                    borderColor: '#E89B9B',
-                    backgroundColor: 'rgba(232,155,155,0.08)',
+                    borderColor: CHART_COLORS.depression.line,
+                    backgroundColor: CHART_COLORS.depression.fill,
                     borderWidth: 3, tension: 0.4, fill: true,
-                    pointRadius: 6, pointBackgroundColor: '#E89B9B',
+                    pointRadius: 6, pointBackgroundColor: CHART_COLORS.depression.point,
                     pointBorderColor: '#fff', pointBorderWidth: 3
                 },
                 {
                     label: 'Anxiety',
                     data: scoreTrend.map(s => s.anxiety_score),
-                    borderColor: '#cc8758',
-                    backgroundColor: 'rgba(232,168,124,0.08)',
+                    borderColor: CHART_COLORS.anxiety.line,
+                    backgroundColor: CHART_COLORS.anxiety.fill,
                     borderWidth: 3, tension: 0.4, fill: true,
-                    pointRadius: 6, pointBackgroundColor: '#E8A87C',
+                    pointRadius: 6, pointBackgroundColor: CHART_COLORS.anxiety.point,
                     pointBorderColor: '#fff', pointBorderWidth: 3
                 },
                 {
                     label: 'Stress',
                     data: scoreTrend.map(s => s.stress_score),
-                    borderColor: '#5886ae',
-                    backgroundColor: 'rgba(107,154,196,0.08)',
+                    borderColor: CHART_COLORS.stress.line,
+                    backgroundColor: CHART_COLORS.stress.fill,
                     borderWidth: 3, tension: 0.4, fill: true,
-                    pointRadius: 6, pointBackgroundColor: '#6B9AC4',
+                    pointRadius: 6, pointBackgroundColor: CHART_COLORS.stress.point,
                     pointBorderColor: '#fff', pointBorderWidth: 3
                 }
             ]
@@ -121,7 +138,10 @@ function renderScoreTrendChart(scoreTrend) {
             responsive: true,
             maintainAspectRatio: false,
             plugins: {
-                legend: { display: true, position: 'top' },
+                legend: {
+                    display: true, position: 'top',
+                    labels: { color: CHART_COLORS.text, font: { family: "'Plus Jakarta Sans', sans-serif", size: 12, weight: '600' } }
+                },
                 tooltip: {
                     callbacks: {
                         afterBody: (items) => {
@@ -137,17 +157,21 @@ function renderScoreTrendChart(scoreTrend) {
                 }
             },
             scales: {
-                y: { beginAtZero: true, max: 63,
-                     ticks: { font: { family: "'Plus Jakarta Sans', sans-serif", size: 11 }, color: '#9AA5B9' } },
-                x: { grid: { display: false },
-                     ticks: { font: { family: "'Plus Jakarta Sans', sans-serif", size: 11 }, color: '#9AA5B9' } }
+                y: {
+                    beginAtZero: true, max: 63,
+                    ticks: { font: { family: "'Plus Jakarta Sans', sans-serif", size: 12, weight: '600' }, color: CHART_COLORS.text },
+                    grid: { color: CHART_COLORS.grid }
+                },
+                x: {
+                    grid: { display: false },
+                    ticks: { font: { family: "'Plus Jakarta Sans', sans-serif", size: 12, weight: '600' }, color: CHART_COLORS.text }
+                }
             }
         }
     });
 }
 
 // ─── CHART 2: Facial Emotion Donut ───────────────────────────────────────────
-// Data source: data.facial_emotions  (array with overall_dominant_emotion)
 
 function renderFacialEmotionChart(facialEmotions) {
     const ctx = document.getElementById('emotionChart');
@@ -157,7 +181,7 @@ function renderFacialEmotionChart(facialEmotions) {
     if (existing) existing.destroy();
 
     if (!facialEmotions || !facialEmotions.length) {
-        ctx.parentElement.innerHTML = '<p style="text-align:center;color:#9ca3af;font-size:13px;padding:40px 0;">No facial emotion data yet.</p>';
+        ctx.parentElement.innerHTML = '<p style="text-align:center;color:#64748B;font-size:13px;padding:40px 0;font-weight:500;">No facial emotion data yet.</p>';
         return;
     }
 
@@ -167,15 +191,9 @@ function renderFacialEmotionChart(facialEmotions) {
         emotionCounts[e] = (emotionCounts[e] || 0) + 1;
     });
 
-    const EMOTION_COLORS = {
-        angry: '#E89B9B', sad: '#6B9AC4', happy: '#7DBAA4',
-        neutral: '#A89DD9', fear: '#E8A87C', surprise: '#F5C842',
-        disgust: '#8B6F8B', unknown: '#C8CDD6'
-    };
-
     const labels = Object.keys(emotionCounts);
     const values = Object.values(emotionCounts);
-    const colors = labels.map(l => EMOTION_COLORS[l] || '#C8CDD6');
+    const colors = labels.map(l => EMOTION_COLORS[l] || '#94A3B8');
 
     new Chart(ctx, {
         type: 'doughnut',
@@ -184,20 +202,20 @@ function renderFacialEmotionChart(facialEmotions) {
             responsive: true,
             maintainAspectRatio: false,
             plugins: {
-                legend: { position: 'bottom',
-                    labels: { font: { family: "'Plus Jakarta Sans', sans-serif", size: 11 } } }
+                legend: {
+                    position: 'bottom',
+                    labels: { color: CHART_COLORS.text, font: { family: "'Plus Jakarta Sans', sans-serif", size: 12, weight: '600' } }
+                }
             }
         }
     });
 }
 
 // ─── CHART 3: Feeling Scores Bar ──────────────────────────────────────────────
-// Data source: data.feeling_scores  (single object from latest session)
-// questionnaire_project_final_score = {"Sadness": 0.42, "Annoyance": 0.05, ...}
 
 function renderFeelingScoresChart(data) {
     const canvas = document.getElementById('feelingChart');
-    if (!canvas || !data.labels) return;
+    if (!canvas || !data || !data.labels) return;
 
     const ctx = canvas.getContext('2d');
     const existing = Chart.getChart(canvas);
@@ -210,27 +228,27 @@ function renderFeelingScoresChart(data) {
             datasets: [{
                 label: 'Score',
                 data: data.values,
-                backgroundColor: '#E8A87C', // Peach color from your sample image
+                backgroundColor: CHART_COLORS.feeling,
                 borderRadius: 4,
                 barThickness: 12
             }]
         },
         options: {
-            indexAxis: 'y', // Makes it a horizontal bar chart
+            indexAxis: 'y',
             responsive: true,
             maintainAspectRatio: false,
             scales: {
                 x: {
                     beginAtZero: true,
-                    max: 1, // Crucial for 0.0 - 1.0 range
+                    max: 1,
                     grid: { display: false },
-                    ticks: { color: '#9AA5B9', stepSize: 0.2 }
+                    ticks: { color: CHART_COLORS.text, stepSize: 0.2, font: { family: "'Plus Jakarta Sans', sans-serif", size: 11, weight: '600' } }
                 },
                 y: {
                     grid: { display: false },
                     ticks: {
-                        color: '#4B5563',
-                        font: { family: "'Plus Jakarta Sans', sans-serif", weight: '600' }
+                        color: CHART_COLORS.text,
+                        font: { family: "'Plus Jakarta Sans', sans-serif", size: 12, weight: '700' }
                     }
                 }
             },
@@ -247,17 +265,16 @@ function renderFeelingScoresChart(data) {
 }
 
 // ─── SESSION LIST ─────────────────────────────────────────────────────────────
-// Data source: data.sessions  (array DESC by date)
 
-let globalSessions = []; // To store data for the modal
+let globalSessions = [];
 
 function renderSessionList(sessions) {
-    globalSessions = sessions; 
+    globalSessions = sessions;
     const container = document.querySelector('.sessions-list');
     if (!container) return;
 
     if (!sessions || !sessions.length) {
-        container.innerHTML = '<p style="color:#9AA5B9;font-size:14px;padding:16px;">No sessions yet.</p>';
+        container.innerHTML = '<p style="color:#64748B;font-size:14px;padding:16px;font-weight:500;">No sessions yet.</p>';
         return;
     }
 
@@ -271,7 +288,7 @@ function renderSessionList(sessions) {
         const date = new Date(s.finalized_at);
         const dateLabel = i === 0 ? 'Latest' : date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
         const timeLabel = date.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
-        
+
         const riskKey = (s.depression_risk_level || 'moderate').toLowerCase();
         const riskClass = RISK_CLASS[riskKey] || 'moderate';
         const trend = s.overall_trend || '—';
@@ -284,10 +301,9 @@ function renderSessionList(sessions) {
 
         const trendLabel = trend === 'no_data' ? 'First Session' : trend;
 
-        // RESTORED ORIGINAL HTML STRUCTURE
         return `
-        <div class="session-card ${i === 0 ? 'recent' : ''}" 
-             onclick="openSessionReport(${i})" 
+        <div class="session-card ${i === 0 ? 'recent' : ''}"
+             onclick="openSessionReport(${i})"
              style="cursor:pointer">
             <div class="session-date">
                 <span class="session-day">${dateLabel}</span>
@@ -313,7 +329,7 @@ function renderSessionList(sessions) {
                         <span class="metric-badge">${s.stress_score ?? '—'}</span>
                     </div>
                 </div>
-                ${s.emotional_summary ? `<p style="font-size:0.78rem;color:#697386;margin-top:6px;line-height:1.4;">${s.emotional_summary.substring(0, 90)}…</p>` : ''}
+                ${s.emotional_summary ? `<p style="font-size:0.78rem;color:#475569;margin-top:6px;line-height:1.4;">${s.emotional_summary.substring(0, 90)}…</p>` : ''}
             </div>
             <div class="session-arrow">
                 <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
@@ -324,37 +340,17 @@ function renderSessionList(sessions) {
     }).join('');
 }
 
-// function openSessionReport(index) {
-//     const session = globalSessions[index];
-//     const modal = document.getElementById('mseModal');
-//     // Ensure this targets your modal's scrollable body
-//     const modalBody = modal.querySelector('.modal-body');
-
-//     if (session && session.report_html) {
-//         modalBody.innerHTML = session.report_html;
-//         modal.style.display = 'flex'; // Use flex if your CSS uses it for centering
-//     } else {
-//         console.error("Report HTML is missing in the data object:", session);
-//         alert("Report content not found.");
-//     }
-// }
-// Ensure you have a close function
-
-// 1. The Core Counting Function
 function incrementResourceCount() {
     const counterDisplay = document.getElementById('stat-resources');
     if (counterDisplay) {
         let currentCount = parseInt(counterDisplay.innerText) || 0;
         counterDisplay.innerText = currentCount + 1;
-        
-        // Visual Feedback
         counterDisplay.style.transition = "transform 0.2s ease";
         counterDisplay.style.transform = "scale(1.4)";
         setTimeout(() => { counterDisplay.style.transform = "scale(1)"; }, 200);
     }
 }
 
-// 2. Updated Session Report Opener
 function openSessionReport(index) {
     const session = globalSessions[index];
 
@@ -363,12 +359,9 @@ function openSessionReport(index) {
         return;
     }
 
-
-    // Parse the HTML and remove the Talk to Therapist button
     const parser = new DOMParser();
     const doc = parser.parseFromString(session.report_html, 'text/html');
 
-    // Remove any element containing "Talk to Therapist" text
     doc.querySelectorAll('a, button').forEach(el => {
         if (el.textContent.trim().toLowerCase().includes('talk to therapist')) {
             el.remove();
@@ -383,7 +376,6 @@ function openSessionReport(index) {
     newTab.document.close();
 }
 
-// 3. The Footer Download Button
 function downloadReport() {
     window.print();
     incrementResourceCount();
@@ -393,13 +385,10 @@ function closeMSEReport() {
     document.getElementById('mseModal').style.display = 'none';
 }
 
-
-// ─── SUMMARY CARDS (Risk, Mood, Streak) ──────────────────────────────────────
-// Data source: data.summary  (single object — latest session snapshot)
+// ─── SUMMARY CARDS ──────────────────────────────────────────────────────────
 
 function renderSummaryCards(summary) {
     if (!summary || !Object.keys(summary).length) {
-        // show empty state for metric cards
         _setText('risk-level-value', 'No data yet');
         _setText('risk-level-note', 'Complete an assessment to see results');
         _setText('current-mood-value', 'No data yet');
@@ -407,20 +396,18 @@ function renderSummaryCards(summary) {
         return;
     }
 
-    // ── Risk Assessment Card ──
     const risk = (summary.depression_risk_level || 'unknown').toLowerCase();
     const RISK_MAP = {
-        minimal:  { label: 'Minimal Risk',  note: 'No immediate intervention needed',         color: '#4CAF50' },
-        mild:     { label: 'Mild Risk',      note: 'Monitor and self-care recommended',         color: '#8BC34A' },
-        low:      { label: 'Low Risk',       note: 'No immediate intervention needed',          color: '#8BC34A' },
-        moderate: { label: 'Moderate Risk',  note: 'Consider seeking professional support',     color: '#FF9800' },
-        severe:   { label: 'Severe Risk',    note: 'Immediate professional help recommended',   color: '#F44336' },
-        normal:   { label: 'Healthy', note: 'Indicators are in a normal range', color: '#4CAF50' }, // ADD THIS LINE
-        minimal:  { label: 'Minimal Risk',  note: 'No immediate intervention needed', color: '#4CAF50' },
-        extreme:  { label: 'Extreme Risk',   note: 'Seek immediate professional help',          color: '#B71C1C' },
-        high:     { label: 'High Risk',      note: 'Immediate professional help recommended',   color: '#F44336' },
+        minimal:  { label: 'Minimal Risk',  note: 'No immediate intervention needed',         color: '#2E7D32' },
+        mild:     { label: 'Mild Risk',     note: 'Monitor and self-care recommended',        color: '#558B2F' },
+        low:      { label: 'Low Risk',      note: 'No immediate intervention needed',         color: '#558B2F' },
+        moderate: { label: 'Moderate Risk', note: 'Consider seeking professional support',    color: '#EF6C00' },
+        severe:   { label: 'Severe Risk',   note: 'Immediate professional help recommended',  color: '#C62828' },
+        normal:   { label: 'Healthy',       note: 'Indicators are in a normal range',         color: '#2E7D32' },
+        extreme:  { label: 'Extreme Risk',  note: 'Seek immediate professional help',         color: '#7F1D1D' },
+        high:     { label: 'High Risk',     note: 'Immediate professional help recommended',  color: '#C62828' },
     };
-    const riskInfo = RISK_MAP[risk] || { label: 'No Data', note: 'Complete an assessment', color: '#9E9E9E' };
+    const riskInfo = RISK_MAP[risk] || { label: 'No Data', note: 'Complete an assessment', color: '#64748B' };
 
     _setText('risk-level-value', riskInfo.label);
     _setText('risk-level-note', riskInfo.note);
@@ -432,7 +419,6 @@ function renderSummaryCards(summary) {
         riskCard.style.borderLeftColor = riskInfo.color;
     }
 
-    // ── Current Mood Card ──
     const emotion = (summary.dominant_emotion || '').toLowerCase();
     const MOOD_MAP = {
         angry:    { label: 'Angry',     note: 'High distress signals detected' },
@@ -452,22 +438,12 @@ function renderSummaryCards(summary) {
     _setText('current-mood-note', `Last assessed: ${_relativeDate(summary.last_session_date)}`);
 }
 
-// ─── STAT CARDS (bottom row) ──────────────────────────────────────────────────
-// Data source: data.stats  (object with counts)
-
 function renderStatCards(stats) {
     if (!stats) return;
-
-    // Sessions Completed
     _setText('stat-sessions', stats.total_sessions ?? '0');
-
-    // Resources Downloaded
     _setText('stat-resources', stats.total_downloads ?? '0');
-
-    // Days Active
     _setText('stat-days', stats.days_active ?? '0');
 
-    // Streak card (in metrics-grid)
     const streak = stats.streak_days || 0;
     _setText('streak-value', streak === 1 ? '1 day' : `${streak} days`);
     _setText('streak-note', streak > 0
@@ -475,21 +451,13 @@ function renderStatCards(stats) {
         : 'Complete your first session to start a streak.');
 }
 
-// ─── WELLNESS BARS ────────────────────────────────────────────────────────────
-// Data source: data.wellness
-// { depression_wellness: 55.6, anxiety_wellness: 58.7, stress_wellness: 45.0,
-//   depression_score: 28, anxiety_score: 26, stress_score: 22 }
-// Lower raw score = better wellness (inverted percentages)
-
-// ─── WELLNESS BARS (FIXED) ────────────────────────────────────────────────────────────
-
 function renderWellnessBars(wellness) {
     if (!wellness) return;
 
     const scales = [
-        { key: 'depression_wellness', label: 'Depression',  color: '#E89B9B' },
-        { key: 'anxiety_wellness',    label: 'Anxiety',     color: '#E8A87C' },
-        { key: 'stress_wellness',     label: 'Stress',      color: '#6B9AC4' },
+        { key: 'depression_wellness', label: 'Depression', color: CHART_COLORS.depression.line },
+        { key: 'anxiety_wellness',    label: 'Anxiety',    color: CHART_COLORS.anxiety.line },
+        { key: 'stress_wellness',     label: 'Stress',     color: CHART_COLORS.stress.line },
     ];
 
     const items = document.querySelectorAll('.wellness-breakdown .wellness-item');
@@ -504,46 +472,36 @@ function renderWellnessBars(wellness) {
             return;
         }
 
-        // 1. Update text immediately
         const valueEl = item.querySelector('.wellness-value');
         if (valueEl) valueEl.textContent = `${pct}%`;
 
-        // 2. Animate the bar width
         const bar = item.querySelector('.wellness-bar');
         if (bar) {
             bar.style.background = s.color;
-            // Force a slight delay so the browser registers the 0% start point for the transition
-            bar.style.width = '0%'; 
+            bar.style.width = '0%';
             setTimeout(() => {
                 bar.style.width = `${pct}%`;
-            }, 100 + (i * 100)); // Staggered animation
+            }, 100 + (i * 100));
         }
+
+        // Update dot color
+        const dot = item.querySelector('.wellness-dot');
+        if (dot) dot.style.background = s.color;
 
         item.style.display = '';
     });
 }
 
-// Remove or empty this function so it doesn't conflict with the new logic
 function animateWellnessBars() {
-    // Logic moved inside renderWellnessBars to ensure it triggers after Fetch
+    // Logic moved inside renderWellnessBars
 }
 
 // ─── RECOMMENDATIONS ──────────────────────────────────────────────────────────
-// Data source: data.recommendations  (single object with recommendations_json)
-//              data.sessions[0]      (for comparison_summary)
-
-// ─── RECOMMENDATIONS (HARDENED v2) ───────────────────────────────────────────
-// Replace the entire renderRecommendations function in dashboard.js with this.
-// Handles: recommendations_json as object, as JSON string, flat shape, null.
 
 function renderRecommendations(recommendations, sessions) {
     const recContainer = document.getElementById('recommendations-list');
-    const noteEl       = document.querySelector('.panel-note');
+    const noteEl = document.querySelector('.panel-note');
 
-    // ── DEBUG: remove after confirming it works ───────────────────────────────
-    console.log('🔍 renderRecommendations called with:', recommendations);
-
-    // ── 1. Comparison summary → footer note ──────────────────────────────────
     const summary = recommendations?.comparison_summary
         || sessions?.[0]?.comparison_summary
         || null;
@@ -559,18 +517,11 @@ function renderRecommendations(recommendations, sessions) {
 
     if (!recContainer) return;
 
-    // ── 2. Extract + parse recommendations_json ───────────────────────────────
     let recs = null;
 
     if (recommendations) {
-        // Case A: { recommendations_json: "{...}" }  ← DB stores it as string
-        // Case B: { recommendations_json: {...} }    ← already parsed object
-        // Case C: { depression: {...}, anxiety: {...}, stress: {...} } ← flat
-        // Case D: recommendations IS the recs object directly
-
         let raw = recommendations.recommendations_json ?? recommendations;
 
-        // If it's a string, parse it
         if (typeof raw === 'string') {
             try { raw = JSON.parse(raw); } catch(e) {
                 console.error('❌ Failed to parse recommendations_json string:', e);
@@ -578,23 +529,19 @@ function renderRecommendations(recommendations, sessions) {
             }
         }
 
-        // Now check if it has at least one of our scale keys
         if (raw && typeof raw === 'object' && (raw.depression || raw.anxiety || raw.stress)) {
             recs = raw;
         }
     }
-
-    console.log('🔍 Parsed recs object:', recs);
 
     if (!recs) {
         recContainer.innerHTML = '<p class="rec-empty">Complete an assessment to see recommendations.</p>';
         return;
     }
 
-    // ── 3. Config ─────────────────────────────────────────────────────────────
     const SCALES = [
         {
-            key: 'depression', label: 'Depression', color: '#E89B9B', bg: 'rgba(232,155,155,0.08)',
+            key: 'depression', label: 'Depression', color: CHART_COLORS.depression.line, bg: 'rgba(199,107,107,0.06)',
             icon: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
                      <circle cx="12" cy="12" r="10"/>
                      <path d="M8 15s1.5-2 4-2 4 2 4 2"/>
@@ -603,13 +550,13 @@ function renderRecommendations(recommendations, sessions) {
                    </svg>`
         },
         {
-            key: 'anxiety', label: 'Anxiety', color: '#E8A87C', bg: 'rgba(232,168,124,0.08)',
+            key: 'anxiety', label: 'Anxiety', color: CHART_COLORS.anxiety.line, bg: 'rgba(201,122,77,0.06)',
             icon: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
                      <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
                    </svg>`
         },
         {
-            key: 'stress', label: 'Stress', color: '#6B9AC4', bg: 'rgba(107,154,196,0.08)',
+            key: 'stress', label: 'Stress', color: CHART_COLORS.stress.line, bg: 'rgba(74,123,160,0.06)',
             icon: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
                      <circle cx="12" cy="12" r="10"/>
                      <path d="M12 6v6l4 2"/>
@@ -628,19 +575,17 @@ function renderRecommendations(recommendations, sessions) {
         extreme:  { label: 'Extreme',  cls: 'lvl-extreme' },
     };
 
-    // ── 4. Build cards ────────────────────────────────────────────────────────
     let html = '';
 
     SCALES.forEach(scale => {
         const block = recs[scale.key];
         if (!block) return;
 
-        // tips can be: block itself if array, block.tips, block.recommendations, block.suggestions
         let tips = [];
-        if (Array.isArray(block))              tips = block;
-        else if (Array.isArray(block.tips))          tips = block.tips;
+        if (Array.isArray(block))                       tips = block;
+        else if (Array.isArray(block.tips))             tips = block.tips;
         else if (Array.isArray(block.recommendations)) tips = block.recommendations;
-        else if (Array.isArray(block.suggestions))    tips = block.suggestions;
+        else if (Array.isArray(block.suggestions))     tips = block.suggestions;
 
         const level = (block.level || block.severity || block.risk_level || 'moderate').toLowerCase();
         const badge = LEVEL_BADGE[level] || { label: 'Moderate', cls: 'lvl-moderate' };
@@ -686,8 +631,6 @@ function _relativeDate(isoString) {
     return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
 }
 
-// ─── UI INTERACTIONS ─────────────────────────────────────────────────────────
-
 function initializeCircularProgress() {
     const progressElement = document.querySelector('.circular-progress');
     if (!progressElement) return;
@@ -707,15 +650,6 @@ function _reinitCircularProgress(el, progress) {
     }, 150);
 }
 
-function animateWellnessBars() {
-    const bars = document.querySelectorAll('.wellness-bar');
-    bars.forEach((bar, i) => {
-        const width = bar.style.width;
-        bar.style.width = '0%';
-        setTimeout(() => { bar.style.width = width; }, 200 + i * 100);
-    });
-}
-
 function showMSEReport(sessionId) {
     const modal = document.getElementById('mseModal');
     if (modal) { modal.classList.add('show'); document.body.style.overflow = 'hidden'; }
@@ -725,8 +659,8 @@ function closeMSEReport() {
     const modal = document.getElementById('mseModal');
     if (modal) {
         modal.style.display = 'none';
-        // Optional: clear content so it doesn't "flash" next time
-        document.querySelector('#mseModal .modal-body').innerHTML = '';
+        const body = document.querySelector('#mseModal .modal-body');
+        if (body) body.innerHTML = '';
     }
 }
 
@@ -737,16 +671,15 @@ function initModalHandlers() {
 }
 
 function showEmergencyResources() {
-    const modal = document.getElementById('supportModal');
-    modal.style.display = 'flex'; // Shows the modal
+    // Now navigates to dedicated crisis support page instead of modal
+    window.location.href = '/crisis-support/';
 }
 
 function closeSupportModal() {
     const modal = document.getElementById('supportModal');
-    modal.style.display = 'none'; // Hides the modal
+    if (modal) modal.style.display = 'none';
 }
 
-// Optional: Close modal if user clicks outside of the box
 window.onclick = function(event) {
     const modal = document.getElementById('supportModal');
     if (event.target == modal) {
@@ -780,25 +713,21 @@ function autoDismissAlert() {
     }, 5000);
 }
 
-// Add this to your event listeners or init block
 function initChartFilters() {
-    const filterSelect = document.getElementById('chartTimeFilter'); // Ensure this ID matches your HTML
+    const filterSelect = document.getElementById('chartTimeFilter');
     if (!filterSelect) return;
 
     filterSelect.addEventListener('change', function(e) {
         const days = parseInt(e.target.value);
         if (!analyticsData || !analyticsData.score_trend) return;
 
-        // Filter the global data
         const filteredTrend = filterDataByDays(analyticsData.score_trend, days);
-        
-        // Re-render only the trend chart
         renderScoreTrendChart(filteredTrend);
     });
 }
 
 function filterDataByDays(data, days) {
-    if (days === 0) return data; // "All Time" option
+    if (days === 0) return data;
 
     const cutoff = new Date();
     cutoff.setDate(cutoff.getDate() - days);

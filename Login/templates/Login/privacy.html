@@ -1,0 +1,139 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Privacy Policy - Student Companion</title>
+    <link rel="icon" type="image/png" href="{% static 'img/logo.png' %}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Literata:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+</head>
+<body>
+
+    {% include 'partials/navbar.html' %}
+
+    <main class="static-page">
+        <div class="static-page-container">
+            <div class="static-page-header">
+                <span class="static-page-eyebrow">Legal</span>
+                <h1 class="static-page-title">Privacy Policy</h1>
+                <p class="static-page-subtitle">How we protect and handle your information</p>
+                <p class="static-page-meta">Last updated: May 2026</p>
+            </div>
+
+            <div class="static-page-content">
+
+                <h2>1. Introduction</h2>
+                <p>
+                    Welcome to <strong>Student Companion</strong>. We understand that mental health information is deeply personal and sensitive. This Privacy Policy explains how we collect, use, store, and protect your information when you use our AI-powered mental wellness platform.
+                </p>
+                <p>
+                    By using our service, you agree to the practices described in this policy. If you do not agree, please do not use the platform.
+                </p>
+
+                <h2>2. Information We Collect</h2>
+
+                <h3>Information You Provide</h3>
+                <ul>
+                    <li><strong>Account information:</strong> Email address, name, and password (encrypted) when you sign up</li>
+                    <li><strong>Assessment responses:</strong> Answers to mental health questionnaires (PHQ-9, GAD-7, PSS, etc.)</li>
+                    <li><strong>Self-reported feelings:</strong> Free-text descriptions of your mental state</li>
+                    <li><strong>Optional facial emotion data:</strong> If you choose to use the camera-based emotion analysis feature</li>
+                </ul>
+
+                <h3>Information Collected Automatically</h3>
+                <ul>
+                    <li>Session timestamps and duration</li>
+                    <li>Device and browser information</li>
+                    <li>IP address (used for security only)</li>
+                    <li>Usage patterns within the platform</li>
+                </ul>
+
+                <h2>3. How We Use Your Information</h2>
+                <p>Your data is used solely to:</p>
+                <ul>
+                    <li>Provide personalized mental wellness assessments and recommendations</li>
+                    <li>Track your progress over time and show meaningful insights</li>
+                    <li>Generate AI-assisted Mental Status Examination (MSE) reports</li>
+                    <li>Improve the accuracy of our wellness models (using anonymized data only)</li>
+                    <li>Detect signs of crisis to direct you to emergency resources</li>
+                    <li>Communicate important account or service updates</li>
+                </ul>
+
+                <h2>4. AI and Automated Analysis</h2>
+                <p>
+                    Student Companion uses AI to analyze your responses and provide insights. <strong>Important:</strong>
+                </p>
+                <ul>
+                    <li>AI analysis is <strong>assistive, not diagnostic</strong>. It does not replace a qualified mental health professional.</li>
+                    <li>AI models are trained on anonymized, aggregated data — never on your individual identifiable information.</li>
+                    <li>You can request that your data not be used for model improvement at any time by contacting us.</li>
+                </ul>
+
+                <h2>5. Data Security</h2>
+                <p>We take the security of your mental health data seriously:</p>
+                <ul>
+                    <li>All data is encrypted in transit (TLS/HTTPS) and at rest (AES-256)</li>
+                    <li>Passwords are hashed using industry-standard algorithms</li>
+                    <li>Access to user data is restricted to authorized personnel on a need-to-know basis</li>
+                    <li>We conduct regular security audits and follow best practices for healthcare-adjacent data</li>
+                </ul>
+
+                <h2>6. Data Sharing</h2>
+                <p>
+                    <strong>We do not sell your data. Ever.</strong>
+                </p>
+                <p>We share information only in these limited cases:</p>
+                <ul>
+                    <li><strong>With your consent</strong> — for example, if you choose to share a report with a counselor</li>
+                    <li><strong>Crisis situations</strong> — if there is imminent risk of harm, we may direct you to emergency services</li>
+                    <li><strong>Legal requirements</strong> — if required by Pakistani law or court order</li>
+                    <li><strong>Service providers</strong> — secure infrastructure providers (e.g., cloud hosting) bound by strict confidentiality agreements</li>
+                </ul>
+
+                <h2>7. Your Rights</h2>
+                <p>You have the right to:</p>
+                <ul>
+                    <li><strong>Access</strong> all your data we hold</li>
+                    <li><strong>Correct</strong> inaccurate information</li>
+                    <li><strong>Delete</strong> your account and all associated data permanently</li>
+                    <li><strong>Export</strong> your data in a portable format</li>
+                    <li><strong>Opt out</strong> of having anonymized data used for model improvement</li>
+                    <li><strong>Withdraw consent</strong> at any time</li>
+                </ul>
+                <p>To exercise any of these rights, contact <a href="mailto:privacy@studentcompanion.pk">privacy@studentcompanion.pk</a>.</p>
+
+                <h2>8. Data Retention</h2>
+                <p>
+                    We retain your data for as long as your account is active. If you delete your account, all personally identifiable information is permanently removed within 30 days. Anonymized aggregate data may be retained for research and service improvement.
+                </p>
+
+                <h2>9. Minors</h2>
+                <p>
+                    Student Companion is intended for users aged 16 and above. If you are under 18, we encourage you to use the platform with the awareness of a parent, guardian, or trusted adult.
+                </p>
+
+                <h2>10. Changes to This Policy</h2>
+                <p>
+                    We may update this Privacy Policy from time to time. We will notify you of significant changes via email and by updating the "Last updated" date at the top of this page.
+                </p>
+
+                <h2>11. Contact Us</h2>
+                <p>If you have any questions about this Privacy Policy or how your data is handled:</p>
+                <ul>
+                    <li><strong>Email:</strong> <a href="mailto:privacy@studentcompanion.pk">privacy@studentcompanion.pk</a></li>
+                    <li><strong>Phone:</strong> +92 21 1234 567</li>
+                    <li><strong>Address:</strong> Bahria University Karachi Campus, 13 National Stadium Rd, Karsaz, Faisal Cantonment, Karachi, Pakistan</li>
+                </ul>
+
+            </div>
+        </div>
+    </main>
+
+    {% include 'partials/footer.html' %}
+
+</body>
+</html>

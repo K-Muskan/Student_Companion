@@ -5,7 +5,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sign In - StudentCompanion</title>
+    <title>Sign In - Student Companion</title>
+    <link rel="icon" type="image/png" href="{% static 'account/img/logo.png' %}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Crimson+Pro:wght@600;700&display=swap" rel="stylesheet">
@@ -16,8 +17,9 @@
         <div class="auth-sidebar">
             <div class="sidebar-content">
                 <div class="logo-area">
-                    <h1 class="brand-name"> Welcome To 24/7 AI - Student Companion</h1>
-                    <p class="brand-tagline">You Don't Have to Face It Alone</p>
+                    <img src="{% static 'account/img/logo.png' %}" alt="Student Companion" class="brand-logo">
+                    <h1 class="brand-name">Student Companion</h1>
+                    <p class="brand-tagline"><span class="brand-tagline-accent"></span>You don't have to face it alone</p>
                 </div>
                 <div class="sidebar-illustration">
                     <div class="floating-shape shape-1"></div>
@@ -25,14 +27,17 @@
                     <div class="floating-shape shape-3"></div>
                 </div>
                 <div class="sidebar-footer">
-                    <p class="quote">"Compassionate AI support designed specifically for students navigating academic and personal challenges."</p>
-                    <p class="quote-author">~~</p>
+                    <p class="quote">"Compassionate AI support, designed specifically for students navigating academic and personal challenges."</p>
+                    <p class="quote-author">24/7 AI Companion</p>
                 </div>
             </div>
         </div>
-        
+
         <div class="auth-main">
             <div class="auth-box">
+                <div class="auth-form-logo">
+                    <img src="{% static 'account/img/logo.png' %}" alt="Student Companion">
+                </div>
                 <div class="auth-header">
                     <h2 class="auth-title">Welcome Back</h2>
                     <p class="auth-subtitle">Sign in to continue your learning journey</p>
@@ -68,12 +73,12 @@
                 <!-- Email/Password Login Form -->
                 <form method="post" action="{% url 'account_login' %}" class="auth-form">
                     {% csrf_token %}
-                    
+
                     <div class="form-group">
                         <label for="id_login" class="form-label">Email Address</label>
-                        <input 
-                            type="email" 
-                            name="login" 
+                        <input
+                            type="email"
+                            name="login"
                             id="id_login"
                             placeholder="you@example.com"
                             class="form-input"
@@ -91,9 +96,9 @@
                             <label for="id_password" class="form-label">Password</label>
                             <a href="{% url 'account_reset_password' %}" class="forgot-link">Forgot password?</a>
                         </div>
-                        <input 
-                            type="password" 
-                            name="password" 
+                        <input
+                            type="password"
+                            name="password"
                             id="id_password"
                             placeholder="••••••••"
                             class="form-input"
@@ -113,9 +118,9 @@
 
                     <div class="form-group checkbox-group">
                         <label class="checkbox-label">
-                            <input 
-                                type="checkbox" 
-                                name="remember" 
+                            <input
+                                type="checkbox"
+                                name="remember"
                                 id="id_remember"
                                 class="checkbox-input"
                             >
@@ -134,7 +139,7 @@
 
                 <div class="auth-footer">
                     <p class="footer-text">
-                        Don't have an account? 
+                        Don't have an account?
                         <a href="{% url 'account_signup' %}" class="footer-link">Sign up</a>
                     </p>
                 </div>

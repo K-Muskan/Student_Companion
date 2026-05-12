@@ -1,0 +1,146 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Terms of Service - Student Companion</title>
+    <link rel="icon" type="image/png" href="{% static 'img/logo.png' %}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Literata:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+</head>
+<body>
+
+    {% include 'partials/navbar.html' %}
+
+    <main class="static-page">
+        <div class="static-page-container">
+            <div class="static-page-header">
+                <span class="static-page-eyebrow">Legal</span>
+                <h1 class="static-page-title">Terms of Service</h1>
+                <p class="static-page-subtitle">Please read these terms carefully before using Student Companion</p>
+                <p class="static-page-meta">Last updated: May 2026</p>
+            </div>
+
+            <div class="static-page-content">
+
+                <h2>1. Acceptance of Terms</h2>
+                <p>
+                    By creating an account or using Student Companion (the "Service"), you agree to be bound by these Terms of Service. If you do not agree, please do not use the Service.
+                </p>
+
+                <h2>2. Important: Not Medical Advice</h2>
+                <p>
+                    <strong>Student Companion is not a medical service or a substitute for professional mental health care.</strong> The platform provides AI-assisted self-assessment and wellness tracking tools designed for educational and supportive purposes only.
+                </p>
+                <ul>
+                    <li>The Service does not diagnose mental health conditions</li>
+                    <li>It does not prescribe treatment or medication</li>
+                    <li>It is not a replacement for therapy, counseling, or psychiatric care</li>
+                    <li>It is not a crisis intervention service</li>
+                </ul>
+                <p>
+                    If you are experiencing a mental health crisis, please use our <a href="{% url 'crisis_support' %}">Crisis Support page</a> to find appropriate emergency resources.
+                </p>
+
+                <h2>3. Eligibility</h2>
+                <p>To use the Service, you must:</p>
+                <ul>
+                    <li>Be at least 16 years of age</li>
+                    <li>Provide accurate and truthful information when creating your account</li>
+                    <li>Have the legal capacity to enter into binding agreements</li>
+                </ul>
+
+                <h2>4. Account Responsibilities</h2>
+                <p>You are responsible for:</p>
+                <ul>
+                    <li>Keeping your account credentials secure and confidential</li>
+                    <li>All activity that occurs under your account</li>
+                    <li>Notifying us immediately of any unauthorized access</li>
+                    <li>Providing honest responses on assessments to ensure meaningful insights</li>
+                </ul>
+
+                <h2>5. Acceptable Use</h2>
+                <p>You agree NOT to:</p>
+                <ul>
+                    <li>Use the Service for any illegal or unauthorized purpose</li>
+                    <li>Share your account credentials with others</li>
+                    <li>Attempt to reverse-engineer, hack, or disrupt the Service</li>
+                    <li>Submit false information that could harm the integrity of AI assessments</li>
+                    <li>Use the Service to harm yourself or others</li>
+                    <li>Upload malicious code or attempt to compromise platform security</li>
+                </ul>
+
+                <h2>6. AI-Generated Content</h2>
+                <p>
+                    The Service uses artificial intelligence to generate insights, recommendations, and reports based on your responses. You acknowledge that:
+                </p>
+                <ul>
+                    <li>AI-generated content may contain errors or inaccuracies</li>
+                    <li>You should not act solely on AI recommendations without consulting qualified professionals</li>
+                    <li>The accuracy of insights depends on the honesty and detail of your responses</li>
+                    <li>AI cannot replace human judgment, empathy, or clinical expertise</li>
+                </ul>
+
+                <h2>7. Your Content and Data</h2>
+                <p>
+                    You retain ownership of all content you submit (responses, feelings, etc.). By using the Service, you grant us a limited license to process your data solely to provide the Service to you, as described in our <a href="{% url 'privacy_policy' %}">Privacy Policy</a>.
+                </p>
+
+                <h2>8. Limitation of Liability</h2>
+                <p>
+                    To the fullest extent permitted by Pakistani law, Student Companion and its operators shall not be liable for:
+                </p>
+                <ul>
+                    <li>Any decisions you make based on AI-generated insights</li>
+                    <li>Indirect, incidental, or consequential damages arising from use of the Service</li>
+                    <li>Mental health outcomes — the Service is supportive, not therapeutic</li>
+                    <li>Service interruptions, data loss, or technical issues</li>
+                </ul>
+                <p>
+                    <strong>You use the Service at your own risk.</strong> If you are in mental health crisis, please contact a qualified professional or emergency services.
+                </p>
+
+                <h2>9. Service Availability</h2>
+                <p>
+                    We strive to keep the Service available 24/7, but we do not guarantee uninterrupted access. We may temporarily suspend the Service for maintenance, updates, or unforeseen technical issues.
+                </p>
+
+                <h2>10. Modifications to the Service</h2>
+                <p>
+                    We reserve the right to modify, add, or remove features at any time. We will provide reasonable notice of significant changes that affect your use of the Service.
+                </p>
+
+                <h2>11. Termination</h2>
+                <p>
+                    You may delete your account at any time through the Service settings. We may suspend or terminate accounts that violate these Terms, though we will give reasonable notice except in cases of serious violations.
+                </p>
+
+                <h2>12. Governing Law</h2>
+                <p>
+                    These Terms are governed by the laws of the Islamic Republic of Pakistan. Any disputes shall be resolved in the courts of Karachi, Sindh.
+                </p>
+
+                <h2>13. Changes to These Terms</h2>
+                <p>
+                    We may update these Terms from time to time. We will notify you of significant changes via email. Your continued use of the Service after changes constitutes acceptance of the new Terms.
+                </p>
+
+                <h2>14. Contact Information</h2>
+                <p>For questions about these Terms:</p>
+                <ul>
+                    <li><strong>Email:</strong> <a href="mailto:legal@studentcompanion.pk">legal@studentcompanion.pk</a></li>
+                    <li><strong>Phone:</strong> +92 21 1234 567</li>
+                    <li><strong>Address:</strong> Bahria University Karachi Campus, 13 National Stadium Rd, Karsaz, Faisal Cantonment, Karachi, Pakistan</li>
+                </ul>
+
+            </div>
+        </div>
+    </main>
+
+    {% include 'partials/footer.html' %}
+
+</body>
+</html>

@@ -4,7 +4,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sign Out - StudentCompanion</title>
+    <title>Sign Out - Student Companion</title>
+    <link rel="icon" type="image/png" href="{% static 'account/img/logo.png' %}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Crimson+Pro:wght@600;700&display=swap" rel="stylesheet">
@@ -15,8 +16,9 @@
         <div class="auth-sidebar">
             <div class="sidebar-content">
                 <div class="logo-area">
-                    <h1 class="brand-name">StudentCompanion</h1>
-                    <p class="brand-tagline">Your academic journey, organized</p>
+                    <img src="{% static 'account/img/logo.png' %}" alt="Student Companion" class="brand-logo">
+                    <h1 class="brand-name">Student Companion</h1>
+                    <p class="brand-tagline"><span class="brand-tagline-accent"></span>Your academic journey, organized</p>
                 </div>
                 <div class="sidebar-illustration">
                     <div class="floating-shape shape-1"></div>
@@ -29,9 +31,12 @@
                 </div>
             </div>
         </div>
-        
+
         <div class="auth-main">
             <div class="auth-box">
+                <div class="auth-form-logo">
+                    <img src="{% static 'account/img/logo.png' %}" alt="Student Companion">
+                </div>
                 <div class="auth-header">
                     <h2 class="auth-title">Sign Out</h2>
                     <p class="auth-subtitle">Are you sure you want to sign out?</p>
@@ -39,20 +44,20 @@
 
                 <form method="post" action="{% url 'account_logout' %}" class="auth-form">
                     {% csrf_token %}
-                    
-                    <div style="text-align: center; margin-bottom: 2rem;">
-                        <svg width="80" height="80" viewBox="0 0 80 80" fill="none" style="margin: 0 auto;">
-                            <circle cx="40" cy="40" r="38" stroke="#E1E8F0" stroke-width="4"/>
-                            <path d="M50 30H30C27.7909 30 26 31.7909 26 34V46C26 48.2091 27.7909 50 30 50H50" stroke="#2D5F8D" stroke-width="3" stroke-linecap="round"/>
-                            <path d="M44 40H54M54 40L50 36M54 40L50 44" stroke="#2D5F8D" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+
+                    <div class="icon-circle">
+                        <svg width="80" height="80" viewBox="0 0 80 80" fill="none">
+                            <circle cx="40" cy="40" r="38" stroke-width="4"/>
+                            <path d="M50 30H30C27.7909 30 26 31.7909 26 34V46C26 48.2091 27.7909 50 30 50H50" stroke-width="3" stroke-linecap="round"/>
+                            <path d="M44 40H54M54 40L50 36M54 40L50 44" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
                         </svg>
                     </div>
 
-                    <button type="submit" class="btn-primary" style="margin-bottom: 1rem;">
+                    <button type="submit" class="btn-primary">
                         <span>Yes, Sign Out</span>
                     </button>
-                    
-                    <a href="{% url 'account_login' %}" class="btn-social" style="text-decoration: none;">
+
+                    <a href="{% url 'account_login' %}" class="btn-secondary">
                         <span>Cancel</span>
                     </a>
                 </form>

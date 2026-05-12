@@ -16,6 +16,33 @@ def home(request):
 def dashboard(request):
     return render(request, "Login/dashboard.html")
 
+"""
+Add these views to your existing views.py (in the Login app or wherever your dashboard view lives).
+You can also create a new file like 'pages_views.py' and import them.
+"""
+
+from django.shortcuts import render
+
+
+def crisis_support(request):
+    """Emergency mental health resources for Pakistan."""
+    return render(request, 'Login/crisis.html')
+
+
+def privacy_policy(request):
+    """Privacy policy page."""
+    return render(request, 'Login/privacy.html')
+
+
+def terms_of_service(request):
+    """Terms of service page."""
+    return render(request, 'Login/terms.html')
+
+
+def help_center(request):
+    """Help center / FAQ page."""
+    return render(request, 'Login/help.html')
+
 
 @login_required
 def dashboard_analytics(request):

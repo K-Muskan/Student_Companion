@@ -5,7 +5,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard - StudentCompanion</title>
+    <title>Dashboard - Student Companion</title>
+    <link rel="icon" type="image/png" href="{% static 'img/logo.png' %}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Literata:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
@@ -13,19 +14,18 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 </head>
 <body>
-    <!-- Navigation -->
+    <!-- ============================================================
+         NAVBAR (with logo)
+         ============================================================ -->
     <nav class="navbar">
         <div class="nav-container">
-            <div class="nav-brand">
-                <h1 class="brand-name">StudentCompanion</h1>
-                <span class="brand-tagline">Mental Wellness Hub</span>
-            </div>
-            <!-- <div class="nav-menu">
-                <a href="#overview" class="nav-link active">Overview</a>
-                <a href="#sessions" class="nav-link">Sessions</a>
-                <a href="#insights" class="nav-link">Insights</a>
-                <a href="#resources" class="nav-link">Resources</a>
-            </div> -->
+            <a href="/" class="nav-brand">
+                <img src="{% static 'img/logo.png' %}" alt="Student Companion" class="nav-brand-logo">
+                <div class="nav-brand-text">
+                    <h1 class="brand-name">Student Companion</h1>
+                    <span class="brand-tagline">Mental Wellness Hub</span>
+                </div>
+            </a>
             <div class="nav-menu">
                 <a href="#overview-top" class="nav-link active">Overview</a>
                 <a href="#sessions-section" class="nav-link">Sessions</a>
@@ -61,7 +61,7 @@
             <!-- Welcome Section -->
             <section id="overview-top" class="welcome-section">
                 <div class="welcome-content">
-                    <h2 class="welcome-title">Welcome back, {{ user.first_name|default:"Student" }}! 👋</h2>
+                    <h2 class="welcome-title">Welcome back, {{ user.first_name|default:"Student" }}! </h2>
                     <p class="welcome-subtitle">Here's your mental wellness overview</p>
                 </div>
                 <div class="quick-actions">
@@ -71,12 +71,14 @@
                         </svg>
                         <span>Start New Session</span>
                     </a>
-                    <button class="btn-secondary" onclick="showEmergencyResources()">
+                    <a href="{% url 'crisis_support' %}" class="btn-secondary btn-support">
                         <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                            <path d="M10 2L12.5 7L18 8L14 12L15 18L10 15L5 18L6 12L2 8L7.5 7L10 2Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+                            <path d="M9.99988 1.66675C5.39738 1.66675 1.66655 5.39758 1.66655 10.0001C1.66655 14.6026 5.39738 18.3334 9.99988 18.3334C14.6024 18.3334 18.3332 14.6026 18.3332 10.0001C18.3332 5.39758 14.6024 1.66675 9.99988 1.66675Z" stroke="currentColor" stroke-width="2"/>
+                            <path d="M10 6.66675V10.8334" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                            <circle cx="10" cy="13.75" r="1" fill="currentColor"/>
                         </svg>
                         <span>Get Support</span>
-                    </button>
+                    </a>
                 </div>
             </section>
 
@@ -90,49 +92,46 @@
                 <p class="metric-description" id="risk-level-note">Complete an assessment to see results</p>
             </div>
 
-    <div class="metric-card mood-card">
-        <div class="metric-icon">
-            <svg width="32" height="32" viewBox="0 0 24 24" fill="none">
-                <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
-                <path d="M8 14s1.5 2 4 2 4-2 4-2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                <circle cx="9" cy="9" r="1" fill="currentColor"/><circle cx="15" cy="9" r="1" fill="currentColor"/>
-            </svg>
-        </div>
-        <h3 class="metric-title">Current Mood</h3>
-        <div class="metric-value" id="current-mood-value">No data yet</div>
-        <p class="metric-description" id="current-mood-note">Complete an assessment to see results</p>
-    </div>
+            <div class="metric-card mood-card">
+                <div class="metric-icon">
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none">
+                        <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
+                        <path d="M8 14s1.5 2 4 2 4-2 4-2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                        <circle cx="9" cy="9" r="1" fill="currentColor"/><circle cx="15" cy="9" r="1" fill="currentColor"/>
+                    </svg>
+                </div>
+                <h3 class="metric-title">Current Mood</h3>
+                <div class="metric-value" id="current-mood-value">No data yet</div>
+                <p class="metric-description" id="current-mood-note">Complete an assessment to see results</p>
+            </div>
 
-    <div class="metric-card streak-card">
-        <div class="metric-icon">
-            <svg width="32" height="32" viewBox="0 0 24 24" fill="none"><path d="M13 2L3 14h8l-1 8 10-12h-8l1-8z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>
+            <div class="metric-card streak-card">
+                <div class="metric-icon">
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none"><path d="M13 2L3 14h8l-1 8 10-12h-8l1-8z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>
+                </div>
+                <h3 class="metric-title">Session Streak</h3>
+                <div class="metric-value" id="streak-value">0 days</div>
+                <p class="metric-description" id="streak-note">Complete your first session.</p>
+            </div>
         </div>
-        <h3 class="metric-title">Session Streak</h3>
-        <div class="metric-value" id="streak-value">0 days</div>
-        <p class="metric-description" id="streak-note">Complete your first session.</p>
-    </div>
-</div>
 
             <!-- Charts Section -->
             <section id="insights-section" class="charts-section">
-                <!-- Mood Trend Chart -->
                 <div class="chart-card">
                     <div class="chart-header">
                         <h3 class="chart-title">Mood Trend (Last 30 Days)</h3>
                         <select id="chartTimeFilter" class="chart-filter">
-    <option value="7">Last 7 Days</option>
-    <option value="30" selected>Last 30 Days</option>
-    <option value="90">Last 3 Months</option>
-    <option value="0">All Time</option>
-</select>
+                            <option value="7">Last 7 Days</option>
+                            <option value="30" selected>Last 30 Days</option>
+                            <option value="90">Last 3 Months</option>
+                            <option value="0">All Time</option>
+                        </select>
                     </div>
                     <div class="chart-container">
                         <canvas id="moodChart"></canvas>
                     </div>
                 </div>
 
-                <!-- Wellness Breakdown -->
-                <!-- FIX: kept exact HTML structure so renderWellnessBars() can target it correctly -->
                 <div class="chart-card">
                     <div class="chart-header">
                         <h3 class="chart-title">Wellness Factors</h3>
@@ -140,38 +139,37 @@
                     <div class="wellness-breakdown">
                         <div class="wellness-item">
                             <div class="wellness-label">
-                                <span class="wellness-dot" style="background: #E89B9B;"></span>
+                                <span class="wellness-dot" style="background: #C76B6B;"></span>
                                 <span>Depression</span>
                             </div>
                             <div class="wellness-bar-container">
-                                <div class="wellness-bar" style="width: 0%; background: #E89B9B; transition: width 0.6s ease;"></div>
+                                <div class="wellness-bar" style="width: 0%; background: #C76B6B; transition: width 0.6s ease;"></div>
                             </div>
                             <span class="wellness-value">—</span>
                         </div>
                         <div class="wellness-item">
                             <div class="wellness-label">
-                                <span class="wellness-dot" style="background: #E8A87C;"></span>
+                                <span class="wellness-dot" style="background: #C97A4D;"></span>
                                 <span>Anxiety</span>
                             </div>
                             <div class="wellness-bar-container">
-                                <div class="wellness-bar" style="width: 0%; background: #E8A87C; transition: width 0.6s ease;"></div>
+                                <div class="wellness-bar" style="width: 0%; background: #C97A4D; transition: width 0.6s ease;"></div>
                             </div>
                             <span class="wellness-value">—</span>
                         </div>
                         <div class="wellness-item">
                             <div class="wellness-label">
-                                <span class="wellness-dot" style="background: #6B9AC4;"></span>
+                                <span class="wellness-dot" style="background: #4A7BA0;"></span>
                                 <span>Stress</span>
                             </div>
                             <div class="wellness-bar-container">
-                                <div class="wellness-bar" style="width: 0%; background: #6B9AC4; transition: width 0.6s ease;"></div>
+                                <div class="wellness-bar" style="width: 0%; background: #4A7BA0; transition: width 0.6s ease;"></div>
                             </div>
                             <span class="wellness-value">—</span>
                         </div>
                     </div>
                 </div>
 
-                <!-- Facial Emotions Chart -->
                 <div class="chart-card">
                     <div class="chart-header">
                         <h3 class="chart-title">Facial Emotions Across Sessions</h3>
@@ -181,7 +179,6 @@
                     </div>
                 </div>
 
-                <!-- Feeling Scores Chart -->
                 <div class="chart-card">
                     <div class="chart-header">
                         <h3 class="chart-title">Feeling Scores (Latest Session)</h3>
@@ -194,35 +191,29 @@
 
             <!-- Session History & Recommendations -->
             <section id="sessions-section" class="content-grid">
-                <!-- Recent Sessions -->
                 <div class="sessions-panel">
                     <div class="panel-header">
                         <h3 class="panel-title">Recent Sessions</h3>
                         <a href="#" class="panel-link">View All</a>
                     </div>
                     <div class="sessions-list">
-                        <p style="color: #9AA5B9; font-size: 14px; padding: 16px;">Loading sessions...</p>
+                        <p style="color: #64748B; font-size: 14px; padding: 16px; font-weight: 500;">Loading sessions...</p>
                     </div>
                 </div>
 
-                <!-- Recommendations Panel -->
                 <div class="recommendations-panel">
                     <div class="panel-header">
                         <h3 class="panel-title">Clinical Recommendations</h3>
                         <span class="panel-badge">Based on latest session</span>
                     </div>
-                    <div class="recommendations-list" id="recommendations-list">
-
-                    </div>
-                        <!-- JS will populate this -->
-                  
+                    <div class="recommendations-list" id="recommendations-list"></div>
                     <div class="panel-footer">
                         <p class="panel-note">
                             <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
                                 <circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="2"/>
                                 <path d="M8 4v4M8 10h.01" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
                             </svg>
-                            Complete an assessment to see personalised notes
+                            <span>Complete an assessment to see personalised notes</span>
                         </p>
                     </div>
                 </div>
@@ -242,7 +233,6 @@
                         <span class="stat-label">Sessions Completed</span>
                     </div>
                 </div>
-
 
                 <div class="stat-item">
                     <div class="stat-icon">
@@ -272,89 +262,14 @@
         </div>
     </main>
 
-    <!-- MSE Report Modal -->
+    <!-- MSE Report Modal (kept for backward compatibility) -->
     <div id="mseModal" class="modal">
         <div class="modal-content mse-report">
             <div class="modal-header">
                 <h2 class="modal-title">Mental Status Examination Report</h2>
                 <button class="modal-close" onclick="closeMSEReport()">×</button>
             </div>
-            <div class="modal-body">
-                <div class="mse-section">
-                    <div class="mse-meta">
-                        <span class="mse-date">Assessment Date: February 05, 2026 at 2:50 PM</span>
-                        <span class="mse-badge ai-assisted">AI-Assisted Analysis</span>
-                    </div>
-                </div>
-
-                <div class="mse-section highlight-section low-risk-section">
-                    <h3 class="mse-heading">Risk Assessment</h3>
-                    <div class="risk-summary">
-                        <div class="risk-level">
-                            <span class="risk-badge low">LOW RISK</span>
-                            <p class="risk-text">No immediate intervention needed</p>
-                        </div>
-                        <div class="risk-details">
-                            <div class="risk-item">
-                                <span class="risk-label">Suicide Risk:</span>
-                                <span class="risk-value low">Low</span>
-                            </div>
-                            <div class="risk-item">
-                                <span class="risk-label">Homicide Risk:</span>
-                                <span class="risk-value low">Low</span>
-                            </div>
-                            <div class="risk-item">
-                                <span class="risk-label">Acute Anxiety:</span>
-                                <span class="risk-value warning">Yes</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="mse-section">
-                    <h3 class="mse-heading">Mood and Affect</h3>
-                    <div class="mse-content">
-                        <div class="mse-item">
-                            <span class="mse-label">Stated Mood:</span>
-                            <span class="mse-value">"I have been feeling really empty"</span>
-                        </div>
-                        <div class="mse-item">
-                            <span class="mse-label">Mood Category:</span>
-                            <span class="mse-badge depressed">Depressed</span>
-                        </div>
-                        <div class="mse-item">
-                            <span class="mse-label">Sentiment Score:</span>
-                            <span class="mse-value">0.00 <span class="mse-note">(-1 to +1 scale)</span></span>
-                        </div>
-                        <div class="mse-item">
-                            <span class="mse-label">Affect Congruence:</span>
-                            <span class="mse-value warning">Incongruent - discrepancy between internal feelings and external presentation</span>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="mse-section">
-                    <h3 class="mse-heading">Insight and Judgment</h3>
-                    <div class="mse-content">
-                        <div class="mse-item">
-                            <span class="mse-label">Insight:</span>
-                            <span class="mse-badge success">Good - patient acknowledges difficulties</span>
-                        </div>
-                        <div class="mse-item">
-                            <span class="mse-label">Judgment:</span>
-                            <span class="mse-badge warning">Fair - mixed decision-making patterns</span>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="mse-disclaimer">
-                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                        <circle cx="10" cy="10" r="9" stroke="currentColor" stroke-width="2"/>
-                        <path d="M10 6v4M10 13h.01" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                    </svg>
-                    <p>This is an AI-assisted analysis and should be reviewed by a qualified mental health professional. This report does not constitute a formal diagnosis or treatment plan.</p>
-                </div>
-            </div>
+            <div class="modal-body"></div>
             <div class="modal-footer">
                 <button class="btn-secondary" onclick="downloadReport()">
                     <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
@@ -366,60 +281,13 @@
             </div>
         </div>
     </div>
-    <div id="supportModal" class="modal">
-    <div class="modal-content support-card">
-        <div class="modal-header">
-            <h2 class="modal-title">Emergency Support</h2>
-            <button class="modal-close" onclick="closeSupportModal()">×</button>
-        </div>
-        <div class="modal-body">
-            <p class="support-intro">If you are in immediate danger, please contact emergency services or use these 24/7 resources:</p>
-            
-            <div class="support-resources">
-                <div class="resource-item">
-                    <div class="resource-icon">🆘</div>
-                    <div class="resource-info">
-                        <strong>National Suicide Prevention Lifeline</strong>
-                        <p>Call or Text: <span class="highlight">988</span></p>
-                    </div>
-                </div>
-
-                <div class="resource-item">
-                    <div class="resource-icon">📱</div>
-                    <div class="resource-info">
-                        <strong>Crisis Text Line</strong>
-                        <p>Text <span class="highlight">HOME</span> to 741741</p>
-                    </div>
-                </div>
-
-                <div class="resource-item">
-                    <div class="resource-icon">💚</div>
-                    <div class="resource-info">
-                        <strong>Campus Counseling</strong>
-                        <p>Contact your local student health center</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="modal-footer">
-            <button class="btn-primary" onclick="closeSupportModal()">Close</button>
-        </div>
-    </div>
-</div>
 
     <script src="{% static 'js/dashboard.js' %}"></script>
-<footer class="dashboard-footer">
-    <div class="footer-container">
-        <div class="footer-info">
-            <p class="footer-brand">StudentCompanion</p>
-            <p>© 2026 Mental Wellness Hub. All rights reserved.</p>
-        </div>
-        <div class="footer-links">
-            <a href="#">Privacy Policy</a>
-            <a href="#">Terms of Service</a>
-            <a href="#">Help Center</a>
-        </div>
-    </div>
-</footer>
+
+    <!-- ============================================================
+         PROFESSIONAL FOOTER
+         ============================================================ -->
+    {% include 'partials/footer.html' %}
+
 </body>
 </html>

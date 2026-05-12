@@ -1,0 +1,166 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Help Center - Student Companion</title>
+    <link rel="icon" type="image/png" href="{% static 'img/logo.png' %}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Literata:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+</head>
+<body>
+
+    {% include 'partials/navbar.html' %}
+
+    <main class="static-page">
+        <div class="static-page-container">
+            <div class="static-page-header">
+                <span class="static-page-eyebrow">Support</span>
+                <h1 class="static-page-title">Help Center</h1>
+                <p class="static-page-subtitle">Answers to common questions and how to get the most out of Student Companion</p>
+            </div>
+
+            <div class="static-page-content">
+
+                <h2>Getting Started</h2>
+
+                <h3>What is Student Companion?</h3>
+                <p>
+                    Student Companion is an AI-powered mental wellness platform designed specifically for university students. It helps you track your mental health, complete validated psychological assessments, and receive personalized insights and recommendations — all in a private, judgment-free space.
+                </p>
+
+                <h3>Is it free to use?</h3>
+                <p>
+                    Yes. Student Companion is currently free for all students. We may introduce optional premium features in the future, but core wellness tracking and assessments will remain free.
+                </p>
+
+                <h3>How do I create an account?</h3>
+                <p>
+                    Click "Sign Up" on the home page. You can register with your email and a password, or use Google sign-in for faster setup. We recommend using your university email if possible.
+                </p>
+
+                <h2>Using Assessments</h2>
+
+                <h3>What kind of assessments are available?</h3>
+                <p>The platform uses internationally validated psychological assessments, including:</p>
+                <ul>
+                    <li><strong>PHQ-9</strong> — Depression screening</li>
+                    <li><strong>GAD-7</strong> — Anxiety screening</li>
+                    <li><strong>PSS</strong> — Perceived Stress Scale</li>
+                    <li><strong>Facial emotion analysis</strong> (optional, camera-based)</li>
+                    <li><strong>Free-text feeling reflections</strong> analyzed by AI</li>
+                </ul>
+
+                <h3>How often should I take assessments?</h3>
+                <p>
+                    There's no fixed rule, but most students benefit from completing an assessment <strong>once every 1–2 weeks</strong>. This frequency provides meaningful trend data without becoming overwhelming. You can take an assessment any time you feel a significant change in your mental state.
+                </p>
+
+                <h3>How long does an assessment take?</h3>
+                <p>
+                    A complete assessment typically takes <strong>10–15 minutes</strong>. You can pause and resume anytime — your progress is saved automatically.
+                </p>
+
+                <h3>Is the camera/facial emotion feature mandatory?</h3>
+                <p>
+                    No. The facial emotion feature is completely optional. You can complete the entire assessment using only the questionnaire and text responses if you prefer. If you do enable the camera, footage is processed in real-time and is not stored — only the analyzed emotion labels are saved.
+                </p>
+
+                <h2>Understanding Your Results</h2>
+
+                <h3>What do the risk levels mean?</h3>
+                <ul>
+                    <li><strong>Minimal/Low:</strong> Indicators are within a healthy range. Continue self-care.</li>
+                    <li><strong>Moderate:</strong> Some signs of distress. Consider speaking with someone you trust or a counselor.</li>
+                    <li><strong>Severe/High:</strong> Significant indicators of distress. We strongly recommend professional support.</li>
+                    <li><strong>Extreme:</strong> Immediate professional help is recommended. Please contact a helpline.</li>
+                </ul>
+
+                <h3>Can the AI diagnose me?</h3>
+                <p>
+                    <strong>No.</strong> The AI provides assessment scores and insights based on your responses, but only a qualified mental health professional can diagnose mental health conditions. Always consult a doctor or therapist for an actual diagnosis.
+                </p>
+
+                <h3>What is the Mental Status Examination (MSE) Report?</h3>
+                <p>
+                    The MSE report is a structured summary of your latest assessment, written in a format clinicians use. You can download it and share it with a counselor or therapist to give them a head start on understanding what you're going through.
+                </p>
+
+                <h2>Privacy & Data</h2>
+
+                <h3>Who can see my data?</h3>
+                <p>
+                    Only you. Your responses, scores, and reports are private to your account. We do not share individual data with universities, parents, employers, or third parties. Read our full <a href="{% url 'privacy_policy' %}">Privacy Policy</a> for details.
+                </p>
+
+                <h3>Can I delete my data?</h3>
+                <p>
+                    Yes. You can delete your account at any time, which permanently removes all your data within 30 days. Contact <a href="mailto:privacy@studentcompanion.pk">privacy@studentcompanion.pk</a> to request deletion.
+                </p>
+
+                <h3>Is my data used to train AI models?</h3>
+                <p>
+                    Only anonymized, aggregated data may be used to improve the platform's accuracy. Your individual responses are never used in a way that could identify you. You can opt out of this entirely from your account settings.
+                </p>
+
+                <h2>Technical Issues</h2>
+
+                <h3>I forgot my password. What do I do?</h3>
+                <p>
+                    Click "Forgot password?" on the sign-in page and enter your email. We'll send you a secure reset link. If you don't receive the email within a few minutes, check your spam folder.
+                </p>
+
+                <h3>The page won't load or charts aren't showing.</h3>
+                <p>Try these steps in order:</p>
+                <ol>
+                    <li>Refresh the page (Ctrl+Shift+R or Cmd+Shift+R)</li>
+                    <li>Clear your browser cache</li>
+                    <li>Try a different browser (we recommend Chrome or Firefox)</li>
+                    <li>Check that JavaScript is enabled</li>
+                    <li>Contact support if the issue persists</li>
+                </ol>
+
+                <h3>The AI gave me a result that doesn't feel right.</h3>
+                <p>
+                    The AI is a tool, not a verdict. If your results don't match how you feel, trust your own self-knowledge. Consider:
+                </p>
+                <ul>
+                    <li>Were you fully honest in your responses? (No judgment — sometimes we minimize or exaggerate)</li>
+                    <li>Did external factors affect your assessment (illness, sleep deprivation, etc.)?</li>
+                    <li>Talk to a real human professional for a proper evaluation</li>
+                </ul>
+
+                <h2>Support a Friend</h2>
+
+                <h3>Can I share my report with a counselor?</h3>
+                <p>
+                    Absolutely. Click the "Download Report" button in any session view to get a PDF you can send to a therapist, counselor, or doctor. This gives them helpful context before your appointment.
+                </p>
+
+                <h3>How can I help a friend who's struggling?</h3>
+                <p>
+                    Visit our <a href="{% url 'crisis_support' %}">Crisis Support page</a> for guidance on how to support someone in mental health distress. The most important things you can do are <strong>listen without judgment</strong>, <strong>take their feelings seriously</strong>, and <strong>encourage them to reach out for professional help</strong>.
+                </p>
+
+                <h2>Still Need Help?</h2>
+                <p>If you didn't find what you were looking for, contact our team:</p>
+                <ul>
+                    <li><strong>General support:</strong> <a href="mailto:support@studentcompanion.pk">support@studentcompanion.pk</a></li>
+                    <li><strong>Privacy questions:</strong> <a href="mailto:privacy@studentcompanion.pk">privacy@studentcompanion.pk</a></li>
+                    <li><strong>Phone:</strong> +92 21 1234 567 (Mon–Fri, 9 AM – 5 PM PKT)</li>
+                </ul>
+                <p>
+                    For mental health emergencies, please go directly to the <a href="{% url 'crisis_support' %}">Crisis Support page</a> for 24/7 helplines.
+                </p>
+
+            </div>
+        </div>
+    </main>
+
+    {% include 'partials/footer.html' %}
+
+</body>
+</html>

@@ -5,7 +5,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sign Up - StudentCompanion</title>
+    <title>Sign Up - Student Companion</title>
+    <link rel="icon" type="image/png" href="{% static 'account/img/logo.png' %}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Crimson+Pro:wght@600;700&display=swap" rel="stylesheet">
@@ -16,8 +17,9 @@
         <div class="auth-sidebar">
             <div class="sidebar-content">
                 <div class="logo-area">
-                    <h1 class="brand-name">StudentCompanion</h1>
-                    <p class="brand-tagline">Your academic journey, organized</p>
+                    <img src="{% static 'account/img/logo.png' %}" alt="Student Companion" class="brand-logo">
+                    <h1 class="brand-name">Student Companion</h1>
+                    <p class="brand-tagline"><span class="brand-tagline-accent"></span>AI-powered mental health support</p>
                 </div>
                 <div class="sidebar-illustration">
                     <div class="floating-shape shape-1"></div>
@@ -30,12 +32,15 @@
                 </div>
             </div>
         </div>
-        
+
         <div class="auth-main">
             <div class="auth-box">
+                <div class="auth-form-logo">
+                    <img src="{% static 'account/img/logo.png' %}" alt="Student Companion">
+                </div>
                 <div class="auth-header">
                     <h2 class="auth-title">Create Account</h2>
-                    <p class="auth-subtitle">Start organizing your academic life today</p>
+                    <p class="auth-subtitle">Start your journey with us today</p>
                 </div>
 
                 {% if messages %}
@@ -68,12 +73,12 @@
                 <!-- Email/Password Signup Form -->
                 <form method="post" action="{% url 'account_signup' %}" class="auth-form">
                     {% csrf_token %}
-                    
+
                     <div class="form-group">
                         <label for="id_email" class="form-label">Email Address</label>
-                        <input 
-                            type="email" 
-                            name="email" 
+                        <input
+                            type="email"
+                            name="email"
                             id="id_email"
                             placeholder="you@example.com"
                             class="form-input"
@@ -88,9 +93,9 @@
 
                     <div class="form-group">
                         <label for="id_password1" class="form-label">Password</label>
-                        <input 
-                            type="password" 
-                            name="password1" 
+                        <input
+                            type="password"
+                            name="password1"
                             id="id_password1"
                             placeholder="••••••••"
                             class="form-input"
@@ -105,9 +110,9 @@
 
                     <div class="form-group">
                         <label for="id_password2" class="form-label">Confirm Password</label>
-                        <input 
-                            type="password" 
-                            name="password2" 
+                        <input
+                            type="password"
+                            name="password2"
                             id="id_password2"
                             placeholder="••••••••"
                             class="form-input"
@@ -133,15 +138,15 @@
                     </button>
 
                     <p class="terms-text">
-                        By signing up, you agree to our 
-                        <a href="#" class="terms-link">Terms of Service</a> and 
+                        By signing up, you agree to our
+                        <a href="#" class="terms-link">Terms of Service</a> and
                         <a href="#" class="terms-link">Privacy Policy</a>
                     </p>
                 </form>
 
                 <div class="auth-footer">
                     <p class="footer-text">
-                        Already have an account? 
+                        Already have an account?
                         <a href="{% url 'account_login' %}" class="footer-link">Sign in</a>
                     </p>
                 </div>

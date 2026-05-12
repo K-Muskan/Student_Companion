@@ -604,9 +604,9 @@ body {
       <h1>Mental Health Assessment Results</h1>
       <p class="header-sub">Clinical Scale Report — Three-Scale Assessment</p>
       <div class="header-meta">
-        <span>📅 {{ timestamp|date:"N j, Y — g:i A" }}</span>
-        <span>📋 BDI · PSS-10 · BAI</span>
-        <span>🆔 #{{ assessment_id }}</span>
+        <span> {{ timestamp|date:"N j, Y — g:i A" }}</span>
+        <span> BDI · PSS-10 · BAI</span>
+        <span> ID #{{ assessment_id }}</span>
       </div>
     </div>
   </div>
@@ -623,7 +623,7 @@ body {
     </div>
     {% elif overall_risk == 'severe' or overall_risk == 'extreme' or overall_risk == 'high' %}
     <div class="alert alert-danger">
-      <span class="alert-icon">⚠️</span>
+      <span class="alert-icon"> </span>
       <div>
         <strong>HIGH RISK DETECTED</strong>
         Significant distress indicators found. Urgent professional attention is recommended.
@@ -631,7 +631,7 @@ body {
     </div>
     {% elif overall_risk == 'moderate' or overall_risk == 'borderline' %}
     <div class="alert alert-warning">
-      <span class="alert-icon">⚠️</span>
+      <span class="alert-icon"> </span>
       <div>
         <strong>MODERATE RISK</strong>
         Clinical attention recommended within 24–48 hours.
@@ -639,8 +639,8 @@ body {
     </div>
     {% else %}
     <div class="alert alert-success">
-      <span class="alert-icon">✅</span>
-      <div>
+      <span class="alert-icon"></span>
+      <div> 
         <strong>LOW RISK</strong>
         Results within normal range. Routine follow-up recommended.
       </div>
@@ -650,7 +650,7 @@ body {
 
   <!-- ══ ACTION BAR (hidden on print) ══ -->
   <div class="action-bar no-print">
-    <a href="/" class="btn btn-dashboard">🏠 Dashboard</a>
+    <a href="/" class="btn btn-dashboard"> Dashboard</a>
     <a href="/assessment/" class="btn btn-secondary">← New Assessment</a>
 
     <a href="#"
@@ -662,7 +662,7 @@ body {
        class="btn btn-secondary">⬇ JSON Data</a>
 
     <button onclick="window.print()" class="btn btn-secondary">🖨 Print / Save PDF</button>
-    <a href="/assessment/therapist/{{ assessment_id }}/" class="btn btn-primary">🤖 Talk to Therapist</a>
+    <a href="/assessment/therapist/{{ assessment_id }}/" class="btn btn-primary"> Talk to Therapist</a>
   </div>
 
   <!-- ══ THREE SCALE CARDS ══ -->
@@ -965,7 +965,7 @@ body {
 
   <!-- ══ DISCLAIMER ══ -->
   <div class="disclaimer">
-    <strong>⚠️ Important Medical Disclaimer</strong>
+    <strong> Important Medical Disclaimer</strong>
     <p>This is an AI-assisted screening tool and does not constitute a formal clinical diagnosis or treatment plan. All results should be reviewed by a qualified mental health professional. In case of emergency, contact emergency services immediately.</p>
   </div>
 
